@@ -151,6 +151,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1badbea75d4ebd42ab11969b360f8bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MaxLevels: 5
+  NodesPerLevel: 7
+  _playerInputSeed: 0
+  _usePlayerInputSeed: 1
+  _uniquePaths: 3
+  _totalPaths: 7
+  _startingNodes: []
 --- !u!4 &437789669
 Transform:
   m_ObjectHideFlags: 0
