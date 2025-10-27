@@ -1,3 +1,4 @@
+using System.Net.NetworkInformation;
 using UnityEngine;
 
 namespace BP.MapGeneration
@@ -16,10 +17,14 @@ namespace BP.MapGeneration
 
     public class MapGenerator : MonoBehaviour
     {
-        public const int MaxLevels = 5;
-        public const int NodesPerLevel = 8;
+        [SerializeField] private int MaxLevels = 5;
+        [SerializeField] private int NodesPerLevel = 8;
+        [SerializeField] private int _playerInputSeed = 12345;
+        [SerializeField]private bool _usePlayerInputSeed = false;
 
         private MapNode[,] _mapGrid;
+        private System.Random _pRNG;
+        public int GeneratedSeed { get; private set; }
 
         private void OnDrawGizmos()
         {
@@ -39,6 +44,8 @@ namespace BP.MapGeneration
         private void Start()
         {
             CreateNodeGrid();
+            int? seed = _usePlayerInputSeed ? _playerInputSeed : (int?)null;
+            InitializePRNG(seed);
         }
 
         private void CreateNodeGrid()
@@ -52,6 +59,22 @@ namespace BP.MapGeneration
                     _mapGrid[level, nodeIndex] = node;
                 }
             }
+        }
+
+        private void InitializePRNG(int? seed)
+        {
+            if (seed == null)
+            {
+                int intMinMaxSeed = Random.Range(int.MinValue, int.MaxValue);
+                int dateTimeSeed = System.DateTime.Now.Millisecond;
+                GeneratedSeed = Mathf.Abs(intMinMaxSeed + dateTimeSeed);
+            }
+            else
+            {
+                GeneratedSeed = Mathf.Abs(seed.Value);
+            }
+
+            _pRNG = new System.Random(GeneratedSeed);
         }
     }
 }
