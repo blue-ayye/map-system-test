@@ -16,6 +16,7 @@ namespace BP.MapGeneration
         /// <summary>
         /// This is just for testing purposes. Call the individual methods from a control script to control the flow.
         /// </summary>
+        /// 
         [ContextMenu("Create Map Grid")]
         public void CreateMapGrid()
         {

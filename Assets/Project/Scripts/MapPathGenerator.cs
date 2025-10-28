@@ -16,6 +16,34 @@ namespace BP.MapGeneration
         private int _nodesPerLevel;
         public System.Random PRNG;
 
+        /// <summary>
+        /// This is just for testing purposes. Call the individual methods from a control script to control the flow.
+        /// </summary>
+        ///
+        [ContextMenu("Create Map Paths")]
+        public void CreateMapPaths()
+        {
+            ClearPathViews();
+
+            _maxLevels = 9;
+            _nodesPerLevel = 7;
+            PRNG = new System.Random(0);
+            _mapGrid = new MapNode[_maxLevels, _nodesPerLevel];
+
+            // Initialize map grid with nodes
+            for (int level = 0; level < _maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    _mapGrid[level, nodeIndex] = new MapNode(level, nodeIndex);
+                }
+            }
+
+            SelectStartingNodes();
+            GeneratePaths();
+            CreatePathViews();
+        }
+
         public void Initialize(MapNode[,] mapGrid, int maxLevels, int nodesPerLevel, System.Random pRNG)
         {
             _mapGrid = mapGrid;
@@ -156,8 +184,6 @@ namespace BP.MapGeneration
                 parentNode.ChildNodes.Add(childNode);
         }
 
-
-
         private List<MapNode> GetNodesAt(int level)
         {
             List<MapNode> nodes = new List<MapNode>();
@@ -171,6 +197,5 @@ namespace BP.MapGeneration
 
             return nodes;
         }
-
     }
 }
