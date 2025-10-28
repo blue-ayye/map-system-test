@@ -11,7 +11,18 @@ namespace BP.MapGeneration
 
         public MapNode[,] MapGrid;
 
-        // Grid management
+        /// <summary>
+        /// This is just for testing purposes. Call the individual methods from a control script to control the flow.
+        /// </summary>
+        [ContextMenu("Create Map Grid")]
+        public void CreateMapGrid()
+        {
+            ClearNodeViews();
+
+            CreateNodeGrid();
+            CreateNodeViews();
+        }
+
         public void ClearUnusedNodes()
         {
             for (int level = 0; level < _maxLevels; level++)
@@ -37,6 +48,8 @@ namespace BP.MapGeneration
 
         public void CreateNodeViews()
         {
+            if (MapGrid == null) return;
+
             for (int level = 0; level < _maxLevels; level++)
             {
                 for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
