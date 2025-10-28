@@ -10,6 +10,8 @@ namespace BP.MapGeneration
         [SerializeField] private Transform _nodeViewPrefab;
 
         public MapNode[,] MapGrid;
+        public int MaxLevels => _maxLevels;
+        public int NodesPerLevel => _nodesPerLevel;
 
         /// <summary>
         /// This is just for testing purposes. Call the individual methods from a control script to control the flow.

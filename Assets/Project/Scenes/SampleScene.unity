@@ -286,13 +286,14 @@ GameObject:
   - component: {fileID: 437789669}
   - component: {fileID: 437789668}
   - component: {fileID: 437789670}
+  - component: {fileID: 437789671}
   m_Layer: 0
   m_Name: Map Generator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &437789668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -306,16 +307,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _mapGridGenerator: {fileID: 437789670}
-  _maxLevels: 9
-  _nodesPerLevel: 7
+  _mapPathGenerator: {fileID: 437789671}
   _playerInputSeed: 0
   _usePlayerInputSeed: 1
-  _uniquePaths: 3
-  _totalPaths: 7
-  _nodeViewParent: {fileID: 437789669}
-  _nodeViewPrefab: {fileID: 110525534}
-  _pathViewParent: {fileID: 437789669}
-  _pathViewPrefab: {fileID: 945572697}
 --- !u!4 &437789669
 Transform:
   m_ObjectHideFlags: 0
@@ -347,6 +341,22 @@ MonoBehaviour:
   _nodesPerLevel: 7
   _nodeViewParent: {fileID: 437789669}
   _nodeViewPrefab: {fileID: 110525534}
+--- !u!114 &437789671
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 437789667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ab6bfe31f24d84581cd766871f9a8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _uniquePaths: 3
+  _totalPaths: 7
+  _pathViewParent: {fileID: 437789669}
+  _pathViewPrefab: {fileID: 945572697}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
