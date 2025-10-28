@@ -6,7 +6,6 @@ namespace BP.MapGeneration
     /// Pure data class representing a node in the map generation process. Helps with performance by avoiding instantiating view objects during path generation.
     /// </summary>
     ///
-    [System.Serializable]
     public class MapNode
     {
         public int Level;
