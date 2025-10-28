@@ -26,6 +26,10 @@ namespace BP.MapGeneration
         [SerializeField] private bool _usePlayerInputSeed = false;
         [SerializeField] private int _uniquePaths = 3;
         [SerializeField] private int _totalPaths = 7;
+        [SerializeField] private Transform _nodeViewParent;
+        [SerializeField] private Transform _nodeViewPrefab;
+        [SerializeField] private Transform _pathViewParent;
+        [SerializeField] private Transform _pathViewPrefab;
 
         private MapNode[,] _mapGrid;
         private System.Random _pRNG;
@@ -36,6 +40,8 @@ namespace BP.MapGeneration
         {
             if (_mapGrid == null)
                 return;
+
+            // Draw nodes
             for (int level = 0; level < _maxLevels; level++)
             {
                 for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
@@ -52,6 +58,7 @@ namespace BP.MapGeneration
                 for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
                 {
                     var node = _mapGrid[level, nodeIndex];
+                    if (node == null) continue;
                     Vector3 fromPosition = new Vector3(nodeIndex * 2.0f, level * 2.0f, 0);
                     foreach (var child in node.ChildNodes)
                     {
@@ -63,6 +70,7 @@ namespace BP.MapGeneration
             }
         }
 
+        [ContextMenu("Generate New Map")]
         private void Start()
         {
             int? seed = _usePlayerInputSeed ? _playerInputSeed : (int?)null;
@@ -70,6 +78,53 @@ namespace BP.MapGeneration
             CreateNodeGrid();
             SelectStartingNodes();
             GeneratePaths();
+
+            ClearUnusedNodes();
+
+            ClearNodeViews();
+            ClearPathViews();
+            CreateNodeViews();
+            CreatePathViews();
+        }
+
+        // Grid management
+        private void ClearUnusedNodes()
+        {
+            for (int level = 0; level < _maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    var node = _mapGrid[level, nodeIndex];
+                    if (node.ParentNodes.Count == 0 && node.ChildNodes.Count == 0)
+                    {
+                        _mapGrid[level, nodeIndex] = null;
+                    }
+                }
+            }
+        }
+
+        private void ClearNodeViews()
+        {
+            foreach (Transform child in _nodeViewParent)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        private void CreateNodeViews()
+        {
+            for (int level = 0; level < _maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    var node = _mapGrid[level, nodeIndex];
+                    if (node == null) continue;
+
+                    Vector3 position = new Vector3(nodeIndex * 2.0f, level * 2.0f, 0);
+                    var nodeView = Instantiate(_nodeViewPrefab, _nodeViewParent);
+                    nodeView.position = position;
+                }
+            }
         }
 
         private void CreateNodeGrid()
@@ -85,20 +140,39 @@ namespace BP.MapGeneration
             }
         }
 
-        private void InitializePRNG(int? seed)
-        {
-            if (seed == null)
-            {
-                int intMinMaxSeed = Random.Range(int.MinValue, int.MaxValue);
-                int dateTimeSeed = System.DateTime.Now.Millisecond;
-                GeneratedSeed = Mathf.Abs(intMinMaxSeed + dateTimeSeed);
-            }
-            else
-            {
-                GeneratedSeed = Mathf.Abs(seed.Value);
-            }
+        // Path management
 
-            _pRNG = new System.Random(GeneratedSeed);
+        private void ClearPathViews()
+        {
+            foreach (Transform child in _pathViewParent)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        private void CreatePathViews()
+        {
+            for (int level = 0; level < _maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    var node = _mapGrid[level, nodeIndex];
+                    if (node == null) continue;
+                    Vector3 fromPosition = new Vector3(nodeIndex * 2.0f, level * 2.0f, 0);
+                    foreach (var child in node.ChildNodes)
+                    {
+                        Vector3 toPosition = new Vector3(child.NodeIndex * 2.0f, child.Level * 2.0f, 0);
+                        var pathView = Instantiate(_pathViewPrefab, _pathViewParent);
+                        var lineRenderer = pathView.GetComponent<LineRenderer>();
+                        if (lineRenderer != null)
+                        {
+                            lineRenderer.positionCount = 2;
+                            lineRenderer.SetPosition(0, fromPosition);
+                            lineRenderer.SetPosition(1, toPosition);
+                        }
+                    }
+                }
+            }
         }
 
         private void SelectStartingNodes()
@@ -198,6 +272,22 @@ namespace BP.MapGeneration
                 childNode.ParentNodes.Add(parentNode);
             if (!parentNode.ChildNodes.Contains(childNode))
                 parentNode.ChildNodes.Add(childNode);
+        }
+
+        private void InitializePRNG(int? seed)
+        {
+            if (seed == null)
+            {
+                int intMinMaxSeed = Random.Range(int.MinValue, int.MaxValue);
+                int dateTimeSeed = System.DateTime.Now.Millisecond;
+                GeneratedSeed = Mathf.Abs(intMinMaxSeed + dateTimeSeed);
+            }
+            else
+            {
+                GeneratedSeed = Mathf.Abs(seed.Value);
+            }
+
+            _pRNG = new System.Random(GeneratedSeed);
         }
 
         private List<MapNode> GetNodesAt(int level)
