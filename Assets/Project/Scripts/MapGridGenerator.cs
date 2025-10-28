@@ -5,7 +5,7 @@ namespace BP.MapGeneration
     public class MapGridGenerator : MonoBehaviour
     {
         [SerializeField] private int _maxLevels = 9;
-        [SerializeField] private int _nodesPerLevel = 5;
+        [SerializeField] private int _nodesPerLevel = 7;
         [SerializeField] private Transform _nodeViewParent;
         [SerializeField] private Transform _nodeViewPrefab;
 

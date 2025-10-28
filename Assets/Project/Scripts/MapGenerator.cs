@@ -22,7 +22,7 @@ namespace BP.MapGeneration
     {
         [SerializeField] private MapGridGenerator _mapGridGenerator;
         [SerializeField] private int _maxLevels = 9;
-        [SerializeField] private int _nodesPerLevel = 5;
+        [SerializeField] private int _nodesPerLevel = 7;
         [SerializeField] private int _playerInputSeed = 0;
         [SerializeField] private bool _usePlayerInputSeed = false;
         [SerializeField] private int _uniquePaths = 3;
@@ -75,24 +75,25 @@ namespace BP.MapGeneration
         private void Start()
         {
             _mapGridGenerator.ClearNodeViews();
+            ClearPathViews();
+
             _mapGridGenerator.CreateNodeGrid();
+
+            _mapGrid = _mapGridGenerator.MapGrid;
+
+
+            int? seed = _usePlayerInputSeed ? _playerInputSeed : (int?)null;
+            InitializePRNG(seed);
+            SelectStartingNodes();
+            GeneratePaths();
+
+            _mapGridGenerator.ClearUnusedNodes();
+
             _mapGridGenerator.CreateNodeViews();
-
-            //int? seed = _usePlayerInputSeed ? _playerInputSeed : (int?)null;
-            //InitializePRNG(seed);
-            //CreateNodeGrid();
-            //SelectStartingNodes();
-            //GeneratePaths();
-
-            //ClearUnusedNodes();
-
-            //ClearNodeViews();
-            //ClearPathViews();
-            //CreateNodeViews();
-            //CreatePathViews();
+            CreatePathViews();
         }
 
-        
+
 
         // Path management
 
