@@ -20,6 +20,7 @@ namespace BP.MapGeneration
 
     public class MapGenerator : MonoBehaviour
     {
+        [SerializeField] private MapGridGenerator _mapGridGenerator;
         [SerializeField] private int _maxLevels = 9;
         [SerializeField] private int _nodesPerLevel = 5;
         [SerializeField] private int _playerInputSeed = 0;
@@ -73,72 +74,25 @@ namespace BP.MapGeneration
         [ContextMenu("Generate New Map")]
         private void Start()
         {
-            int? seed = _usePlayerInputSeed ? _playerInputSeed : (int?)null;
-            InitializePRNG(seed);
-            CreateNodeGrid();
-            SelectStartingNodes();
-            GeneratePaths();
+            _mapGridGenerator.ClearNodeViews();
+            _mapGridGenerator.CreateNodeGrid();
+            _mapGridGenerator.CreateNodeViews();
 
-            ClearUnusedNodes();
+            //int? seed = _usePlayerInputSeed ? _playerInputSeed : (int?)null;
+            //InitializePRNG(seed);
+            //CreateNodeGrid();
+            //SelectStartingNodes();
+            //GeneratePaths();
 
-            ClearNodeViews();
-            ClearPathViews();
-            CreateNodeViews();
-            CreatePathViews();
+            //ClearUnusedNodes();
+
+            //ClearNodeViews();
+            //ClearPathViews();
+            //CreateNodeViews();
+            //CreatePathViews();
         }
 
-        // Grid management
-        private void ClearUnusedNodes()
-        {
-            for (int level = 0; level < _maxLevels; level++)
-            {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    var node = _mapGrid[level, nodeIndex];
-                    if (node.ParentNodes.Count == 0 && node.ChildNodes.Count == 0)
-                    {
-                        _mapGrid[level, nodeIndex] = null;
-                    }
-                }
-            }
-        }
-
-        private void ClearNodeViews()
-        {
-            foreach (Transform child in _nodeViewParent)
-            {
-                Destroy(child.gameObject);
-            }
-        }
-
-        private void CreateNodeViews()
-        {
-            for (int level = 0; level < _maxLevels; level++)
-            {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    var node = _mapGrid[level, nodeIndex];
-                    if (node == null) continue;
-
-                    Vector3 position = new Vector3(nodeIndex * 2.0f, level * 2.0f, 0);
-                    var nodeView = Instantiate(_nodeViewPrefab, _nodeViewParent);
-                    nodeView.position = position;
-                }
-            }
-        }
-
-        private void CreateNodeGrid()
-        {
-            _mapGrid = new MapNode[_maxLevels, _nodesPerLevel];
-            for (int level = 0; level < _maxLevels; level++)
-            {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    var node = new MapNode(level, nodeIndex);
-                    _mapGrid[level, nodeIndex] = node;
-                }
-            }
-        }
+        
 
         // Path management
 

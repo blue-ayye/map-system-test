@@ -237,6 +237,7 @@ GameObject:
   m_Component:
   - component: {fileID: 437789669}
   - component: {fileID: 437789668}
+  - component: {fileID: 437789670}
   m_Layer: 0
   m_Name: Map Generator
   m_TagString: Untagged
@@ -256,6 +257,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1badbea75d4ebd42ab11969b360f8bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _mapGridGenerator: {fileID: 437789670}
   _maxLevels: 9
   _nodesPerLevel: 5
   _playerInputSeed: 0
@@ -281,6 +283,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &437789670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 437789667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06db456f92d339a4598fabca069a7b2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _maxLevels: 9
+  _nodesPerLevel: 5
+  _nodeViewParent: {fileID: 437789669}
+  _nodeViewPrefab: {fileID: 110525534}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
