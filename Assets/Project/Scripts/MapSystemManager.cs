@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BP.MapSystem
@@ -33,6 +34,8 @@ namespace BP.MapSystem
 
             _mapGridGenerator.CreateNodeViews();
             _mapPathGenerator.CreatePathViews();
+
+            AssignNodeTypes(mapGrid, pRNG);
         }
 
         private System.Random InitializePRNG(int? seed)
@@ -49,6 +52,31 @@ namespace BP.MapSystem
             }
 
             return new System.Random(GeneratedSeed);
+        }
+
+        [SerializeField] private List<MapNodeTypeSO> _nodeTypes;
+
+        private void AssignNodeTypes(MapNode[,] mapGrid, System.Random pRNG)
+        {
+            int maxLevels = mapGrid.GetLength(0);
+            int nodesPerLevel = mapGrid.GetLength(1);
+            for (int level = 0; level < maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < nodesPerLevel; nodeIndex++)
+                {
+                    var node = mapGrid[level, nodeIndex];
+                    if (node != null)
+                    {
+                        int typeIndex = pRNG.Next(_nodeTypes.Count);
+                        var nodeType = _nodeTypes[typeIndex];
+                        var nodeView = node.NodeView;
+                        if (nodeView != null)
+                        {
+                            nodeView.SetNodeType(nodeType);
+                        }
+                    }
+                }
+            }
         }
     }
 }

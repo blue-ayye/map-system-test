@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace BP.MapSystem
@@ -7,7 +8,7 @@ namespace BP.MapSystem
         [SerializeField] private int _maxLevels = 9;
         [SerializeField] private int _nodesPerLevel = 7;
         [SerializeField] private Transform _nodeViewParent;
-        [SerializeField] private Transform _nodeViewPrefab;
+        [SerializeField] private MapNodeView _nodeViewPrefab;
 
         public MapNode[,] MapGrid;
         public int MaxLevels => _maxLevels;
@@ -62,7 +63,8 @@ namespace BP.MapSystem
 
                     Vector3 position = new Vector3(nodeIndex * 2.0f, level * 2.0f, 0);
                     var nodeView = Instantiate(_nodeViewPrefab, _nodeViewParent);
-                    nodeView.position = position;
+                    nodeView.transform.localPosition = position;
+                    node.NodeView = nodeView;
                 }
             }
         }
