@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace BP.MapGeneration
+namespace BP.MapSystem
 {
     public class MapPathGenerator : MonoBehaviour
     {

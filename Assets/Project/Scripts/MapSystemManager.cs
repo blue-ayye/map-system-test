@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace BP.MapGeneration
+namespace BP.MapSystem
 {
-    public class MapGenerator : MonoBehaviour
+    public class MapSystemManager : MonoBehaviour
     {
         [SerializeField] private MapGridGenerator _mapGridGenerator;
         [SerializeField] private MapPathGenerator _mapPathGenerator;

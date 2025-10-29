@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BP.MapGeneration
+namespace BP.MapSystem
 {
     /// <summary>
     /// Pure data class representing a node in the map generation process. Helps with performance by avoiding instantiating view objects during path generation.

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace BP.MapGeneration
+namespace BP.MapSystem
 {
     public class MapGridGenerator : MonoBehaviour
     {
