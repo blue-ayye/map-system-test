@@ -55,6 +55,7 @@ namespace BP.MapSystem
         }
 
         [SerializeField] private List<MapNodeTypeSO> _nodeTypes;
+        [SerializeField] private List<NodeTypeRulesSO> _nodeTypeRules;
 
         private void AssignNodeTypes(MapNode[,] mapGrid, System.Random pRNG)
         {

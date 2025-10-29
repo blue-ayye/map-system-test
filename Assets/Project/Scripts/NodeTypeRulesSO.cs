@@ -1,24 +1,23 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BP.MapSystem
 {
-    [CreateAssetMenu(fileName = "MapNodeType", menuName = "Map System/Map Node Type")]
-    public class MapNodeTypeSO : ScriptableObject
+    [CreateAssetMenu(fileName = "NodeTypeRules", menuName = "Map System/Node Type Rules")]
+    public class NodeTypeRulesSO : ScriptableObject
     {
-        [SerializeField] private string _displayName;
-        [SerializeField] private Sprite _displayIcon;
-
-        public string DisplayName => _displayName;
-        public Sprite DisplayIcon => _displayIcon;
+        [SerializeField] private int _startLevel;
+        [SerializeField] private int _endLevel;
+        [SerializeField] private List<NodeTypeFloatValue> _nodeTypeWeights;
 
 #if UNITY_EDITOR
 
         [ContextMenu("Rename File to Match Display Name")]
         public void RenameFile()
         {
-            string suffix = "_MapNodeType";
+            string suffix = "_NodeTypeRules";
             string assetPath = UnityEditor.AssetDatabase.GetAssetPath(this);
-            string newFileName = _displayName.Replace(" ", "") + suffix;
+            string newFileName = $"{_startLevel}-{_endLevel}" + suffix;
             string newAssetPath = System.IO.Path.GetDirectoryName(assetPath) + "/" + newFileName + ".asset";
 
             // Check if an asset with the new name already exists

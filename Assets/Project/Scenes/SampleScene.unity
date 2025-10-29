@@ -313,6 +313,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3d6716f3d80f078429398b6053c984bf, type: 2}
   - {fileID: 11400000, guid: 150bf7cde51c8f7468b55f2d280af3d3, type: 2}
   - {fileID: 11400000, guid: 2dd035117122e3a4cb7cb8428d9a9c67, type: 2}
+  _nodeTypeRules:
+  - {fileID: 11400000, guid: 4c3a299861012214b8fc7f0ee06e5aa8, type: 2}
+  - {fileID: 11400000, guid: a9956709e08b9ca42b0d44eb80713a6a, type: 2}
+  - {fileID: 11400000, guid: bc455712ed78dd64aa996eff9b2f820e, type: 2}
+  - {fileID: 11400000, guid: 9cfb9b045eb55c94a91ddee2f77859bd, type: 2}
+  - {fileID: 11400000, guid: ecec3a55574489441bdce085933f2f7c, type: 2}
 --- !u!4 &437789669
 Transform:
   m_ObjectHideFlags: 0
@@ -625,8 +631,8 @@ Camera:
   m_GameObject: {fileID: 963194225}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.18867922, g: 0.18867922, b: 0.18867922, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -676,7 +682,7 @@ Transform:
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -30}
+  m_LocalPosition: {x: 6.5, y: 8, z: -15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -766,8 +772,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 0.3
-  m_fontSizeBase: 0.3
+  m_fontSize: 0.5
+  m_fontSizeBase: 0.5
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
