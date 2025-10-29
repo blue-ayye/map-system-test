@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b16ba6d47c3149d44b43f68fba9ef1ba, type: 3}
-  m_Name: 5-5_NodeTypeRules
+  m_Name: 8-8_NodeTypeRules
   m_EditorClassIdentifier: 
-  _startLevel: 5
-  _endLevel: 5
+  _startLevel: 8
+  _endLevel: 8
   _nodeTypeWeights:
-  - NodeType: {fileID: 11400000, guid: 2dd035117122e3a4cb7cb8428d9a9c67, type: 2}
+  - NodeType: {fileID: 11400000, guid: 3d6716f3d80f078429398b6053c984bf, type: 2}
     Value: 0

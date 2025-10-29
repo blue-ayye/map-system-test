@@ -9,7 +9,7 @@ namespace BP.MapSystem
     public class MapNode
     {
         public int Level;
-        public int NodeIndex;
+        public int Index;
         public List<MapNode> ParentNodes { get; } = new List<MapNode>();
         public List<MapNode> ChildNodes { get; } = new List<MapNode>();
         public MapNodeView NodeView { get; set; }
@@ -17,7 +17,7 @@ namespace BP.MapSystem
         public MapNode(int level, int nodeIndex)
         {
             Level = level;
-            NodeIndex = nodeIndex;
+            Index = nodeIndex;
         }
     }
 }

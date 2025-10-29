@@ -9,11 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b16ba6d47c3149d44b43f68fba9ef1ba, type: 3}
-  m_Name: 9-9_NodeTypeRules
+  m_Script: {fileID: 11500000, guid: 9d5a8462403aae04191df11eb98f05f7, type: 3}
+  m_Name: Monster_MapNodeType
   m_EditorClassIdentifier: 
-  _startLevel: 9
-  _endLevel: 9
-  _nodeTypeWeights:
-  - NodeType: {fileID: 11400000, guid: 3d6716f3d80f078429398b6053c984bf, type: 2}
-    Value: 0
+  _displayName: Monster
+  _displayIcon: {fileID: 21300000, guid: 22e75bb784aee0a4db6fb894fb43541c, type: 3}

@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: Shop_MapNodeType
   m_EditorClassIdentifier: 
   _displayName: Shop
-  _displayIcon: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  _displayIcon: {fileID: 21300000, guid: 0b99aa1196d37e746be81e4c14b89fe4, type: 3}

@@ -71,7 +71,7 @@ namespace BP.MapSystem
                     Vector3 fromPosition = new Vector3(nodeIndex * 2.0f, level * 2.0f, 0);
                     foreach (var child in node.ChildNodes)
                     {
-                        Vector3 toPosition = new Vector3(child.NodeIndex * 2.0f, child.Level * 2.0f, 0);
+                        Vector3 toPosition = new Vector3(child.Index * 2.0f, child.Level * 2.0f, 0);
                         var pathView = Instantiate(_pathViewPrefab, _pathViewParent);
                         var lineRenderer = pathView.GetComponent<LineRenderer>();
                         if (lineRenderer != null)
@@ -133,7 +133,7 @@ namespace BP.MapSystem
             if (nextLevelNodes.Count == 0) return null;
 
             List<MapNode> potentialNextNodes = new List<MapNode>();
-            int currentIndex = currentNode.NodeIndex;
+            int currentIndex = currentNode.Index;
             for (int offset = -1; offset <= 1; offset++) // Implements Rule 2
             {
                 int nextIndex = currentIndex + offset;
@@ -157,12 +157,12 @@ namespace BP.MapSystem
         private bool CanOverlapPath(MapNode fromNode, MapNode toNode)
         {
             // If toNode.NodeIndex == fromNode.NodeIndex, no overlap is possible
-            if (toNode.NodeIndex == fromNode.NodeIndex) return false;
+            if (toNode.Index == fromNode.Index) return false;
 
             // Find the path direction and the adjacent nodes in that direction
-            int direction = toNode.NodeIndex > fromNode.NodeIndex ? 1 : -1;
-            int fromNodeAdjacentIndex = fromNode.NodeIndex + direction;
-            int toNodeAdjacentIndex = toNode.NodeIndex - direction;
+            int direction = toNode.Index > fromNode.Index ? 1 : -1;
+            int fromNodeAdjacentIndex = fromNode.Index + direction;
+            int toNodeAdjacentIndex = toNode.Index - direction;
 
             // Check bounds. If the adjacent index is out of bounds, no overlap is possible.
             if (toNodeAdjacentIndex < 0 || toNodeAdjacentIndex >= _nodesPerLevel) return false;

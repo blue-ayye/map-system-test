@@ -10,6 +10,10 @@ namespace BP.MapSystem
         [SerializeField] private int _endLevel;
         [SerializeField] private List<NodeTypeFloatValue> _nodeTypeWeights;
 
+        public int StartLevel => _startLevel;
+        public int EndLevel => _endLevel;
+        public List<NodeTypeFloatValue> NodeTypeWeights => _nodeTypeWeights;
+
 #if UNITY_EDITOR
 
         [ContextMenu("Rename File to Match Display Name")]

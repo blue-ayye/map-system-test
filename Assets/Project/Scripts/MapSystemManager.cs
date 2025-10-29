@@ -54,8 +54,8 @@ namespace BP.MapSystem
             return new System.Random(GeneratedSeed);
         }
 
-        [SerializeField] private List<MapNodeTypeSO> _nodeTypes;
         [SerializeField] private List<NodeTypeRulesSO> _nodeTypeRules;
+        [SerializeField] private MapNodeTypeSO _defaultNodeType;
 
         private void AssignNodeTypes(MapNode[,] mapGrid, System.Random pRNG)
         {
@@ -63,13 +63,15 @@ namespace BP.MapSystem
             int nodesPerLevel = mapGrid.GetLength(1);
             for (int level = 0; level < maxLevels; level++)
             {
+                NodeTypeRulesSO nodeTypeRules = _nodeTypeRules.Find(rules => level >= rules.StartLevel && level <= rules.EndLevel);
+                if (nodeTypeRules == null) continue;
+
                 for (int nodeIndex = 0; nodeIndex < nodesPerLevel; nodeIndex++)
                 {
                     var node = mapGrid[level, nodeIndex];
                     if (node != null)
                     {
-                        int typeIndex = pRNG.Next(_nodeTypes.Count);
-                        var nodeType = _nodeTypes[typeIndex];
+                        var nodeType = GetValidNodeType(node, nodeTypeRules, pRNG);
                         var nodeView = node.NodeView;
                         if (nodeView != null)
                         {
@@ -78,6 +80,40 @@ namespace BP.MapSystem
                     }
                 }
             }
+        }
+
+        private MapNodeTypeSO GetValidNodeType(MapNode node, NodeTypeRulesSO nodeTypeRules, System.Random pRNG)
+        {
+            if (nodeTypeRules.NodeTypeWeights.Count == 0)
+            {
+                Debug.LogWarning($"NodeTypeRulesSO '{nodeTypeRules.name}' has no NodeTypeWeights defined. Assigning default node type.");
+                return _defaultNodeType;
+            }
+
+            return GetNodeTypeByWeight(node, nodeTypeRules, pRNG);
+        }
+
+        private MapNodeTypeSO GetNodeTypeByWeight(MapNode node, NodeTypeRulesSO nodeTypeRules, System.Random pRNG)
+        {
+            float totalWeight = 0f;
+            foreach (var typeWeight in nodeTypeRules.NodeTypeWeights)
+            {
+                totalWeight += typeWeight.Value;
+            }
+
+            float randomValue = (float)(pRNG.NextDouble() * totalWeight);
+            float cumulativeWeight = 0f;
+            foreach (var typeWeight in nodeTypeRules.NodeTypeWeights)
+            {
+                cumulativeWeight += typeWeight.Value;
+                if (randomValue <= cumulativeWeight)
+                {
+                    return typeWeight.NodeType;
+                }
+            }
+
+            Debug.LogWarning($"Failed to assign a node type for node at Level {node.Level}, Index {node.Index}. Assigning default node type.");
+            return _defaultNodeType; // Fallback in case of rounding errors
         }
     }
 }

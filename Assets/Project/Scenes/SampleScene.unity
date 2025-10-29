@@ -150,8 +150,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 5}
-  m_ConstrainProportionsScale: 1
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1568414726}
   m_Father: {fileID: 0}
@@ -197,12 +197,12 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 21300000, guid: 22e75bb784aee0a4db6fb894fb43541c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.16, y: 0.16}
+  m_Size: {x: 0.42, y: 0.42}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -306,19 +306,13 @@ MonoBehaviour:
   _playerInputSeed: 0
   _usePlayerInputSeed: 1
   <GeneratedSeed>k__BackingField: 0
-  _nodeTypes:
-  - {fileID: 11400000, guid: 21f81f166ec7eef41990617276d9a4c2, type: 2}
-  - {fileID: 11400000, guid: 38f73fd2965f59a4f90430b8f0af9f5d, type: 2}
-  - {fileID: 11400000, guid: 4ecff7e8ef2b56d42b31f0886a872230, type: 2}
-  - {fileID: 11400000, guid: 3d6716f3d80f078429398b6053c984bf, type: 2}
-  - {fileID: 11400000, guid: 150bf7cde51c8f7468b55f2d280af3d3, type: 2}
-  - {fileID: 11400000, guid: 2dd035117122e3a4cb7cb8428d9a9c67, type: 2}
   _nodeTypeRules:
   - {fileID: 11400000, guid: 4c3a299861012214b8fc7f0ee06e5aa8, type: 2}
   - {fileID: 11400000, guid: a9956709e08b9ca42b0d44eb80713a6a, type: 2}
   - {fileID: 11400000, guid: bc455712ed78dd64aa996eff9b2f820e, type: 2}
   - {fileID: 11400000, guid: 9cfb9b045eb55c94a91ddee2f77859bd, type: 2}
   - {fileID: 11400000, guid: ecec3a55574489441bdce085933f2f7c, type: 2}
+  _defaultNodeType: {fileID: 11400000, guid: 21f81f166ec7eef41990617276d9a4c2, type: 2}
 --- !u!4 &437789669
 Transform:
   m_ObjectHideFlags: 0
@@ -518,7 +512,7 @@ LineRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -100
   m_Positions:
   - {x: 0, y: 0, z: 0}
   - {x: 0, y: 0, z: 1}
@@ -632,7 +626,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.18867922, g: 0.18867922, b: 0.18867922, a: 0}
+  m_BackGroundColor: {r: 0.33962262, g: 0.33962262, b: 0.33962262, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
