@@ -9,10 +9,13 @@ namespace BP.MapSystem
         [SerializeField] private int _startLevel;
         [SerializeField] private int _endLevel;
         [SerializeField] private List<NodeTypeFloatValue> _nodeTypeWeights;
+        [Tooltip("0 = no reduction, 1 = full reduction")]
+        [SerializeField] private float _parentTypeWeightReductionFactor = 0f;
 
         public int StartLevel => _startLevel;
         public int EndLevel => _endLevel;
         public List<NodeTypeFloatValue> NodeTypeWeights => _nodeTypeWeights;
+        public float ParentTypeWeightReductionFactor => _parentTypeWeightReductionFactor;
 
 #if UNITY_EDITOR
 

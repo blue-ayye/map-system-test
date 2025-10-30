@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace BP.MapSystem
@@ -72,6 +73,7 @@ namespace BP.MapSystem
                     if (node != null)
                     {
                         var nodeType = GetValidNodeType(node, nodeTypeRules, pRNG);
+                        node.NodeType = nodeType;
                         var nodeView = node.NodeView;
                         if (nodeView != null)
                         {
@@ -90,25 +92,47 @@ namespace BP.MapSystem
                 return _defaultNodeType;
             }
 
-            return GetNodeTypeByWeight(node, nodeTypeRules, pRNG);
-        }
+            // Make a copy of the weights to modify
+            Dictionary<MapNodeTypeSO, float> availableWeights = nodeTypeRules.NodeTypeWeights.ToDictionary(ntw => ntw.NodeType, ntw => ntw.Value);
 
-        private MapNodeTypeSO GetNodeTypeByWeight(MapNode node, NodeTypeRulesSO nodeTypeRules, System.Random pRNG)
-        {
-            float totalWeight = 0f;
-            foreach (var typeWeight in nodeTypeRules.NodeTypeWeights)
+            // Reduce weights based on parent node types
+            foreach (var parentNode in node.ParentNodes)
             {
-                totalWeight += typeWeight.Value;
+                if (parentNode.NodeType != null && availableWeights.ContainsKey(parentNode.NodeType))
+                {
+                    float newValue = availableWeights[parentNode.NodeType] * (1f - nodeTypeRules.ParentTypeWeightReductionFactor);
+                    if (newValue <= 0f)
+                    {
+                        availableWeights.Remove(parentNode.NodeType);
+                    }
+                    else
+                    {
+                        availableWeights[parentNode.NodeType] = newValue;
+                    }
+                }
             }
 
+            return GetNodeTypeByWeight(node, availableWeights, pRNG);
+        }
+
+        private MapNodeTypeSO GetNodeTypeByWeight(MapNode node, Dictionary<MapNodeTypeSO, float> availableWeights,  System.Random pRNG)
+        {
+            float totalWeight = availableWeights.Values.Sum();
+            if (totalWeight <= 0f)
+            {
+                Debug.LogWarning($"All node types have zero weight for node at Level {node.Level}, Index {node.Index}. Assigning default node type.");
+                return _defaultNodeType;
+            }
             float randomValue = (float)(pRNG.NextDouble() * totalWeight);
             float cumulativeWeight = 0f;
-            foreach (var typeWeight in nodeTypeRules.NodeTypeWeights)
+
+            for (int i = 0; i < availableWeights.Count; i++)
             {
-                cumulativeWeight += typeWeight.Value;
+                var kvp = availableWeights.ElementAt(i);
+                cumulativeWeight += kvp.Value;
                 if (randomValue <= cumulativeWeight)
                 {
-                    return typeWeight.NodeType;
+                    return kvp.Key;
                 }
             }
 
