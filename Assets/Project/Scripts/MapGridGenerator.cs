@@ -53,20 +53,20 @@ namespace BP.MapSystem
             UnityEditor.Handles.color = Color.white;
             for (int index = 0; index < _nodesPerLevel; index++)
             {
-                int level = 0;
+                int level = -1;
                 float xNorm = _nodesPerLevel == 1 ? 0.5f : (float)index / (_nodesPerLevel - 1);
                 float yNorm = _maxLevels == 1 ? 0.5f : (float)level / (_maxLevels - 1);
                 Vector3 position = _origin + _right * 2f * xNorm + _up * 2f * yNorm;
-                UnityEditor.Handles.Label(position + Vector3.up * radius * 1.5f, $"     N{index}");
+                UnityEditor.Handles.Label(position + Vector3.up * radius * 1.5f, $"N{index}");
             }
 
             for (int index = 0; index < _maxLevels; index++)
             {
-                int nodeIndex = 0;
+                int nodeIndex = -1;
                 float xNorm = _nodesPerLevel == 1 ? 0.5f : (float)nodeIndex / (_nodesPerLevel - 1);
                 float yNorm = _maxLevels == 1 ? 0.5f : (float)index / (_maxLevels - 1);
                 Vector3 position = _origin + _right * 2f * xNorm + _up * 2f * yNorm;
-                UnityEditor.Handles.Label(position + Vector3.up * radius * 1.5f, $"L{index}     ");
+                UnityEditor.Handles.Label(position + Vector3.up * radius * 1.5f, $"L{index}");
             }
         }
 
@@ -159,6 +159,7 @@ namespace BP.MapSystem
                     float yNorm = _maxLevels == 1 ? 0.5f : (float)level / (_maxLevels - 1);
 
                     Vector3 position = _origin + _right * 2f * xNorm + _up * 2f * yNorm;
+                    node.WorldPosition = position;
 
                     var nodeView = Instantiate(_nodeViewPrefab, _nodeViewParent);
                     nodeView.transform.localPosition = position;

@@ -68,10 +68,14 @@ namespace BP.MapSystem
                 {
                     var node = _mapGrid[level, nodeIndex];
                     if (node == null) continue;
-                    Vector3 fromPosition = new Vector3(nodeIndex * 2.0f, level * 2.0f, 0);
+                    //Vector3 fromPosition = new Vector3(nodeIndex * 2.0f, level * 2.0f, 0);
+                    var nodeWorldPos = node.WorldPosition;
+                    Vector3 fromPosition = new Vector3(nodeWorldPos.x, nodeWorldPos.y, nodeWorldPos.z);
                     foreach (var child in node.ChildNodes)
                     {
-                        Vector3 toPosition = new Vector3(child.Index * 2.0f, child.Level * 2.0f, 0);
+                        //Vector3 toPosition = new Vector3(child.Index * 2.0f, child.Level * 2.0f, 0);
+                        var childWorldPos = child.WorldPosition;
+                        Vector3 toPosition = new Vector3(childWorldPos.x, childWorldPos.y, childWorldPos.z);
                         var pathView = Instantiate(_pathViewPrefab, _pathViewParent);
                         var lineRenderer = pathView.GetComponent<LineRenderer>();
                         if (lineRenderer != null)
