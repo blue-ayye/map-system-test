@@ -254,7 +254,7 @@ MonoBehaviour:
   _maxLevels: 9
   _nodesPerLevel: 7
   _nodeViewParent: {fileID: 358877470}
-  _nodeViewPrefab: {fileID: 110525534}
+  _nodeViewPrefab: {fileID: 110525536}
 --- !u!4 &358877470
 Transform:
   m_ObjectHideFlags: 0

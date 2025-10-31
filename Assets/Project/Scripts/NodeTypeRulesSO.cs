@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using AYellowpaper.SerializedCollections;
 
 namespace BP.MapSystem
 {
@@ -8,14 +9,19 @@ namespace BP.MapSystem
     {
         [SerializeField] private int _startLevel;
         [SerializeField] private int _endLevel;
-        [SerializeField] private List<NodeTypeFloatValue> _nodeTypeWeights;
-        [Tooltip("0 = no reduction, 1 = full reduction")]
-        [SerializeField] private float _parentTypeWeightReductionFactor = 0f;
+        [SerializeField] private bool _excludeFromOtherRules;
+        [SerializedDictionary("Node Type", "Weight")]
+        [SerializeField] private SerializedDictionary<MapNodeTypeSO, float> _nodeTypeWeights;
+        //[SerializeField] private float _parentTypeWeightReductionFactor = 0f;
+        [SerializedDictionary("Node Type", "Weight Reduction")]
+        [SerializeField] private SerializedDictionary<MapNodeTypeSO, float> _consecutiveTypeWeightReductions;
 
         public int StartLevel => _startLevel;
         public int EndLevel => _endLevel;
-        public List<NodeTypeFloatValue> NodeTypeWeights => _nodeTypeWeights;
-        public float ParentTypeWeightReductionFactor => _parentTypeWeightReductionFactor;
+        public bool ExcludeFromOtherRules => _excludeFromOtherRules;
+        public Dictionary<MapNodeTypeSO, float> NodeTypeWeights => _nodeTypeWeights;
+        //public float ParentTypeWeightReductionFactor => _parentTypeWeightReductionFactor;
+        public Dictionary<MapNodeTypeSO, float> ConsecutiveTypeWeightReductions => _consecutiveTypeWeightReductions;
 
 #if UNITY_EDITOR
 
@@ -39,6 +45,22 @@ namespace BP.MapSystem
             UnityEditor.AssetDatabase.RenameAsset(assetPath, newFileName);
             UnityEditor.AssetDatabase.SaveAssets();
             UnityEditor.AssetDatabase.Refresh();
+        }
+
+        [ContextMenu("Fill Consecutive Type Reductions")]
+        private void FillConsecutiveTypeReductions()
+        {
+            var allNodeTypes = UnityEditor.AssetDatabase.FindAssets("t:MapNodeTypeSO");
+            foreach (var guid in allNodeTypes)
+            {
+                var path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                var nodeType = UnityEditor.AssetDatabase.LoadAssetAtPath<MapNodeTypeSO>(path);
+                if (!_consecutiveTypeWeightReductions.ContainsKey(nodeType))
+                {
+                    _consecutiveTypeWeightReductions.Add(nodeType, 0f);
+                    UnityEditor.EditorUtility.SetDirty(this);
+                }
+            }
         }
 
 #endif

@@ -62,6 +62,29 @@ namespace BP.MapSystem
         {
             int maxLevels = mapGrid.GetLength(0);
             int nodesPerLevel = mapGrid.GetLength(1);
+
+            var excludeFromOtherRulesLevels = _nodeTypeRules.Where(rules => rules.ExcludeFromOtherRules).ToList();
+            foreach (var rule in excludeFromOtherRulesLevels)
+            {
+                for (int level = rule.StartLevel; level <= rule.EndLevel; level++)
+                {
+                    for (int nodeIndex = 0; nodeIndex < nodesPerLevel; nodeIndex++)
+                    {
+                        var node = mapGrid[level, nodeIndex];
+                        if (node != null)
+                        {
+                            var nodeType = GetValidNodeType(node, rule, pRNG);
+                            node.NodeType = nodeType;
+                            var nodeView = node.NodeView;
+                            if (nodeView != null)
+                            {
+                                nodeView.SetNodeType(nodeType);
+                            }
+                        }
+                    }
+                }
+            }
+
             for (int level = 0; level < maxLevels; level++)
             {
                 NodeTypeRulesSO nodeTypeRules = _nodeTypeRules.Find(rules => level >= rules.StartLevel && level <= rules.EndLevel);
@@ -93,21 +116,22 @@ namespace BP.MapSystem
             }
 
             // Make a copy of the weights to modify
-            Dictionary<MapNodeTypeSO, float> availableWeights = nodeTypeRules.NodeTypeWeights.ToDictionary(ntw => ntw.NodeType, ntw => ntw.Value);
+            Dictionary<MapNodeTypeSO, float> availableWeights = new Dictionary<MapNodeTypeSO, float>(nodeTypeRules.NodeTypeWeights);
 
-            // Reduce weights based on parent node types
-            foreach (var parentNode in node.ParentNodes)
+            // Reduce weights of consecutive node types
+            var consecutiveNodes = new List<MapNode>(node.ParentNodes).Concat(node.ChildNodes).Where(cn => cn.NodeType != null).ToList();
+            foreach (var consecutiveNode in consecutiveNodes)
             {
-                if (parentNode.NodeType != null && availableWeights.ContainsKey(parentNode.NodeType))
+                if (nodeTypeRules.ConsecutiveTypeWeightReductions.TryGetValue(consecutiveNode.NodeType, out float reductionValue) && availableWeights.ContainsKey(consecutiveNode.NodeType))
                 {
-                    float newValue = availableWeights[parentNode.NodeType] * (1f - nodeTypeRules.ParentTypeWeightReductionFactor);
+                    float newValue = availableWeights[consecutiveNode.NodeType] - reductionValue;
                     if (newValue <= 0f)
                     {
-                        availableWeights.Remove(parentNode.NodeType);
+                        availableWeights.Remove(consecutiveNode.NodeType);
                     }
                     else
                     {
-                        availableWeights[parentNode.NodeType] = newValue;
+                        availableWeights[consecutiveNode.NodeType] = newValue;
                     }
                 }
             }
