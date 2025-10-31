@@ -303,7 +303,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _mapGridGenerator: {fileID: 437789670}
   _mapPathGenerator: {fileID: 437789671}
-  _playerInputSeed: 0
+  _playerInputSeed: 817167126
   _usePlayerInputSeed: 1
   <GeneratedSeed>k__BackingField: 0
   _nodeTypeRules:

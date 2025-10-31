@@ -18,28 +18,21 @@ MonoBehaviour:
   _nodeTypeWeights:
     _serializedList:
     - Key: {fileID: 11400000, guid: 38f73fd2965f59a4f90430b8f0af9f5d, type: 2}
-      Value: 30
+      Value: 15
     - Key: {fileID: 11400000, guid: 21f81f166ec7eef41990617276d9a4c2, type: 2}
       Value: 40
     - Key: {fileID: 11400000, guid: 3d6716f3d80f078429398b6053c984bf, type: 2}
-      Value: 20
+      Value: 15
     - Key: {fileID: 11400000, guid: 150bf7cde51c8f7468b55f2d280af3d3, type: 2}
-      Value: 20
-    - Key: {fileID: 11400000, guid: 2dd035117122e3a4cb7cb8428d9a9c67, type: 2}
-      Value: 5
+      Value: 15
     - Key: {fileID: 11400000, guid: 4ecff7e8ef2b56d42b31f0886a872230, type: 2}
       Value: 5
   _consecutiveTypeWeightReductions:
     _serializedList:
     - Key: {fileID: 11400000, guid: 38f73fd2965f59a4f90430b8f0af9f5d, type: 2}
-      Value: 0
-    - Key: {fileID: 11400000, guid: 21f81f166ec7eef41990617276d9a4c2, type: 2}
-      Value: 0
+      Value: 15
     - Key: {fileID: 11400000, guid: 3d6716f3d80f078429398b6053c984bf, type: 2}
-      Value: 0
+      Value: 15
     - Key: {fileID: 11400000, guid: 150bf7cde51c8f7468b55f2d280af3d3, type: 2}
-      Value: 0
-    - Key: {fileID: 11400000, guid: 2dd035117122e3a4cb7cb8428d9a9c67, type: 2}
-      Value: 0
-    - Key: {fileID: 11400000, guid: 4ecff7e8ef2b56d42b31f0886a872230, type: 2}
-      Value: 0
+      Value: 15
+  _siblingNodeTypeConstraint: 2

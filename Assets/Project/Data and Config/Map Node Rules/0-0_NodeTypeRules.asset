@@ -21,3 +21,4 @@ MonoBehaviour:
       Value: 100
   _consecutiveTypeWeightReductions:
     _serializedList: []
+  _siblingNodeTypeConstraint: 0

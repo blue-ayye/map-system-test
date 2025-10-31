@@ -107,7 +107,7 @@ namespace BP.MapSystem
             }
         }
 
-        private MapNodeTypeSO GetValidNodeType(MapNode node, NodeTypeRulesSO nodeTypeRules, System.Random pRNG)
+        private MapNodeTypeSO GetValidNodeType(MapNode currentNode, NodeTypeRulesSO nodeTypeRules, System.Random pRNG)
         {
             if (nodeTypeRules.NodeTypeWeights.Count == 0)
             {
@@ -119,7 +119,7 @@ namespace BP.MapSystem
             Dictionary<MapNodeTypeSO, float> availableWeights = new Dictionary<MapNodeTypeSO, float>(nodeTypeRules.NodeTypeWeights);
 
             // Reduce weights of consecutive node types
-            var consecutiveNodes = new List<MapNode>(node.ParentNodes).Concat(node.ChildNodes).Where(cn => cn.NodeType != null).ToList();
+            var consecutiveNodes = new List<MapNode>(currentNode.ParentNodes).Concat(currentNode.ChildNodes).Where(cn => cn.NodeType != null).ToList();
             foreach (var consecutiveNode in consecutiveNodes)
             {
                 if (nodeTypeRules.ConsecutiveTypeWeightReductions.TryGetValue(consecutiveNode.NodeType, out float reductionValue) && availableWeights.ContainsKey(consecutiveNode.NodeType))
@@ -136,10 +136,47 @@ namespace BP.MapSystem
                 }
             }
 
-            return GetNodeTypeByWeight(node, availableWeights, pRNG);
+            // Apply sibling node type constraints (Use Seed: 817167126 Grid: 9x7 Path: 3/7 to demonstrate)
+            if (nodeTypeRules.SiblingTypeConstraint != SiblingNodeTypeConstraint.AllowSameType)
+            {
+                var allSiblings = currentNode.ParentNodes.SelectMany(p => p.ChildNodes).Where(c => c != currentNode).Distinct().ToList();
+                MapNode previousSibling = null;
+                MapNode nextSibling = null;
+                foreach (var sibling in allSiblings)
+                {
+                    if (sibling.Index < currentNode.Index)
+                    {
+                        if (previousSibling == null || sibling.Index > previousSibling.Index)
+                        {
+                            previousSibling = sibling;
+                        }
+                    }
+                    else if (sibling.Index > currentNode.Index)
+                    {
+                        if (nextSibling == null || sibling.Index < nextSibling.Index)
+                        {
+                            nextSibling = sibling;
+                        }
+                    }
+                }
+
+                var siblingsToCheck = nodeTypeRules.SiblingTypeConstraint == SiblingNodeTypeConstraint.DisallowSameTypeForImmediateSiblings
+                    ? new List<MapNode> { previousSibling, nextSibling }
+                    : allSiblings;
+
+                foreach (var sibling in siblingsToCheck)
+                {
+                    if (sibling != null && sibling.NodeType != null && availableWeights.ContainsKey(sibling.NodeType))
+                    {
+                        availableWeights.Remove(sibling.NodeType);
+                    }
+                }
+            }
+
+            return GetNodeTypeByWeight(currentNode, availableWeights, pRNG);
         }
 
-        private MapNodeTypeSO GetNodeTypeByWeight(MapNode node, Dictionary<MapNodeTypeSO, float> availableWeights,  System.Random pRNG)
+        private MapNodeTypeSO GetNodeTypeByWeight(MapNode node, Dictionary<MapNodeTypeSO, float> availableWeights, System.Random pRNG)
         {
             float totalWeight = availableWeights.Values.Sum();
             if (totalWeight <= 0f)

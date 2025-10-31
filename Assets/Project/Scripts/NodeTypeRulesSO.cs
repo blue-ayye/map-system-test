@@ -4,6 +4,13 @@ using AYellowpaper.SerializedCollections;
 
 namespace BP.MapSystem
 {
+    public enum SiblingNodeTypeConstraint
+    {
+        AllowSameType,
+        DisallowSameTypeForImmediateSiblings,
+        DisallowSameTypeForAllSiblings
+    }
+
     [CreateAssetMenu(fileName = "NodeTypeRules", menuName = "Map System/Node Type Rules")]
     public class NodeTypeRulesSO : ScriptableObject
     {
@@ -15,6 +22,7 @@ namespace BP.MapSystem
         //[SerializeField] private float _parentTypeWeightReductionFactor = 0f;
         [SerializedDictionary("Node Type", "Weight Reduction")]
         [SerializeField] private SerializedDictionary<MapNodeTypeSO, float> _consecutiveTypeWeightReductions;
+        [SerializeField] private SiblingNodeTypeConstraint _siblingNodeTypeConstraint;
 
         public int StartLevel => _startLevel;
         public int EndLevel => _endLevel;
@@ -22,6 +30,7 @@ namespace BP.MapSystem
         public Dictionary<MapNodeTypeSO, float> NodeTypeWeights => _nodeTypeWeights;
         //public float ParentTypeWeightReductionFactor => _parentTypeWeightReductionFactor;
         public Dictionary<MapNodeTypeSO, float> ConsecutiveTypeWeightReductions => _consecutiveTypeWeightReductions;
+        public SiblingNodeTypeConstraint SiblingTypeConstraint => _siblingNodeTypeConstraint;
 
 #if UNITY_EDITOR
 
