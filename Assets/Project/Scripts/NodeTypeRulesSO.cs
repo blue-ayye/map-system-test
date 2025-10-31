@@ -47,19 +47,49 @@ namespace BP.MapSystem
             UnityEditor.AssetDatabase.Refresh();
         }
 
-        [ContextMenu("Fill Consecutive Type Reductions")]
-        private void FillConsecutiveTypeReductions()
+        [ContextMenu("Populate Node Type Weights")]
+        private void PopulateNodeTypeWeights()
         {
             var allNodeTypes = UnityEditor.AssetDatabase.FindAssets("t:MapNodeTypeSO");
             foreach (var guid in allNodeTypes)
             {
                 var path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
                 var nodeType = UnityEditor.AssetDatabase.LoadAssetAtPath<MapNodeTypeSO>(path);
-                if (!_consecutiveTypeWeightReductions.ContainsKey(nodeType))
+                if (!_nodeTypeWeights.ContainsKey(nodeType))
                 {
-                    _consecutiveTypeWeightReductions.Add(nodeType, 0f);
+                    _nodeTypeWeights.Add(nodeType, 1f);
                     UnityEditor.EditorUtility.SetDirty(this);
                 }
+            }
+        }
+
+        [ContextMenu("Add or Remove Missing Node Types in Consecutive Type Weight Reductions")]
+        private void AddOrRemoveMissingNodeTypeInConsecutiveTypeWightReductions()
+        {
+            var currentWeights = new Dictionary<MapNodeTypeSO, float>(_nodeTypeWeights);
+            // Add missing node types
+            foreach (var weight in currentWeights)
+            {
+                if (!_consecutiveTypeWeightReductions.ContainsKey(weight.Key))
+                {
+                    _consecutiveTypeWeightReductions.Add(weight.Key, weight.Value);
+                    UnityEditor.EditorUtility.SetDirty(this);
+                }
+            }
+
+            // Remove obsolete node types
+            var entryToRemove = new List<MapNodeTypeSO>();
+            foreach (var kvp in _consecutiveTypeWeightReductions)
+            {
+                if (!currentWeights.ContainsKey(kvp.Key))
+                {
+                    entryToRemove.Add(kvp.Key);
+                }
+            }
+            foreach (var key in entryToRemove)
+            {
+                _consecutiveTypeWeightReductions.Remove(key);
+                UnityEditor.EditorUtility.SetDirty(this);
             }
         }
 
