@@ -535,7 +535,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &437789668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -588,7 +588,7 @@ MonoBehaviour:
   _nodeViewParent: {fileID: 1373344873}
   _mapAreaBoundsDefiner: {fileID: 1600653608}
   _nodeViewPrefab: {fileID: 110525536}
-  _direction: 3
+  _direction: 1
   _zRotation: 0
 --- !u!114 &437789671
 MonoBehaviour:
@@ -1117,7 +1117,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1061727595
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1170,7 +1170,7 @@ MonoBehaviour:
   _nodeViewParent: {fileID: 1623811994}
   _mapAreaBoundsDefiner: {fileID: 121739639}
   _nodeViewPrefab: {fileID: 1460519374}
-  _direction: 3
+  _direction: 2
   _zRotation: 0
 --- !u!114 &1061727598
 MonoBehaviour:
