@@ -2,6 +2,15 @@ using UnityEngine;
 
 namespace BP.MapSystem
 {
+    public enum MapDirection
+    {
+        TopToBottom,
+        BottomToTop,
+        LeftToRight,
+        RightToLeft
+    }
+
+
     public class MapGridGenerator : MonoBehaviour
     {
         [SerializeField] private int _maxLevels = 9;
@@ -9,6 +18,7 @@ namespace BP.MapSystem
         [SerializeField] private Transform _nodeViewParent;
         [SerializeField] private Transform _mapAreaBoundsDefiner;
         [SerializeField] private MapNodeView _nodeViewPrefab;
+        [SerializeField] private MapDirection _direction = MapDirection.TopToBottom;
 
         public MapNode[,] MapGrid;
         public int MaxLevels => _maxLevels;
@@ -18,6 +28,7 @@ namespace BP.MapSystem
         private Vector3 _origin;
         private Vector3 _center;
         private Vector3 _size;
+        [SerializeField]private int _zRotation;
 
 #if UNITY_EDITOR
 
@@ -117,6 +128,31 @@ namespace BP.MapSystem
             {
                 Debug.LogError("Map Area Bounds Definer must have either a RectTransform or BoxCollider component.");
             }
+            _right = _mapAreaBoundsDefiner.right * (_size.x * 0.5f);
+            _up = _mapAreaBoundsDefiner.up * (_size.y * 0.5f);
+
+            switch (_direction)
+            {
+                case MapDirection.TopToBottom:
+                    _origin = _center - _right + _up;
+                    _up = -_up;
+                    break;
+
+                case MapDirection.BottomToTop:
+                    _origin = _center - _right - _up;
+                    break;
+
+                case MapDirection.LeftToRight:
+                    (_right, _up) = (_up, _right); // Rotate 90° clockwise
+                    _origin = _center - _right - _up;
+                    break;
+
+                case MapDirection.RightToLeft:
+                    (_right, _up) = (-_up, -_right); // Rotate 90° counter-clockwise
+                    _right = -_right; // Correct direction
+                    _origin = _center - _right - _up;
+                    break;
+            }
         }
 
         public void ClearUnusedNodes()
@@ -162,8 +198,9 @@ namespace BP.MapSystem
                     node.WorldPosition = position;
 
                     var nodeView = Instantiate(_nodeViewPrefab, _nodeViewParent);
-                    nodeView.transform.localPosition = position;
-                    nodeView.transform.rotation = _mapAreaBoundsDefiner.rotation;
+                    // Z axis = 0 but x and y are set according to map area's rotation x and y
+                    Quaternion rotation = Quaternion.Euler(_mapAreaBoundsDefiner.rotation.eulerAngles.x, _mapAreaBoundsDefiner.rotation.eulerAngles.y, _zRotation);
+                    nodeView.transform.SetPositionAndRotation(position, rotation);
                     node.NodeView = nodeView;
                 }
             }
