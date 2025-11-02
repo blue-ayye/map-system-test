@@ -176,7 +176,8 @@ namespace BP.MapSystem
                     break;
 
                 case MapDirection.BottomToTop:
-                    boundData.origin = boundData.center - boundData.right - boundData.up;
+                    boundData.origin = boundData.center + boundData.right - boundData.up;
+                    boundData.right = -boundData.right;
                     break;
 
                 case MapDirection.LeftToRight:
@@ -186,7 +187,6 @@ namespace BP.MapSystem
 
                 case MapDirection.RightToLeft:
                     (boundData.right, boundData.up) = (-boundData.up, -boundData.right); // Rotate 90° counter-clockwise
-                    boundData.right = -boundData.right;
                     boundData.origin = boundData.center - boundData.right - boundData.up;
                     break;
             }
