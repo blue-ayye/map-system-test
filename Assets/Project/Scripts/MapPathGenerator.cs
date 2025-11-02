@@ -68,20 +68,13 @@ namespace BP.MapSystem
                 {
                     var node = _mapGrid[level, nodeIndex];
                     if (node == null) continue;
-                    var nodeWorldPos = node.NodeView.transform.position;
-                    Vector3 fromPosition = new Vector3(nodeWorldPos.x, nodeWorldPos.y, nodeWorldPos.z);
-                    foreach (var child in node.ChildNodes)
+
+                    foreach (var childNode in node.ChildNodes)
                     {
-                        var childWorldPos = child.NodeView.transform.position;
-                        Vector3 toPosition = new Vector3(childWorldPos.x, childWorldPos.y, childWorldPos.z);
-                        var pathView = Instantiate(_pathViewPrefab, _pathViewParent);
-                        var lineRenderer = pathView.GetComponent<LineRenderer>();
-                        if (lineRenderer != null)
-                        {
-                            lineRenderer.positionCount = 2;
-                            lineRenderer.SetPosition(0, fromPosition);
-                            lineRenderer.SetPosition(1, toPosition);
-                        }
+                        var pathViewTransform = Instantiate(_pathViewPrefab, _pathViewParent);
+                        pathViewTransform.localPosition = Vector3.zero; // Reset local position to avoid unintended offsets
+                        var pathView = pathViewTransform.GetComponent<IMapPathView>();
+                        pathView.DrawPath(node, childNode);
                     }
                 }
             }
