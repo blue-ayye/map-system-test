@@ -16,7 +16,6 @@ namespace BP.MapSystem
         public List<MapNode> ChildNodes { get; } = new List<MapNode>();
         public MapNodeView NodeView { get; set; }
         public MapNodeTypeSO NodeType { get; set; }
-        public Vector3 WorldPosition { get; set; }
 
         public MapNode(int level, int nodeIndex)
         {

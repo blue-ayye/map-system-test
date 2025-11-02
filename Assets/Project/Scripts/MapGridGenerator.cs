@@ -94,10 +94,8 @@ namespace BP.MapSystem
                     var node = MapGrid[level, nodeIndex];
                     if (node == null) continue;
 
-                    Vector3 position = GetNodePosition(level, nodeIndex);
-                    node.WorldPosition = position;
-
                     var nodeView = Instantiate(_nodeViewPrefab, _nodeViewParent);
+                    Vector3 position = GetNodePosition(level, nodeIndex);
                     Quaternion rotation = Quaternion.Euler(
                         _mapAreaBoundsDefiner.rotation.eulerAngles.x,
                         _mapAreaBoundsDefiner.rotation.eulerAngles.y,
