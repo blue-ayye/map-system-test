@@ -10,8 +10,8 @@ namespace BP.MapSystem
             if (fromNode == null || toNode == null) return;
             if (fromNode.NodeView == null || toNode.NodeView == null) return;
 
-            var startPos = fromNode.NodeView.transform.position;
-            var endPos = toNode.NodeView.transform.position;
+            var startPos = fromNode.NodeView.Position;
+            var endPos = toNode.NodeView.Position;
 
             var lineRenderer = GetComponent<LineRenderer>();
             lineRenderer.positionCount = 2;

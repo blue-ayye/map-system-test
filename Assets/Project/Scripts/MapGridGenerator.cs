@@ -25,7 +25,7 @@ namespace BP.MapSystem
         [SerializeField] private int _nodesPerLevel = 7;
         [SerializeField] private Transform _nodeViewParent;
         [SerializeField] private Transform _mapAreaBoundsDefiner;
-        [SerializeField] private MapNodeView _nodeViewPrefab;
+        [SerializeField] private Transform _nodeViewPrefab;
         [SerializeField] private MapDirection _direction = MapDirection.TopToBottom;
         [SerializeField] private int _zRotation;
 
@@ -102,7 +102,7 @@ namespace BP.MapSystem
                         _zRotation
                     );
                     nodeView.transform.SetPositionAndRotation(position, rotation);
-                    node.NodeView = nodeView;
+                    node.NodeView = nodeView.GetComponent<IMapNodeView>();
                 }
             }
         }

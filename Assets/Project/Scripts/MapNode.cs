@@ -14,7 +14,7 @@ namespace BP.MapSystem
         public int Index;
         public List<MapNode> ParentNodes { get; } = new List<MapNode>();
         public List<MapNode> ChildNodes { get; } = new List<MapNode>();
-        public MapNodeView NodeView { get; set; }
+        public IMapNodeView NodeView { get; set; }
         public MapNodeTypeSO NodeType { get; set; }
 
         public MapNode(int level, int nodeIndex)
