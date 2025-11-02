@@ -13,10 +13,13 @@ namespace BP.MapSystem
             var startPos = fromNode.NodeView.Position;
             var endPos = toNode.NodeView.Position;
 
+            var startLocalPos = transform.InverseTransformPoint(startPos);
+            var endLocalPos = transform.InverseTransformPoint(endPos);
+
             var lineRenderer = GetComponent<LineRenderer>();
             lineRenderer.positionCount = 2;
-            lineRenderer.SetPosition(0, startPos);
-            lineRenderer.SetPosition(1, endPos);
+            lineRenderer.SetPosition(0, startLocalPos);
+            lineRenderer.SetPosition(1, endLocalPos);
 
             if (pathColor.HasValue)
             {
