@@ -16,6 +16,7 @@ namespace BP.MapSystem
         public List<MapNode> ChildNodes { get; } = new List<MapNode>();
         public IMapNodeView NodeView { get; set; }
         public MapNodeTypeSO NodeType { get; set; }
+        public Vector3 Position => NodeView != null ? NodeView.Transform.position : Vector3.zero;
 
         public MapNode(int level, int nodeIndex)
         {

@@ -5,11 +5,17 @@ namespace BP.MapSystem
     public class WorldMapNodeView : MonoBehaviour, IMapNodeView
     {
         [SerializeField] private SpriteRenderer _iconRenderer;
-        public Vector3 Position => transform.position;
-        public void SetNodeType(MapNodeTypeSO nodeType)
+
+        private MapNode _mapNode;
+
+        public Transform Transform => transform;
+
+        public void Initialize(MapNode node)
         {
+            _mapNode = node;
+
             if (_iconRenderer != null)
-                _iconRenderer.sprite = nodeType.DisplayIcon;
+                _iconRenderer.sprite = node.NodeType.DisplayIcon;
         }
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace BP.MapSystem
@@ -30,6 +31,8 @@ namespace BP.MapSystem
             SetNodeTypeByRules(mapGrid, normalLevels);
         }
 
+
+
         private void SetNodeTypeByRules(MapNode[,] mapGrid, List<NodeTypeRulesSO> nodeTypeRules)
         {
             int nodesPerLevel = mapGrid.GetLength(1);
@@ -45,9 +48,6 @@ namespace BP.MapSystem
 
                         var nodeType = GetValidNodeType(node, rule);
                         node.NodeType = nodeType;
-
-                        if (node.NodeView != null)
-                            node.NodeView.SetNodeType(nodeType);
                     }
                 }
             }

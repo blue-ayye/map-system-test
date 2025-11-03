@@ -132,16 +132,25 @@ namespace BP.MapSystem
                     var node = _mapGrid[level, nodeIndex];
                     if (node == null) continue;
 
-                    var nodeView = Instantiate(_nodeViewPrefab, _nodeViewParent);
-
                     Vector3 position = GetNodePosition(level, nodeIndex, _applyJitter);
                     Quaternion rotation = Quaternion.Euler(
                         _mapAreaBoundsDefiner.rotation.eulerAngles.x,
                         _mapAreaBoundsDefiner.rotation.eulerAngles.y,
                         _zRotation
                     );
-                    nodeView.transform.SetPositionAndRotation(position, rotation);
-                    node.NodeView = nodeView.GetComponent<IMapNodeView>();
+
+                    var nodeViewTransform = Instantiate(_nodeViewPrefab, _nodeViewParent);
+                    nodeViewTransform.SetPositionAndRotation(position, rotation);
+
+                    if (nodeViewTransform.TryGetComponent(out IMapNodeView nodeView))
+                    {
+                        nodeView.Initialize(node);
+                        node.NodeView = nodeView;
+                    }
+                    else
+                    {
+                        Debug.LogError("Node View Prefab does not have a component that implements IMapNodeView.");
+                    }
                 }
             }
         }

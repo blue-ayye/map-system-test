@@ -7,12 +7,16 @@ namespace BP.MapSystem
     {
         [SerializeField] private Image _iconImage;
 
-        public Vector3 Position => transform.position;
+        private MapNode _mapNode;
 
-        public void SetNodeType(MapNodeTypeSO nodeType)
+        public Transform Transform => transform;
+
+        public void Initialize(MapNode node)
         {
+            _mapNode = node;
+
             if (_iconImage != null)
-                _iconImage.sprite = nodeType.DisplayIcon;
+                _iconImage.sprite = node.NodeType.DisplayIcon;
         }
     }
 }

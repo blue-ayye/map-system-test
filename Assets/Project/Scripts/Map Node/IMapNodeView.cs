@@ -4,8 +4,8 @@ namespace BP.MapSystem
 {
     public interface IMapNodeView
     {
-        void SetNodeType(MapNodeTypeSO nodeType);
+        void Initialize(MapNode node);
 
-        Vector3 Position { get; }
+        Transform Transform { get; }
     }
 }
