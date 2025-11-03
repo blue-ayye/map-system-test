@@ -5,58 +5,67 @@ namespace BP.MapSystem
 {
     public class MapPathGenerator : MonoBehaviour
     {
+        [Header("Path Generation Settings")]
         [SerializeField] private int _uniquePaths = 3;
         [SerializeField] private int _totalPaths = 7;
+
+        [Header("Path View Settings")]
         [SerializeField] private Transform _pathViewParent;
         [SerializeField] private Transform _pathViewPrefab;
-        private List<MapNode> _startingNodes = new List<MapNode>();
 
         private MapNode[,] _mapGrid;
         private int _maxLevels;
         private int _nodesPerLevel;
-        public System.Random PRNG;
+        private System.Random _pathingRNG;
+        private List<MapNode> _startingNodes = new List<MapNode>();
 
-        /// <summary>
-        /// This is just for testing purposes. Call the individual methods from a control script to control the flow.
-        /// </summary>
-        ///
-        [ContextMenu("Create Map Paths")]
-        public void CreateMapPaths()
-        {
-            ClearPathViews();
-
-            _maxLevels = 9;
-            _nodesPerLevel = 7;
-            PRNG = new System.Random(0);
-            _mapGrid = new MapNode[_maxLevels, _nodesPerLevel];
-
-            // Initialize map grid with nodes
-            for (int level = 0; level < _maxLevels; level++)
-            {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    _mapGrid[level, nodeIndex] = new MapNode(level, nodeIndex);
-                }
-            }
-
-            SelectStartingNodes();
-            GeneratePaths();
-            CreatePathViews();
-        }
-
-        public void Initialize(MapNode[,] mapGrid, int maxLevels, int nodesPerLevel, System.Random pRNG)
+        public void Initialize(MapNode[,] mapGrid, System.Random pRNG)
         {
             _mapGrid = mapGrid;
-            _maxLevels = maxLevels;
-            _nodesPerLevel = nodesPerLevel;
-            PRNG = pRNG;
+            _maxLevels = mapGrid.GetLength(0);
+            _nodesPerLevel = mapGrid.GetLength(1);
+            _pathingRNG = pRNG;
         }
 
-        public void ClearPathViews()
+        public void SelectStartingNodes()
         {
-            foreach (Transform child in _pathViewParent)
+            int startingLevel = 0;
+            _startingNodes.Clear();
+            // Ensure at least <MinUniqueStartingPoints> number of nodes are unique
+            for (int i = 0; i < _uniquePaths; i++)
             {
-                Destroy(child.gameObject);
+                MapNode randomNode;
+                do
+                {
+                    int randomIndex = _pathingRNG.Next(0, _nodesPerLevel);
+                    randomNode = _mapGrid[startingLevel, randomIndex];
+                } while (_startingNodes.Contains(randomNode));
+                _startingNodes.Add(randomNode);
+            }
+
+            // Then fill the rest allowing duplicate nodes to allow multiple paths from same starting point
+            while (_startingNodes.Count < _totalPaths)
+            {
+                int randomIndex = _pathingRNG.Next(0, _nodesPerLevel);
+                var randomNode = _mapGrid[startingLevel, randomIndex];
+                _startingNodes.Add(randomNode);
+            }
+        }
+
+        public void GeneratePaths()
+        {
+            for (int pathIndex = 0; pathIndex < _startingNodes.Count; pathIndex++)
+            {
+                Color debugPathColor = Color.HSVToRGB((float)pathIndex / _startingNodes.Count, 1f, 1f);
+                MapNode currentNode = _startingNodes[pathIndex];
+                for (int level = 0; level < _maxLevels - 1; level++)
+                {
+                    var nextNode = GetValidNextNode(currentNode, level + 1);
+                    if (nextNode == null) break; // No valid next node, end this path
+
+                    LinkNodes(nextNode, currentNode);
+                    currentNode = nextNode;
+                }
             }
         }
 
@@ -80,45 +89,11 @@ namespace BP.MapSystem
             }
         }
 
-        public void SelectStartingNodes()
+        public void ClearPathViews()
         {
-            int startingLevel = 0;
-            _startingNodes.Clear();
-            // Ensure at least <MinUniqueStartingPoints> number of nodes are unique
-            for (int i = 0; i < _uniquePaths; i++)
+            foreach (Transform child in _pathViewParent)
             {
-                MapNode randomNode;
-                do
-                {
-                    int randomIndex = PRNG.Next(0, _nodesPerLevel);
-                    randomNode = _mapGrid[startingLevel, randomIndex];
-                } while (_startingNodes.Contains(randomNode));
-                _startingNodes.Add(randomNode);
-            }
-
-            // Then fill the rest allowing duplicate nodes to allow multiple paths from same starting point
-            while (_startingNodes.Count < _totalPaths)
-            {
-                int randomIndex = PRNG.Next(0, _nodesPerLevel);
-                var randomNode = _mapGrid[startingLevel, randomIndex];
-                _startingNodes.Add(randomNode);
-            }
-        }
-
-        public void GeneratePaths()
-        {
-            for (int pathIndex = 0; pathIndex < _startingNodes.Count; pathIndex++)
-            {
-                Color debugPathColor = Color.HSVToRGB((float)pathIndex / _startingNodes.Count, 1f, 1f);
-                MapNode currentNode = _startingNodes[pathIndex];
-                for (int level = 0; level < _maxLevels - 1; level++)
-                {
-                    var nextNode = GetValidNextNode(currentNode, level + 1);
-                    if (nextNode == null) break; // No valid next node, end this path
-
-                    LinkNodes(nextNode, currentNode);
-                    currentNode = nextNode;
-                }
+                Destroy(child.gameObject);
             }
         }
 
@@ -145,7 +120,7 @@ namespace BP.MapSystem
             if (potentialNextNodes.Count == 0) return null;
 
             // Randomly select one of the valid next nodes
-            var selectedNode = potentialNextNodes[PRNG.Next(0, potentialNextNodes.Count)];
+            var selectedNode = potentialNextNodes[_pathingRNG.Next(0, potentialNextNodes.Count)];
             return selectedNode;
         }
 
@@ -191,6 +166,34 @@ namespace BP.MapSystem
             }
 
             return nodes;
+        }
+
+        /// <summary>
+        /// This is just for testing purposes. Call the individual methods from a control script to control the flow.
+        /// </summary>
+        ///
+        [ContextMenu("Create Map Paths")]
+        private void CreateMapPaths()
+        {
+            ClearPathViews();
+
+            _maxLevels = 9;
+            _nodesPerLevel = 7;
+            _pathingRNG = new System.Random(0);
+            _mapGrid = new MapNode[_maxLevels, _nodesPerLevel];
+
+            // Initialize map grid with nodes
+            for (int level = 0; level < _maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    _mapGrid[level, nodeIndex] = new MapNode(level, nodeIndex);
+                }
+            }
+
+            SelectStartingNodes();
+            GeneratePaths();
+            CreatePathViews();
         }
     }
 }

@@ -10,36 +10,37 @@ namespace BP.MapSystem
         RightToLeft
     }
 
-    public class MapGridGenerator : MonoBehaviour
+    public struct MapBoundsData
     {
-        private struct BoundsData
-        {
-            public Vector3 origin;
-            public Vector3 right;
-            public Vector3 up;
-            public Vector3 center;
-            public Vector3 size;
-        }
+        public Vector3 origin;
+        public Vector3 right;
+        public Vector3 up;
+        public Vector3 center;
+        public Vector3 size;
+    }
 
+    public class MapNodeGenerator : MonoBehaviour
+    {
+        [Header("Map Grid Settings")]
         [SerializeField] private int _maxLevels = 9;
         [SerializeField] private int _nodesPerLevel = 7;
-        [SerializeField] private Transform _nodeViewParent;
         [SerializeField] private Transform _mapAreaBoundsDefiner;
-        [SerializeField] private Transform _nodeViewPrefab;
         [SerializeField] private MapDirection _direction = MapDirection.TopToBottom;
-        [SerializeField] private int _zRotation;
         [Tooltip("0.25f means up to 25% of the distance between nodes (they will never overlap)")]
         [SerializeField][Range(0f, .5f)] private float _nodeSpaceJitterAmount;
         [Tooltip("0.25f means up to 25% of the distance between levels (they will never overlap)")]
         [SerializeField][Range(0f, .5f)] private float _levelSpaceJitterAmount;
         [SerializeField] private bool _applyJitter = true;
 
-        public MapNode[,] MapGrid;
-        public int MaxLevels => _maxLevels;
-        public int NodesPerLevel => _nodesPerLevel;
+        [Header("Node View Settings")]
+        [SerializeField] private Transform _nodeViewParent;
+        [SerializeField] private Transform _nodeViewPrefab;
+        [SerializeField] private int _zRotation;
 
-        private BoundsData _bounds;
+        private MapNode[,] _mapGrid;
+        private MapBoundsData _bounds;
         private Vector2 _dynamicSpacing;
+        private System.Random _jitterRNG;
 
         private void OnDrawGizmos()
         {
@@ -86,9 +87,41 @@ namespace BP.MapSystem
 #endif
         }
 
+        public void Initialize(System.Random jitterRNG)
+        {
+            _jitterRNG = jitterRNG;
+        }
+
+        public MapNode[,] CreateNodeGrid()
+        {
+            _mapGrid = new MapNode[_maxLevels, _nodesPerLevel];
+            for (int level = 0; level < _maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    _mapGrid[level, nodeIndex] = new MapNode(level, nodeIndex);
+                }
+            }
+
+            return _mapGrid;
+        }
+
+        public void ClearUnusedNodes()
+        {
+            for (int level = 0; level < _maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    var node = _mapGrid[level, nodeIndex];
+                    if (node != null && node.ParentNodes.Count == 0 && node.ChildNodes.Count == 0)
+                        _mapGrid[level, nodeIndex] = null;
+                }
+            }
+        }
+
         public void CreateNodeViews()
         {
-            if (MapGrid == null) return;
+            if (_mapGrid == null) return;
 
             CalculateBounds();
 
@@ -96,7 +129,7 @@ namespace BP.MapSystem
             {
                 for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
                 {
-                    var node = MapGrid[level, nodeIndex];
+                    var node = _mapGrid[level, nodeIndex];
                     if (node == null) continue;
 
                     var nodeView = Instantiate(_nodeViewPrefab, _nodeViewParent);
@@ -113,42 +146,10 @@ namespace BP.MapSystem
             }
         }
 
-        private System.Random _jitterRNG;
-
-        public void Initialize(System.Random jitterRNG)
-        {
-            _jitterRNG = jitterRNG;
-        }
-
-        public void CreateNodeGrid()
-        {
-            MapGrid = new MapNode[_maxLevels, _nodesPerLevel];
-            for (int level = 0; level < _maxLevels; level++)
-            {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    MapGrid[level, nodeIndex] = new MapNode(level, nodeIndex);
-                }
-            }
-        }
-
         public void ClearNodeViews()
         {
             foreach (Transform child in _nodeViewParent)
                 Destroy(child.gameObject);
-        }
-
-        public void ClearUnusedNodes()
-        {
-            for (int level = 0; level < _maxLevels; level++)
-            {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    var node = MapGrid[level, nodeIndex];
-                    if (node != null && node.ParentNodes.Count == 0 && node.ChildNodes.Count == 0)
-                        MapGrid[level, nodeIndex] = null;
-                }
-            }
         }
 
         private void CalculateBounds()
@@ -159,7 +160,7 @@ namespace BP.MapSystem
                 return;
             }
 
-            BoundsData boundData = new BoundsData();
+            MapBoundsData boundData = new MapBoundsData();
 
             // Handle UI (RectTransform) or 3D (BoxCollider)
             if (_mapAreaBoundsDefiner.TryGetComponent(out RectTransform rt))

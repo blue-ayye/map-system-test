@@ -4,7 +4,7 @@ namespace BP.MapSystem
 {
     public class MapSystemManager : MonoBehaviour
     {
-        [SerializeField] private MapGridGenerator _mapGridGenerator;
+        [SerializeField] private MapNodeGenerator _mapGridGenerator;
         [SerializeField] private MapPathGenerator _mapPathGenerator;
         [SerializeField] private MapNodeTypeAssigner _mapNodeTypeAssigner;
         [SerializeField] private int _playerInputSeed = 0;
@@ -23,23 +23,20 @@ namespace BP.MapSystem
             var mapJitterRNG = new System.Random(GeneratedSeed);
 
             _mapGridGenerator.Initialize(mapJitterRNG);
-            _mapGridGenerator.CreateNodeGrid();
+            var mapGrid = _mapGridGenerator.CreateNodeGrid();
 
             var mapPathingRNG = new System.Random(GeneratedSeed + 1);
-            int maxLevels = _mapGridGenerator.MaxLevels;
-            int nodesPerLevel = _mapGridGenerator.NodesPerLevel;
-            var mapGrid = _mapGridGenerator.MapGrid;
-            _mapPathGenerator.Initialize(mapGrid, maxLevels, nodesPerLevel, mapPathingRNG);
+            _mapPathGenerator.Initialize(mapGrid, mapPathingRNG);
             _mapPathGenerator.SelectStartingNodes();
             _mapPathGenerator.GeneratePaths();
-
             _mapGridGenerator.ClearUnusedNodes();
 
             _mapGridGenerator.CreateNodeViews();
             _mapPathGenerator.CreatePathViews();
 
             var mapNodeTypeRNG = new System.Random(GeneratedSeed + 2);
-            _mapNodeTypeAssigner.AssignNodeTypes(mapGrid, mapNodeTypeRNG);
+            _mapNodeTypeAssigner.Initialize(mapNodeTypeRNG);
+            _mapNodeTypeAssigner.AssignNodeTypes(mapGrid);
         }
 
         private void GenerateSeed()

@@ -6,23 +6,31 @@ namespace BP.MapSystem
 {
     public class MapNodeTypeAssigner : MonoBehaviour
     {
+        [Header("Node Type Assignment Settings")]
         [SerializeField] private List<NodeTypeRulesSO> _nodeTypeRules;
         [SerializeField] private MapNodeTypeSO _defaultNodeType;
 
-        public void AssignNodeTypes(MapNode[,] mapGrid, System.Random pRNG)
+        private System.Random _nodeTypeRNG;
+
+        public void Initialize(System.Random nodeTypeRNG)
+        {
+            _nodeTypeRNG = nodeTypeRNG;
+        }
+
+        public void AssignNodeTypes(MapNode[,] mapGrid)
         {
             int maxLevels = mapGrid.GetLength(0);
 
             // 1. First, process rules that are marked to exclude from other rules
             var staticLevels = _nodeTypeRules.Where(rules => rules.ExcludeFromOtherRules).ToList();
-            SetNodeTypeByRules(mapGrid, pRNG, staticLevels);
+            SetNodeTypeByRules(mapGrid, staticLevels);
 
             // 2. Then, process the remaining rules so static levels influence them
             var normalLevels = _nodeTypeRules.Where(rules => !rules.ExcludeFromOtherRules).ToList();
-            SetNodeTypeByRules(mapGrid, pRNG, normalLevels);
+            SetNodeTypeByRules(mapGrid, normalLevels);
         }
 
-        private void SetNodeTypeByRules(MapNode[,] mapGrid, System.Random pRNG, List<NodeTypeRulesSO> nodeTypeRules)
+        private void SetNodeTypeByRules(MapNode[,] mapGrid, List<NodeTypeRulesSO> nodeTypeRules)
         {
             int nodesPerLevel = mapGrid.GetLength(1);
 
@@ -35,7 +43,7 @@ namespace BP.MapSystem
                         var node = mapGrid[level, nodeIndex];
                         if (node == null) continue;
 
-                        var nodeType = GetValidNodeType(node, rule, pRNG);
+                        var nodeType = GetValidNodeType(node, rule);
                         node.NodeType = nodeType;
 
                         if (node.NodeView != null)
@@ -45,7 +53,7 @@ namespace BP.MapSystem
             }
         }
 
-        private MapNodeTypeSO GetValidNodeType(MapNode currentNode, NodeTypeRulesSO nodeTypeRules, System.Random pRNG)
+        private MapNodeTypeSO GetValidNodeType(MapNode currentNode, NodeTypeRulesSO nodeTypeRules)
         {
             if (nodeTypeRules.NodeTypeWeights.Count == 0)
             {
@@ -56,7 +64,7 @@ namespace BP.MapSystem
             // If excluded from other rules, use weights as-is
             if (nodeTypeRules.ExcludeFromOtherRules)
             {
-                return GetNodeTypeByWeight(currentNode, nodeTypeRules.NodeTypeWeights, pRNG);
+                return GetNodeTypeByWeight(currentNode, nodeTypeRules.NodeTypeWeights);
             }
 
             // Make a copy of the weights to modify
@@ -65,10 +73,10 @@ namespace BP.MapSystem
             // Reduce weights of consecutive node types
             ApplyConsecutiveRules(currentNode, nodeTypeRules, availableWeights);
 
-            // Use Seed: 817167126 Grid: 9x7 Path: 3/7 to demonstrate
+            // Example Seed: 1865619447 Grid: 9x7 Path: 3/7 shows DisallowAllSiblings working well
             ApplySiblingConstraintRules(currentNode, nodeTypeRules, availableWeights);
 
-            return GetNodeTypeByWeight(currentNode, availableWeights, pRNG);
+            return GetNodeTypeByWeight(currentNode, availableWeights);
         }
 
         private static void ApplySiblingConstraintRules(MapNode currentNode, NodeTypeRulesSO nodeTypeRules, Dictionary<MapNodeTypeSO, float> availableWeights)
@@ -130,7 +138,7 @@ namespace BP.MapSystem
             }
         }
 
-        private MapNodeTypeSO GetNodeTypeByWeight(MapNode node, Dictionary<MapNodeTypeSO, float> availableWeights, System.Random pRNG)
+        private MapNodeTypeSO GetNodeTypeByWeight(MapNode node, Dictionary<MapNodeTypeSO, float> availableWeights)
         {
             float totalWeight = availableWeights.Values.Sum();
             if (totalWeight <= 0f)
@@ -138,7 +146,7 @@ namespace BP.MapSystem
                 Debug.LogWarning($"All node types have zero weight for node at Level {node.Level}, Index {node.Index}. Assigning default node type.");
                 return _defaultNodeType;
             }
-            float randomValue = (float)(pRNG.NextDouble() * totalWeight);
+            float randomValue = (float)(_nodeTypeRNG.NextDouble() * totalWeight);
             float cumulativeWeight = 0f;
 
             for (int i = 0; i < availableWeights.Count; i++)
