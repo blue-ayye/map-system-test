@@ -32,8 +32,7 @@ namespace BP.MapSystem
         [SerializeField][Range(0f, .5f)] private float _nodeSpaceJitterAmount;
         [Tooltip("0.25f means up to 25% of the distance between levels (they will never overlap)")]
         [SerializeField][Range(0f, .5f)] private float _levelSpaceJitterAmount;
-        [SerializeField] private int _jitterSeedInput = 0;
-        [SerializeField] private bool _useJitterSeedInput = false;
+        [SerializeField] private bool _applyJitter = true;
 
         public MapNode[,] MapGrid;
         public int MaxLevels => _maxLevels;
@@ -102,7 +101,7 @@ namespace BP.MapSystem
 
                     var nodeView = Instantiate(_nodeViewPrefab, _nodeViewParent);
 
-                    Vector3 position = GetNodePosition(level, nodeIndex, true);
+                    Vector3 position = GetNodePosition(level, nodeIndex, _applyJitter);
                     Quaternion rotation = Quaternion.Euler(
                         _mapAreaBoundsDefiner.rotation.eulerAngles.x,
                         _mapAreaBoundsDefiner.rotation.eulerAngles.y,
@@ -112,6 +111,13 @@ namespace BP.MapSystem
                     node.NodeView = nodeView.GetComponent<IMapNodeView>();
                 }
             }
+        }
+
+        private System.Random _jitterRNG;
+
+        public void Initialize(System.Random jitterRNG)
+        {
+            _jitterRNG = jitterRNG;
         }
 
         public void CreateNodeGrid()
@@ -220,10 +226,8 @@ namespace BP.MapSystem
             }
             else
             {
-                int jitterSeed = _useJitterSeedInput ? _jitterSeedInput : System.DateTime.Now.Millisecond;
-                System.Random jitterRNG = new System.Random(jitterSeed + level * 73856093 + nodeIndex * 19349663);
-                float jitterX = (float)(jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.x * _nodeSpaceJitterAmount;
-                float jitterY = (float)(jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.y * _levelSpaceJitterAmount;
+                float jitterX = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.x * _nodeSpaceJitterAmount;
+                float jitterY = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.y * _levelSpaceJitterAmount;
 
                 return _bounds.origin
                     + _bounds.right * (xNorm + jitterX) * 2f

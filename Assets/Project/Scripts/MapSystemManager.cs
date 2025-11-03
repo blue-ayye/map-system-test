@@ -18,40 +18,42 @@ namespace BP.MapSystem
             _mapGridGenerator.ClearNodeViews();
             _mapPathGenerator.ClearPathViews();
 
+            GenerateSeed();
+
+            var mapJitterRNG = new System.Random(GeneratedSeed);
+
+            _mapGridGenerator.Initialize(mapJitterRNG);
             _mapGridGenerator.CreateNodeGrid();
 
-            int? seed = _usePlayerInputSeed ? _playerInputSeed : null;
-            var pRNG = InitializePRNG(seed);
+            var mapPathingRNG = new System.Random(GeneratedSeed + 1);
             int maxLevels = _mapGridGenerator.MaxLevels;
             int nodesPerLevel = _mapGridGenerator.NodesPerLevel;
             var mapGrid = _mapGridGenerator.MapGrid;
-
-            _mapPathGenerator.Initialize(mapGrid, maxLevels, nodesPerLevel, pRNG);
+            _mapPathGenerator.Initialize(mapGrid, maxLevels, nodesPerLevel, mapPathingRNG);
             _mapPathGenerator.SelectStartingNodes();
             _mapPathGenerator.GeneratePaths();
 
-            //_mapGridGenerator.ClearUnusedNodes();
+            _mapGridGenerator.ClearUnusedNodes();
 
             _mapGridGenerator.CreateNodeViews();
             _mapPathGenerator.CreatePathViews();
 
-            _mapNodeTypeAssigner.AssignNodeTypes(mapGrid, pRNG);
+            var mapNodeTypeRNG = new System.Random(GeneratedSeed + 2);
+            _mapNodeTypeAssigner.AssignNodeTypes(mapGrid, mapNodeTypeRNG);
         }
 
-        private System.Random InitializePRNG(int? seed)
+        private void GenerateSeed()
         {
-            if (seed == null)
+            if (_usePlayerInputSeed)
+            {
+                GeneratedSeed = Mathf.Abs(_playerInputSeed);
+            }
+            else
             {
                 int intMinMaxSeed = Random.Range(int.MinValue, int.MaxValue);
                 int dateTimeSeed = System.DateTime.Now.Millisecond;
                 GeneratedSeed = Mathf.Abs(intMinMaxSeed + dateTimeSeed);
             }
-            else
-            {
-                GeneratedSeed = Mathf.Abs(seed.Value);
-            }
-
-            return new System.Random(GeneratedSeed);
         }
     }
 }
