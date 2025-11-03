@@ -367,6 +367,8 @@ MonoBehaviour:
   _nodeViewPrefab: {fileID: 6038788913511167360, guid: 6b9064dd03afa1a489f45a384b2d7fe4, type: 3}
   _direction: 2
   _zRotation: 0
+  _nodeSpaceJitterAmount: 0.2
+  _levelSpaceJitterAmount: 0.25
 --- !u!114 &437789671
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -821,6 +823,8 @@ MonoBehaviour:
   _nodeViewPrefab: {fileID: 6679694359499727540, guid: e00ed0d628de3c9468fdd37c5b6e723a, type: 3}
   _direction: 2
   _zRotation: 0
+  _nodeSpaceJitterAmount: 0
+  _levelSpaceJitterAmount: 0
 --- !u!114 &1061727598
 MonoBehaviour:
   m_ObjectHideFlags: 0

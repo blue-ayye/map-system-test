@@ -30,7 +30,7 @@ namespace BP.MapSystem
             _mapPathGenerator.SelectStartingNodes();
             _mapPathGenerator.GeneratePaths();
 
-            _mapGridGenerator.ClearUnusedNodes();
+            //_mapGridGenerator.ClearUnusedNodes();
 
             _mapGridGenerator.CreateNodeViews();
             _mapPathGenerator.CreatePathViews();

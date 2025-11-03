@@ -28,6 +28,12 @@ namespace BP.MapSystem
         [SerializeField] private Transform _nodeViewPrefab;
         [SerializeField] private MapDirection _direction = MapDirection.TopToBottom;
         [SerializeField] private int _zRotation;
+        [Tooltip("0.25f means up to 25% of the distance between nodes (they will never overlap)")]
+        [SerializeField][Range(0f, .5f)] private float _nodeSpaceJitterAmount;
+        [Tooltip("0.25f means up to 25% of the distance between levels (they will never overlap)")]
+        [SerializeField][Range(0f, .5f)] private float _levelSpaceJitterAmount;
+        [SerializeField] private int _jitterSeedInput = 0;
+        [SerializeField] private bool _useJitterSeedInput = false;
 
         public MapNode[,] MapGrid;
         public int MaxLevels => _maxLevels;
@@ -95,7 +101,8 @@ namespace BP.MapSystem
                     if (node == null) continue;
 
                     var nodeView = Instantiate(_nodeViewPrefab, _nodeViewParent);
-                    Vector3 position = GetNodePosition(level, nodeIndex);
+
+                    Vector3 position = GetNodePosition(level, nodeIndex, true);
                     Quaternion rotation = Quaternion.Euler(
                         _mapAreaBoundsDefiner.rotation.eulerAngles.x,
                         _mapAreaBoundsDefiner.rotation.eulerAngles.y,
@@ -200,19 +207,28 @@ namespace BP.MapSystem
             );
         }
 
-        private Vector3 GetNodePosition(int level, int nodeIndex, Vector2? jitterOffset = null)
+        private Vector3 GetNodePosition(int level, int nodeIndex, bool applyJitter = false)
         {
             float xNorm = _dynamicSpacing.x * nodeIndex;
             float yNorm = _dynamicSpacing.y * level;
 
-            Vector2 jitter = jitterOffset ?? Vector2.zero;
+            if (!applyJitter)
+            {
+                return _bounds.origin
+                    + _bounds.right * xNorm * 2f
+                    + _bounds.up * yNorm * 2f;
+            }
+            else
+            {
+                int jitterSeed = _useJitterSeedInput ? _jitterSeedInput : System.DateTime.Now.Millisecond;
+                System.Random jitterRNG = new System.Random(jitterSeed + level * 73856093 + nodeIndex * 19349663);
+                float jitterX = (float)(jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.x * _nodeSpaceJitterAmount;
+                float jitterY = (float)(jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.y * _levelSpaceJitterAmount;
 
-            // Multiply by 2 because bounds.right and bounds.left are half the width
-            Vector3 pos = _bounds.origin
-                + _bounds.right * (xNorm + jitter.x) * 2f
-                + _bounds.up * (yNorm + jitter.y) * 2f;
-
-            return pos;
+                return _bounds.origin
+                    + _bounds.right * (xNorm + jitterX) * 2f
+                    + _bounds.up * (yNorm + jitterY) * 2f;
+            }
         }
 
         [ContextMenu("Debug Create Map Grid")]
