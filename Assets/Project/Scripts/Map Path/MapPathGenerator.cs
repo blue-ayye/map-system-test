@@ -17,7 +17,7 @@ namespace BP.MapSystem
         private int _maxLevels;
         private int _nodesPerLevel;
         private System.Random _pathingRNG;
-        private List<MapNode> _startingNodes = new List<MapNode>();
+        private Dictionary<int,List<MapNode>> _generatedPaths = new Dictionary<int,List<MapNode>>();
 
         public void Initialize(MapNode[,] mapGrid, System.Random pRNG)
         {
@@ -30,34 +30,43 @@ namespace BP.MapSystem
         public void SelectStartingNodes()
         {
             int startingLevel = 0;
-            _startingNodes.Clear();
+            _generatedPaths.Clear();
+            
             // Ensure at least <MinUniqueStartingPoints> number of nodes are unique
-            for (int i = 0; i < _uniquePaths; i++)
+            for (int pathIndex = 0; pathIndex < _uniquePaths; pathIndex++)
             {
                 MapNode randomNode;
+                _generatedPaths[pathIndex] = new List<MapNode>();
                 do
                 {
                     int randomIndex = _pathingRNG.Next(0, _nodesPerLevel);
                     randomNode = _mapGrid[startingLevel, randomIndex];
-                } while (_startingNodes.Contains(randomNode));
-                _startingNodes.Add(randomNode);
+                } while (_generatedPaths[pathIndex].Contains(randomNode));
+                _generatedPaths[pathIndex].Add(randomNode);
             }
 
             // Then fill the rest allowing duplicate nodes to allow multiple paths from same starting point
-            while (_startingNodes.Count < _totalPaths)
+            while (_generatedPaths.Count < _totalPaths)
             {
                 int randomIndex = _pathingRNG.Next(0, _nodesPerLevel);
                 var randomNode = _mapGrid[startingLevel, randomIndex];
-                _startingNodes.Add(randomNode);
+                int pathIndex = _generatedPaths.Count;
+                if (!_generatedPaths.ContainsKey(pathIndex))
+                {
+                    _generatedPaths[pathIndex] = new List<MapNode>();
+                }
+                _generatedPaths[pathIndex].Add(randomNode);
             }
         }
 
         public void GeneratePaths()
         {
-            for (int pathIndex = 0; pathIndex < _startingNodes.Count; pathIndex++)
+            foreach (var pathEntry in _generatedPaths)
             {
-                Color debugPathColor = Color.HSVToRGB((float)pathIndex / _startingNodes.Count, 1f, 1f);
-                MapNode currentNode = _startingNodes[pathIndex];
+                int pathIndex = pathEntry.Key;
+                List<MapNode> pathNodes = pathEntry.Value;
+
+                MapNode currentNode = pathNodes[0];
                 for (int level = 0; level < _maxLevels - 1; level++)
                 {
                     var nextNode = GetValidNextNode(currentNode, level + 1);
@@ -65,6 +74,7 @@ namespace BP.MapSystem
 
                     LinkNodes(nextNode, currentNode);
                     currentNode = nextNode;
+                    pathNodes.Add(currentNode);
                 }
             }
         }
