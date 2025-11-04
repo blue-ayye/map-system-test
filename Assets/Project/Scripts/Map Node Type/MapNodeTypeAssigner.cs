@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace BP.MapSystem
@@ -29,9 +28,48 @@ namespace BP.MapSystem
             // 2. Then, process the remaining rules so static levels influence them
             var normalLevels = _nodeTypeRules.Where(rules => !rules.ExcludeFromOtherRules).ToList();
             SetNodeTypeByRules(mapGrid, normalLevels);
+
+            bool isValid = CheckTypeRulesValidity(mapGrid);
         }
 
+        public bool CheckTypeRulesValidity(MapNode[,] mapGrid)
+        {
+            int violations = 0;
+            int nodesPerLevel = mapGrid.GetLength(1);
+            int maxLevels = mapGrid.GetLength(0);
 
+            foreach (var rule in _nodeTypeRules)
+            {
+                for (int level = rule.StartLevel; level <= rule.EndLevel; level++)
+                {
+                    for (int nodeIndex = 0; nodeIndex < nodesPerLevel; nodeIndex++)
+                    {
+                        var node = mapGrid[level, nodeIndex];
+                        if (node == null) continue;
+
+                        // Check consecutive node constraints
+                        if (rule.ConsecutiveTypeWeightReductions.ContainsKey(node.NodeType))
+                        {
+                            // If the reduction is less than the weight, it means the type may still appear consecutively
+                            if (rule.ConsecutiveTypeWeightReductions[node.NodeType] < rule.NodeTypeWeights[node.NodeType])
+                                continue;
+
+                            var consecutiveNodes = new List<MapNode>(node.ParentNodes).Concat(node.ChildNodes).Where(cn => cn.NodeType != null).ToList();
+                            foreach (var consecutiveNode in consecutiveNodes)
+                            {
+                                if (consecutiveNode.NodeType == node.NodeType)
+                                {
+                                    violations++;
+                                    Debug.LogWarning($"Consecutive node type violation at Level {level}, Index {nodeIndex} for Node Type '{node.NodeType.DisplayName}'");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return violations == 0;
+        }
 
         private void SetNodeTypeByRules(MapNode[,] mapGrid, List<NodeTypeRulesSO> nodeTypeRules)
         {
