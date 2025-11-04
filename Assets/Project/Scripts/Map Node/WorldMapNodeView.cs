@@ -1,9 +1,13 @@
+using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace BP.MapSystem
 {
-    public class WorldMapNodeView : MonoBehaviour, IMapNodeView
+    public class WorldMapNodeView : MonoBehaviour, IMapNodeView, IPointerClickHandler
     {
+        public event Action<MapNode> OnNodeClicked;
+
         [SerializeField] private SpriteRenderer _iconRenderer;
 
         private MapNode _mapNode;
@@ -16,6 +20,11 @@ namespace BP.MapSystem
 
             if (_iconRenderer != null)
                 _iconRenderer.sprite = node.NodeType.DisplayIcon;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            OnNodeClicked?.Invoke(_mapNode);
         }
     }
 }

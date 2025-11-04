@@ -1,11 +1,13 @@
+using System;
 using UnityEngine;
 
 namespace BP.MapSystem
 {
     public interface IMapNodeView
     {
-        void Initialize(MapNode node);
-
+        event Action<MapNode> OnNodeClicked;
         Transform Transform { get; }
+
+        void Initialize(MapNode node);
     }
 }

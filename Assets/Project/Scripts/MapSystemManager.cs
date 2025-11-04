@@ -12,6 +12,8 @@ namespace BP.MapSystem
         [SerializeField] private bool _usePlayerInputSeed = false;
         [SerializeField] private int _generationAttempts = 1;
 
+        private MapNode[,] _mapGrid;
+
         [field: SerializeField] private int GeneratedSeed { get; set; } // Set it to private later
 
         [ContextMenu("Generate New Map")]
@@ -66,35 +68,27 @@ namespace BP.MapSystem
             }
 
             GenerateMapVisuals();
+            SubscribeToMapNodeEvents();
         }
 
-        private void GenerateMapVisuals()
+        private void OnDestroy()
         {
-            _mapGridGenerator.ClearNodeViews();
-            _mapPathGenerator.ClearPathViews();
+            foreach (var node in _mapGrid)
+            {
+                if (node == null || node.NodeView == null) continue;
 
-            _mapGridGenerator.CreateNodeViews();
-            _mapPathGenerator.CreatePathViews();
+                node.NodeView.OnNodeClicked -= NodeView_OnNodeClicked;
+            }
         }
 
-        private void GenerateMap()
+        private void SubscribeToMapNodeEvents()
         {
-            // 1. Create map node data
-            var mapJitterRNG = new System.Random(GeneratedSeed);
-            _mapGridGenerator.Initialize(mapJitterRNG);
-            var mapGrid = _mapGridGenerator.CreateNodeGrid();
+            foreach (var node in _mapGrid)
+            {
+                if (node == null || node.NodeView == null) continue;
 
-            // 2. Create map path data
-            var mapPathingRNG = new System.Random(GeneratedSeed + 1);
-            _mapPathGenerator.Initialize(mapGrid, mapPathingRNG);
-            _mapPathGenerator.SelectStartingNodes();
-            _mapPathGenerator.GeneratePaths();
-            _mapGridGenerator.ClearUnusedNodes();
-
-            // 3. Assign node types to map node data
-            var mapNodeTypeRNG = new System.Random(GeneratedSeed + 2);
-            _mapNodeTypeAssigner.Initialize(mapGrid, mapNodeTypeRNG);
-            _mapNodeTypeAssigner.AssignNodeTypes();
+                node.NodeView.OnNodeClicked += NodeView_OnNodeClicked;
+            }
         }
 
         private void GenerateSeed()
@@ -109,6 +103,41 @@ namespace BP.MapSystem
                 int dateTimeSeed = System.DateTime.Now.Millisecond;
                 GeneratedSeed = Mathf.Abs(intMinMaxSeed + dateTimeSeed);
             }
+        }
+
+        private void GenerateMap()
+        {
+            // 1. Create map node data
+            var mapJitterRNG = new System.Random(GeneratedSeed);
+            _mapGridGenerator.Initialize(mapJitterRNG);
+            _mapGrid = _mapGridGenerator.CreateNodeGrid();
+
+            // 2. Create map path data
+            var mapPathingRNG = new System.Random(GeneratedSeed + 1);
+            _mapPathGenerator.Initialize(_mapGrid, mapPathingRNG);
+            _mapPathGenerator.SelectStartingNodes();
+            _mapPathGenerator.GeneratePaths();
+            _mapGridGenerator.ClearUnusedNodes();
+
+            // 3. Assign node types to map node data
+            var mapNodeTypeRNG = new System.Random(GeneratedSeed + 2);
+            _mapNodeTypeAssigner.Initialize(_mapGrid, mapNodeTypeRNG);
+            _mapNodeTypeAssigner.AssignNodeTypes();
+        }
+
+        private void GenerateMapVisuals()
+        {
+            _mapGridGenerator.ClearNodeViews();
+            _mapPathGenerator.ClearPathViews();
+
+            _mapGridGenerator.CreateNodeViews();
+            _mapPathGenerator.CreatePathViews();
+        }
+
+        private void NodeView_OnNodeClicked(MapNode mapNode)
+        {
+
+            Debug.Log($"Map Node Clicked: Level {mapNode.Level}, Index {mapNode.Index}, Type {mapNode.NodeType.DisplayName}");
         }
     }
 }
