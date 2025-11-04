@@ -11,43 +11,43 @@ namespace BP.MapSystem
         [SerializeField] private MapNodeTypeSO _defaultNodeType;
 
         private System.Random _nodeTypeRNG;
+        private MapNode[,] _mapGrid;
+        private int _nodesPerLevel;
 
-        public void Initialize(System.Random nodeTypeRNG)
+        public void Initialize(MapNode[,] mapGrid, System.Random nodeTypeRNG)
         {
+            _mapGrid = mapGrid;
+            _nodesPerLevel = _mapGrid.GetLength(1);
             _nodeTypeRNG = nodeTypeRNG;
         }
 
-        public void AssignNodeTypes(MapNode[,] mapGrid)
+        public void AssignNodeTypes()
         {
-            int maxLevels = mapGrid.GetLength(0);
-
             // 1. First, process rules that are marked to exclude from other rules
             var staticLevels = _nodeTypeRules.Where(rules => rules.ExcludeFromOtherRules).ToList();
-            SetNodeTypeByRules(mapGrid, staticLevels);
+            SetNodeTypeByRules(staticLevels);
 
             // 2. Then, process the remaining rules so static levels influence them
             var normalLevels = _nodeTypeRules.Where(rules => !rules.ExcludeFromOtherRules).ToList();
-            SetNodeTypeByRules(mapGrid, normalLevels);
-
-            bool isValid = CheckTypeRulesValidity(mapGrid);
+            SetNodeTypeByRules(normalLevels);
         }
 
-        public bool CheckTypeRulesValidity(MapNode[,] mapGrid)
+        public int CheckTypeRulesValidity(bool logging = false)
         {
             int violations = 0;
-            int nodesPerLevel = mapGrid.GetLength(1);
-            int maxLevels = mapGrid.GetLength(0);
 
             foreach (var rule in _nodeTypeRules)
             {
+                if (rule.ExcludeFromOtherRules) continue;
+
                 for (int level = rule.StartLevel; level <= rule.EndLevel; level++)
                 {
-                    for (int nodeIndex = 0; nodeIndex < nodesPerLevel; nodeIndex++)
+                    for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
                     {
-                        var node = mapGrid[level, nodeIndex];
+                        var node = _mapGrid[level, nodeIndex];
                         if (node == null) continue;
 
-                        // Check consecutive node constraints
+                        // 1. Check consecutive node constraints
                         if (rule.ConsecutiveTypeWeightReductions.ContainsKey(node.NodeType))
                         {
                             // If the reduction is less than the weight, it means the type may still appear consecutively
@@ -60,7 +60,47 @@ namespace BP.MapSystem
                                 if (consecutiveNode.NodeType == node.NodeType)
                                 {
                                     violations++;
-                                    Debug.LogWarning($"Consecutive node type violation at Level {level}, Index {nodeIndex} for Node Type '{node.NodeType.DisplayName}'");
+                                    if (logging)
+                                        Debug.LogWarning($"Consecutive node type violation at Level {level}, Index {nodeIndex} for Node Type '{node.NodeType.DisplayName}'");
+                                }
+                            }
+                        }
+
+                        // 2. Check sibling node constraints
+                        if (rule.SiblingTypeConstraint != SiblingNodeTypeConstraint.AllowSameType)
+                        {
+                            var allSiblings = node.ParentNodes.SelectMany(p => p.ChildNodes).Where(c => c != node).Distinct().ToList();
+                            MapNode previousSibling = null;
+                            MapNode nextSibling = null;
+                            foreach (var sibling in allSiblings)
+                            {
+                                if (sibling.Index < node.Index)
+                                {
+                                    if (previousSibling == null || sibling.Index > previousSibling.Index)
+                                    {
+                                        previousSibling = sibling;
+                                    }
+                                }
+                                else if (sibling.Index > node.Index)
+                                {
+                                    if (nextSibling == null || sibling.Index < nextSibling.Index)
+                                    {
+                                        nextSibling = sibling;
+                                    }
+                                }
+                            }
+
+                            var siblingsToCheck = rule.SiblingTypeConstraint == SiblingNodeTypeConstraint.DisallowSameTypeForImmediateSiblings
+                                ? new List<MapNode> { previousSibling, nextSibling }
+                                : allSiblings;
+
+                            foreach (var sibling in siblingsToCheck)
+                            {
+                                if (sibling != null && sibling.NodeType == node.NodeType)
+                                {
+                                    violations++;
+                                    if (logging)
+                                        Debug.LogWarning($"Sibling node type violation at Level {level}, Index {nodeIndex} for Node Type '{node.NodeType.DisplayName}'");
                                 }
                             }
                         }
@@ -68,20 +108,18 @@ namespace BP.MapSystem
                 }
             }
 
-            return violations == 0;
+            return violations;
         }
 
-        private void SetNodeTypeByRules(MapNode[,] mapGrid, List<NodeTypeRulesSO> nodeTypeRules)
+        private void SetNodeTypeByRules(List<NodeTypeRulesSO> nodeTypeRules)
         {
-            int nodesPerLevel = mapGrid.GetLength(1);
-
             foreach (var rule in nodeTypeRules)
             {
                 for (int level = rule.StartLevel; level <= rule.EndLevel; level++)
                 {
-                    for (int nodeIndex = 0; nodeIndex < nodesPerLevel; nodeIndex++)
+                    for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
                     {
-                        var node = mapGrid[level, nodeIndex];
+                        var node = _mapGrid[level, nodeIndex];
                         if (node == null) continue;
 
                         var nodeType = GetValidNodeType(node, rule);
@@ -111,7 +149,7 @@ namespace BP.MapSystem
             // Reduce weights of consecutive node types
             ApplyConsecutiveRules(currentNode, nodeTypeRules, availableWeights);
 
-            // Example Seed: 1865619447 Grid: 9x7 Path: 3/7 shows DisallowAllSiblings working well
+            // Example Seed: 1865619447/274303753/1698927251 Grid: 9x7 Path: 3/7 shows DisallowAllSiblings working well
             ApplySiblingConstraintRules(currentNode, nodeTypeRules, availableWeights);
 
             return GetNodeTypeByWeight(currentNode, availableWeights);
@@ -181,7 +219,7 @@ namespace BP.MapSystem
             float totalWeight = availableWeights.Values.Sum();
             if (totalWeight <= 0f)
             {
-                Debug.LogWarning($"All node types have zero weight for node at Level {node.Level}, Index {node.Index}. Assigning default node type.");
+                // Debug.LogWarning($"All node types have zero weight for node at Level {node.Level}, Index {node.Index}. Assigning default node type.");
                 return _defaultNodeType;
             }
             float randomValue = (float)(_nodeTypeRNG.NextDouble() * totalWeight);
@@ -197,8 +235,11 @@ namespace BP.MapSystem
                 }
             }
 
-            Debug.LogWarning($"Failed to assign a node type for node at Level {node.Level}, Index {node.Index}. Assigning default node type.");
+            // Debug.LogWarning($"Failed to assign a node type for node at Level {node.Level}, Index {node.Index}. Assigning default node type.");
             return _defaultNodeType; // Fallback in case of rounding errors
         }
+
+        [ContextMenu("Check Type Rules Validity")]
+        private void ContextMenuCheckTypeRulesValidity() => CheckTypeRulesValidity(true);
     }
 }

@@ -26,7 +26,7 @@ MonoBehaviour:
   _consecutiveTypeWeightReductions:
     _serializedList:
     - Key: {fileID: 11400000, guid: 21f81f166ec7eef41990617276d9a4c2, type: 2}
-      Value: 15
+      Value: 90
     - Key: {fileID: 11400000, guid: 4ecff7e8ef2b56d42b31f0886a872230, type: 2}
       Value: 10
     - Key: {fileID: 11400000, guid: 150bf7cde51c8f7468b55f2d280af3d3, type: 2}

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BP.MapSystem
@@ -9,38 +10,91 @@ namespace BP.MapSystem
         [SerializeField] private MapNodeTypeAssigner _mapNodeTypeAssigner;
         [SerializeField] private int _playerInputSeed = 0;
         [SerializeField] private bool _usePlayerInputSeed = false;
+        [SerializeField] private int _generationAttempts = 1;
 
         [field: SerializeField] private int GeneratedSeed { get; set; } // Set it to private later
 
         [ContextMenu("Generate New Map")]
         private void Start()
         {
-            // 1. Create seed
-            GenerateSeed();
+            int attempts = 0;
+            Dictionary<int, int> seedViolations = new Dictionary<int, int>();
+            do
+            {
+                GenerateSeed();
+                GenerateMap();
 
-            // 2. Create map node data
+                int violations = _mapNodeTypeAssigner.CheckTypeRulesValidity();
+                seedViolations[GeneratedSeed] = violations;
+
+                attempts++;
+            } while (attempts < _generationAttempts && seedViolations[GeneratedSeed] > 0 && !_usePlayerInputSeed);
+
+            // If current seed has violations, pick the least violating seed from previous attempts
+            if (seedViolations[GeneratedSeed] > 0)
+            {
+                if (!_usePlayerInputSeed)
+                {
+                    int bestSeed = GeneratedSeed;
+                    int leastViolations = seedViolations[GeneratedSeed];
+                    foreach (var kvp in seedViolations)
+                    {
+                        if (kvp.Value < leastViolations)
+                        {
+                            leastViolations = kvp.Value;
+                            bestSeed = kvp.Key;
+                        }
+                    }
+
+                    GeneratedSeed = bestSeed;
+
+                    // Re-generate the map with the best seed
+                    GenerateMap();
+                    _mapNodeTypeAssigner.CheckTypeRulesValidity(true);
+
+                    Debug.LogWarning($"Could not generate a valid map within {_generationAttempts} attempts. " +
+                                     $"Using seed {GeneratedSeed} with {leastViolations} rule violations.");
+                }
+                else
+                {
+                    _mapNodeTypeAssigner.CheckTypeRulesValidity(true);
+                    Debug.LogWarning($"You're using a custom seed {_playerInputSeed} that resulted in " +
+                                     $"{seedViolations[GeneratedSeed]} rule violations. " +
+                                     $"Consider using a different seed or toggle off the custom seed option" +
+                                     $" to allow automatic seed generation with least violations.");
+                }
+            }
+
+            GenerateMapVisuals();
+        }
+
+        private void GenerateMapVisuals()
+        {
+            _mapGridGenerator.ClearNodeViews();
+            _mapPathGenerator.ClearPathViews();
+
+            _mapGridGenerator.CreateNodeViews();
+            _mapPathGenerator.CreatePathViews();
+        }
+
+        private void GenerateMap()
+        {
+            // 1. Create map node data
             var mapJitterRNG = new System.Random(GeneratedSeed);
             _mapGridGenerator.Initialize(mapJitterRNG);
             var mapGrid = _mapGridGenerator.CreateNodeGrid();
 
-            // 3. Create map path data
+            // 2. Create map path data
             var mapPathingRNG = new System.Random(GeneratedSeed + 1);
             _mapPathGenerator.Initialize(mapGrid, mapPathingRNG);
             _mapPathGenerator.SelectStartingNodes();
             _mapPathGenerator.GeneratePaths();
             _mapGridGenerator.ClearUnusedNodes();
 
-            // 4. Assign node types to map node data
+            // 3. Assign node types to map node data
             var mapNodeTypeRNG = new System.Random(GeneratedSeed + 2);
-            _mapNodeTypeAssigner.Initialize(mapNodeTypeRNG);
-            _mapNodeTypeAssigner.AssignNodeTypes(mapGrid);
-
-            // 5. Create map node and path views
-            _mapGridGenerator.ClearNodeViews();
-            _mapPathGenerator.ClearPathViews();
-
-            _mapGridGenerator.CreateNodeViews();
-            _mapPathGenerator.CreatePathViews();
+            _mapNodeTypeAssigner.Initialize(mapGrid, mapNodeTypeRNG);
+            _mapNodeTypeAssigner.AssignNodeTypes();
         }
 
         private void GenerateSeed()
