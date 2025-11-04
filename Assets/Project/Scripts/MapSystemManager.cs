@@ -134,10 +134,54 @@ namespace BP.MapSystem
             _mapPathGenerator.CreatePathViews();
         }
 
-        private void NodeView_OnNodeClicked(MapNode mapNode)
-        {
+        private List<MapNode> _visitedNodes = new List<MapNode>();
+        private MapNode _currentNode;
+        [SerializeField] private bool _canTraverseVisitedNodes;
 
-            Debug.Log($"Map Node Clicked: Level {mapNode.Level}, Index {mapNode.Index}, Type {mapNode.NodeType.DisplayName}");
+        private void NodeView_OnNodeClicked(MapNode clickedNode)
+        {
+            // If no current node, only allow starting at level 0 nodes
+            if (_currentNode == null)
+            {
+                if (clickedNode.Level == 0)
+                {
+                    TraversePath(clickedNode);
+                    Debug.Log($"Starting at Level {_currentNode.Level}, Index {_currentNode.Index}");
+                }
+                else
+                {
+                    Debug.LogWarning("Please click on a starting node at Level 0 to begin.");
+                }
+                return;
+            }
+
+            // Allow traversing back to visited nodes if enabled
+            if (_canTraverseVisitedNodes && _visitedNodes.Contains(clickedNode))
+            {
+                TraversePath(clickedNode);
+                Debug.Log($"Traversed back to Level {_currentNode.Level}, Index {_currentNode.Index}");
+                return;
+            }
+
+            // Check if clicked node is a child of the current node
+            if (_currentNode.ChildNodes.Contains(clickedNode))
+            {
+                TraversePath(clickedNode);
+                Debug.Log($"Moved to Level {_currentNode.Level}, Index {_currentNode.Index}");
+                return;
+            }
+
+            Debug.LogWarning($"Invalid: You can only move to child of the current node Node[{_currentNode.Level}, {_currentNode.Index}]" +
+                $" or traverse back to visited nodes if enabled.");
+        }
+
+        private void TraversePath(MapNode clickedNode)
+        {
+            _currentNode = clickedNode;
+            if (!_visitedNodes.Contains(clickedNode))
+            {
+                _visitedNodes.Add(clickedNode);
+            }
         }
     }
 }
