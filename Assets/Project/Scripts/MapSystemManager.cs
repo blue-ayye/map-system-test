@@ -131,6 +131,7 @@ namespace BP.MapSystem
             _mapPathGenerator.ClearPathViews();
             _currentNode = null;
             _visitedNodes.Clear();
+            _currentTraversalSteps = 0;
 
             _mapGridGenerator.CreateNodeViews();
             _mapPathGenerator.CreatePathViews();
@@ -139,9 +140,19 @@ namespace BP.MapSystem
         private List<MapNode> _visitedNodes = new List<MapNode>();
         private MapNode _currentNode;
         [SerializeField] private bool _canTraverseVisitedNodes;
+        [SerializeField] private int _maxTraversalSteps = -1; // -1 means unlimited
+
+        private int _currentTraversalSteps = 0;
 
         private void NodeView_OnNodeClicked(MapNode clickedNode)
         {
+            // Check max traversal steps
+            if (_maxTraversalSteps >= 0 && _currentTraversalSteps >= _maxTraversalSteps)
+            {
+                Debug.LogWarning("Maximum traversal steps reached. Cannot traverse further.");
+                return;
+            }
+
             // If no current node, only allow starting at level 0 nodes
             if (_currentNode == null)
             {
@@ -160,6 +171,7 @@ namespace BP.MapSystem
             // Allow traversing back to visited nodes if enabled
             if (_canTraverseVisitedNodes && _visitedNodes.Contains(clickedNode))
             {
+                _currentTraversalSteps++;
                 TraversePath(clickedNode);
                 Debug.Log($"Traversed back to Level {_currentNode.Level}, Index {_currentNode.Index}");
                 return;
@@ -168,6 +180,7 @@ namespace BP.MapSystem
             // Check if clicked node is a child of the current node
             if (_currentNode.ChildNodes.Contains(clickedNode))
             {
+                _currentTraversalSteps++;
                 TraversePath(clickedNode);
                 Debug.Log($"Moved to Level {_currentNode.Level}, Index {_currentNode.Index}");
                 return;

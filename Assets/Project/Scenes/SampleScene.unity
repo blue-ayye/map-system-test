@@ -329,11 +329,12 @@ MonoBehaviour:
   _mapGridGenerator: {fileID: 437789670}
   _mapPathGenerator: {fileID: 437789671}
   _mapNodeTypeAssigner: {fileID: 437789672}
-  _playerInputSeed: 1865619447
+  _playerInputSeed: 1698927251
   _usePlayerInputSeed: 1
   _generationAttempts: 100
   <GeneratedSeed>k__BackingField: 0
   _canTraverseVisitedNodes: 1
+  _maxTraversalSteps: -1
 --- !u!4 &437789669
 Transform:
   m_ObjectHideFlags: 0
@@ -920,6 +921,7 @@ MonoBehaviour:
   _generationAttempts: 1
   <GeneratedSeed>k__BackingField: 0
   _canTraverseVisitedNodes: 1
+  _maxTraversalSteps: -1
 --- !u!4 &1061727599
 Transform:
   m_ObjectHideFlags: 0
