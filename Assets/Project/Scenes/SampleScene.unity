@@ -222,6 +222,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2040349252}
+  - {fileID: 749590720}
   - {fileID: 1623811994}
   m_Father: {fileID: 1061727599}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -347,6 +348,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 148710049}
+  - {fileID: 1666124770}
   - {fileID: 1373344873}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -386,7 +388,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _uniquePaths: 3
   _totalPaths: 7
-  _pathViewParent: {fileID: 1373344873}
+  _pathViewParent: {fileID: 1666124770}
   _pathViewPrefab: {fileID: 7287899494070656532, guid: ab7a40d863718f045adcf25ca38ae32d, type: 3}
 --- !u!114 &437789672
 MonoBehaviour:
@@ -660,6 +662,41 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &749590719
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 749590720}
+  m_Layer: 5
+  m_Name: Path Parent
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &749590720
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 749590719}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 437299789}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -839,7 +876,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _uniquePaths: 3
   _totalPaths: 7
-  _pathViewParent: {fileID: 1623811994}
+  _pathViewParent: {fileID: 749590720}
   _pathViewPrefab: {fileID: 5681419231260104886, guid: 2d94f5f2301851043ad8e5c41c019674, type: 3}
 --- !u!114 &1061727597
 MonoBehaviour:
@@ -857,8 +894,8 @@ MonoBehaviour:
   _nodesPerLevel: 7
   _mapAreaBoundsDefiner: {fileID: 121739639}
   _direction: 2
-  _nodeSpaceJitterAmount: 0
-  _levelSpaceJitterAmount: 0
+  _nodeSpaceJitterAmount: 0.25
+  _levelSpaceJitterAmount: 0.25
   _applyJitter: 1
   _nodeViewParent: {fileID: 1623811994}
   _nodeViewPrefab: {fileID: 6679694359499727540, guid: e00ed0d628de3c9468fdd37c5b6e723a, type: 3}
@@ -1086,6 +1123,37 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1666124769
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1666124770}
+  m_Layer: 0
+  m_Name: Path Parent - DONT SCALE
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1666124770
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1666124769}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 437789669}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2040349251
 GameObject:
   m_ObjectHideFlags: 0
