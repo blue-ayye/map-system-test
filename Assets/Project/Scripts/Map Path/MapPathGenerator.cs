@@ -19,6 +19,8 @@ namespace BP.MapSystem
         private System.Random _pathingRNG;
         private Dictionary<int,List<MapNode>> _generatedPaths = new Dictionary<int,List<MapNode>>();
 
+        public List<IMapPathView> PathViews { get; private set; } = new List<IMapPathView>();
+
         public void Initialize(MapNode[,] mapGrid, System.Random pRNG)
         {
             _mapGrid = mapGrid;
@@ -94,6 +96,7 @@ namespace BP.MapSystem
                         pathViewTransform.localPosition = Vector3.zero; // Reset local position to avoid unintended offsets
                         var pathView = pathViewTransform.GetComponent<IMapPathView>();
                         pathView.DrawPath(node, childNode);
+                        PathViews.Add(pathView);
                     }
                 }
             }

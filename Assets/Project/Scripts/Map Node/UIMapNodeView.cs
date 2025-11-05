@@ -10,6 +10,8 @@ namespace BP.MapSystem
         public event Action<MapNode> OnNodeClicked;
 
         [SerializeField] private Image _iconImage;
+        [SerializeField] private Transform _visitedStateIndicator;
+        [SerializeField] private Transform _selectedStateIndicator;
 
         private MapNode _mapNode;
 
@@ -21,6 +23,22 @@ namespace BP.MapSystem
 
             if (_iconImage != null)
                 _iconImage.sprite = node.NodeType.DisplayIcon;
+            if (_visitedStateIndicator != null)
+                _visitedStateIndicator.gameObject.SetActive(false);
+            if (_selectedStateIndicator != null)
+                _selectedStateIndicator.gameObject.SetActive(false);
+        }
+
+        public void SetActiveVisitedState(bool state)
+        {
+            if (_visitedStateIndicator != null)
+                _visitedStateIndicator.gameObject.SetActive(state);
+        }
+
+        public void SetActiveSelectedState(bool state)
+        {
+            if (_selectedStateIndicator != null)
+                _selectedStateIndicator.gameObject.SetActive(state);
         }
 
         public void OnPointerClick(PointerEventData eventData)

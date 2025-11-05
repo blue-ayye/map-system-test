@@ -9,5 +9,7 @@ namespace BP.MapSystem
         Transform Transform { get; }
 
         void Initialize(MapNode node);
+        void SetActiveVisitedState(bool state);
+        void SetActiveSelectedState(bool state);
     }
 }

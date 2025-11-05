@@ -5,10 +5,16 @@ namespace BP.MapSystem
     [RequireComponent(typeof(LineRenderer))]
     public class WorldMapPathView : MonoBehaviour, IMapPathView
     {
+        public MapNode FromNode { get; private set; }
+        public MapNode ToNode { get; private set; }
+
         public void DrawPath(MapNode fromNode, MapNode toNode, Color? pathColor = null)
         {
             if (fromNode == null || toNode == null) return;
             if (fromNode.NodeView == null || toNode.NodeView == null) return;
+
+            FromNode = fromNode;
+            ToNode = toNode;
 
             var startLocalPos = transform.InverseTransformPoint(fromNode.Position);
             var endLocalPos = transform.InverseTransformPoint(toNode.Position);

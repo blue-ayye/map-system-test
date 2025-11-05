@@ -177,11 +177,31 @@ namespace BP.MapSystem
 
         private void TraversePath(MapNode clickedNode)
         {
-            _currentNode = clickedNode;
+            // Mark node as visited
             if (!_visitedNodes.Contains(clickedNode))
             {
+                clickedNode.NodeView.SetActiveVisitedState(true);
                 _visitedNodes.Add(clickedNode);
             }
+
+            // Mark path as traversed
+            IMapPathView pathView = null;
+            foreach (var pv in _mapPathGenerator.PathViews)
+            {
+                if (pv.FromNode == _currentNode && pv.ToNode == clickedNode)
+                {
+                    pathView = pv;
+                    break;
+                }
+            }
+            pathView?.ChangePathColor(Color.yellow); // Change color to indicate traversal
+
+            // Update current node selection state
+            _currentNode?.NodeView.SetActiveSelectedState(false);
+            clickedNode.NodeView.SetActiveSelectedState(true);
+
+            // Update current node reference
+            _currentNode = clickedNode;
         }
     }
 }
