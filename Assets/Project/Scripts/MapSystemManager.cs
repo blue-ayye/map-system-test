@@ -129,6 +129,8 @@ namespace BP.MapSystem
         {
             _mapGridGenerator.ClearNodeViews();
             _mapPathGenerator.ClearPathViews();
+            _currentNode = null;
+            _visitedNodes.Clear();
 
             _mapGridGenerator.CreateNodeViews();
             _mapPathGenerator.CreatePathViews();
