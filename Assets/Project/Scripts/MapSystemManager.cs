@@ -33,48 +33,51 @@ namespace BP.MapSystem
                 attempts++;
             } while (attempts < _generationAttempts && seedViolations[GeneratedSeed] > 0 && !_usePlayerInputSeed);
 
-            // If current seed has violations, pick the least violating seed from previous attempts
             if (seedViolations[GeneratedSeed] > 0)
             {
-                if (!_usePlayerInputSeed)
-                {
-                    int bestSeed = GeneratedSeed;
-                    int leastViolations = seedViolations[GeneratedSeed];
-                    foreach (var kvp in seedViolations)
-                    {
-                        if (kvp.Value < leastViolations)
-                        {
-                            leastViolations = kvp.Value;
-                            bestSeed = kvp.Key;
-                        }
-                    }
-
-                    GeneratedSeed = bestSeed;
-
-                    // Re-generate the map with the best seed
-                    GenerateMap();
-                    _mapNodeTypeAssigner.CheckTypeRulesValidity(true);
-
-                    Debug.LogWarning($"Could not generate a valid map within {_generationAttempts} attempts. " +
-                                     $"Using seed {GeneratedSeed} with {leastViolations} rule violations.");
-                }
-                else
-                {
-                    _mapNodeTypeAssigner.CheckTypeRulesValidity(true);
-                    Debug.LogWarning($"You're using a custom seed {_playerInputSeed} that resulted in " +
-                                     $"{seedViolations[GeneratedSeed]} rule violations. " +
-                                     $"Consider using a different seed or toggle off the custom seed option" +
-                                     $" to allow automatic seed generation with least violations.");
-                }
+                RegenerateMapWithBestSeed(seedViolations);
             }
 
             GenerateMapVisuals();
 
-            // Traversal controller depends on path views being created so initialize it after creating visuals
+            // NOTE: Initialize traversal controller after map generation and visuals creation
+            // It depends on the onClick events of the node views
             _mapTraversalController.Initialize(_mapGrid, _mapPathGenerator.PathViews);
         }
 
+        private void RegenerateMapWithBestSeed(Dictionary<int, int> seedViolationDict)
+        {
+            if (_usePlayerInputSeed)
+            {
+                _mapNodeTypeAssigner.CheckTypeRulesValidity(true);
+                Debug.LogWarning($"You're using a custom seed {_playerInputSeed} that resulted in " +
+                                 $"{seedViolationDict[GeneratedSeed]} rule violations. " +
+                                 $"Consider using a different seed or toggle off the custom seed option" +
+                                 $" to allow automatic seed generation with least violations.");
+            }
+            else
+            {
+                int bestSeed = GeneratedSeed;
+                int leastViolations = seedViolationDict[GeneratedSeed];
+                foreach (var kvp in seedViolationDict)
+                {
+                    if (kvp.Value < leastViolations)
+                    {
+                        leastViolations = kvp.Value;
+                        bestSeed = kvp.Key;
+                    }
+                }
 
+                GeneratedSeed = bestSeed;
+
+                // Re-generate the map with the best seed
+                GenerateMap();
+                _mapNodeTypeAssigner.CheckTypeRulesValidity(true);
+
+                Debug.LogWarning($"Could not generate a valid map within {_generationAttempts} attempts. " +
+                                 $"Using seed {GeneratedSeed} with {leastViolations} rule violations.");
+            }
+        }
 
         private void GenerateSeed()
         {

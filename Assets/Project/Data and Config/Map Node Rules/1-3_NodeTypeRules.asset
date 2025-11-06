@@ -31,4 +31,4 @@ MonoBehaviour:
       Value: 10
     - Key: {fileID: 11400000, guid: 150bf7cde51c8f7468b55f2d280af3d3, type: 2}
       Value: 10
-  _siblingNodeTypeConstraint: 1
+  _siblingNodeTypeConstraint: 0
