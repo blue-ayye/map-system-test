@@ -307,6 +307,7 @@ GameObject:
   - component: {fileID: 437789670}
   - component: {fileID: 437789671}
   - component: {fileID: 437789672}
+  - component: {fileID: 437789673}
   m_Layer: 0
   m_Name: Map Generator 3D
   m_TagString: Untagged
@@ -329,12 +330,11 @@ MonoBehaviour:
   _mapGridGenerator: {fileID: 437789670}
   _mapPathGenerator: {fileID: 437789671}
   _mapNodeTypeAssigner: {fileID: 437789672}
+  _mapTraversalController: {fileID: 437789673}
   _playerInputSeed: 1698927251
   _usePlayerInputSeed: 1
   _generationAttempts: 100
   <GeneratedSeed>k__BackingField: 0
-  _canTraverseVisitedNodes: 1
-  _maxTraversalSteps: -1
 --- !u!4 &437789669
 Transform:
   m_ObjectHideFlags: 0
@@ -410,6 +410,20 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9cfb9b045eb55c94a91ddee2f77859bd, type: 2}
   - {fileID: 11400000, guid: ecec3a55574489441bdce085933f2f7c, type: 2}
   _defaultNodeType: {fileID: 11400000, guid: 21f81f166ec7eef41990617276d9a4c2, type: 2}
+--- !u!114 &437789673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 437789667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86cbc8f0764f48248a8f8caa8ce74c8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _canTraverseVisitedNodes: 1
+  _maxTraversalSteps: 10
 --- !u!1 &570507455
 GameObject:
   m_ObjectHideFlags: 0
@@ -837,6 +851,7 @@ GameObject:
   - component: {fileID: 1061727597}
   - component: {fileID: 1061727596}
   - component: {fileID: 1061727595}
+  - component: {fileID: 1061727600}
   m_Layer: 0
   m_Name: Map Generator UI
   m_TagString: Untagged
@@ -916,12 +931,11 @@ MonoBehaviour:
   _mapGridGenerator: {fileID: 1061727597}
   _mapPathGenerator: {fileID: 1061727596}
   _mapNodeTypeAssigner: {fileID: 1061727595}
+  _mapTraversalController: {fileID: 1061727600}
   _playerInputSeed: 817167126
   _usePlayerInputSeed: 1
   _generationAttempts: 1
   <GeneratedSeed>k__BackingField: 0
-  _canTraverseVisitedNodes: 1
-  _maxTraversalSteps: -1
 --- !u!4 &1061727599
 Transform:
   m_ObjectHideFlags: 0
@@ -938,6 +952,20 @@ Transform:
   - {fileID: 437299789}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1061727600
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1061727594}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86cbc8f0764f48248a8f8caa8ce74c8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _canTraverseVisitedNodes: 1
+  _maxTraversalSteps: -1
 --- !u!1 &1373344872
 GameObject:
   m_ObjectHideFlags: 0
