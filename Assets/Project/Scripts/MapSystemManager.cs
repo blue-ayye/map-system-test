@@ -129,6 +129,9 @@ namespace BP.MapSystem
         [SerializeField] private string _saveFolder = "Maps/Save";
         [SerializeField] private string _fileName = "GeneratedMapData.json";
 
+        private string _folderPath => System.IO.Path.Combine(Application.persistentDataPath, _saveFolder);
+        private string _fullFilePath => System.IO.Path.Combine(_folderPath, _fileName);
+
         [ContextMenu("Save Map Data to JSON")]
         private void SaveMapDataToJson()
         {
@@ -137,19 +140,34 @@ namespace BP.MapSystem
                 Debug.LogError("Map grid is null. Generate the map before saving.");
                 return;
             }
-            SaveMapData(_mapGrid, GeneratedSeed, _saveFolder, _fileName);
+            SaveMapData(_mapGrid, GeneratedSeed);
             Debug.Log($"Map data saved to {_saveFolder}/{_fileName}");
         }
 
-        private void SaveMapData(MapNode[,] mapGrid, int seed, string folderPath, string fileName)
+        private void SaveMapData(MapNode[,] mapGrid, int seed)
         {
             MapData mapDataContainer = new MapData
             {
                 Seed = seed,
-                Nodes = new List<MapNodeData>(),
-                IsCustomSeedUsed = _isCustomSeedUsed
+                Nodes = GetNodeDataList(mapGrid),
+                IsCustomSeedUsed = _isCustomSeedUsed,
+                MapTraversalData = new MapTraversalData(_mapTraversalController.VisitedNodes,
+                                                        _mapTraversalController.CurrentTraversalSteps,
+                                                        _mapTraversalController.CurrentNode)
             };
 
+            string json = JsonUtility.ToJson(mapDataContainer, true);
+            if (!System.IO.Directory.Exists(_folderPath))
+            {
+                System.IO.Directory.CreateDirectory(_folderPath);
+            }
+
+            System.IO.File.WriteAllText(_fullFilePath, json);
+        }
+
+        private List<MapNodeData> GetNodeDataList(MapNode[,] mapGrid)
+        {
+            List<MapNodeData> nodeDataList = new List<MapNodeData>();
             int levels = mapGrid.GetLength(0);
             int nodesPerLevel = mapGrid.GetLength(1);
             for (int level = 0; level < levels; level++)
@@ -165,64 +183,59 @@ namespace BP.MapSystem
                             Index = node.Index,
                             NodeTypeID = node.NodeType.ID
                         };
-                        mapDataContainer.Nodes.Add(nodeData);
+                        nodeDataList.Add(nodeData);
                     }
                 }
             }
-
-            string json = JsonUtility.ToJson(mapDataContainer, true);
-            string fullPath = System.IO.Path.Combine(Application.dataPath, folderPath);
-            if (!System.IO.Directory.Exists(fullPath))
-            {
-                System.IO.Directory.CreateDirectory(fullPath);
-            }
-
-            System.IO.File.WriteAllText(System.IO.Path.Combine(fullPath, fileName), json);
+            return nodeDataList;
         }
+
+        private MapData _mapData;
 
         [ContextMenu("Load Map Data from JSON")]
         private void LoadMapDataFromJson()
         {
-            string fullPath = System.IO.Path.Combine(Application.dataPath, _saveFolder, _fileName);
-            if (!System.IO.File.Exists(fullPath))
+            if (!System.IO.File.Exists(_fullFilePath))
             {
-                Debug.LogError($"Map data file not found at {fullPath}");
+                Debug.LogError($"Map data file not found at {_fullFilePath}");
                 return;
             }
-            string json = System.IO.File.ReadAllText(fullPath);
-            MapData mapDataContainer = JsonUtility.FromJson<MapData>(json);
-            LoadMapData(mapDataContainer);
+            string json = System.IO.File.ReadAllText(_fullFilePath);
+            _mapData = JsonUtility.FromJson<MapData>(json);
             Debug.Log($"Map data loaded from {_saveFolder}/{_fileName}");
+
+            LoadMapData();
         }
 
-        private void LoadMapData(MapData mapData)
+        private void LoadMapData()
         {
-            if (mapData == null)
+            if (_mapData == null)
             {
                 Debug.LogError("Map data is null. Cannot load map.");
                 return;
             }
 
-            if (mapData.IsCustomSeedUsed)
+            if (_mapData.IsCustomSeedUsed)
             {
                 _usePlayerInputSeed = true;
-                _playerInputSeed = mapData.Seed;
+                _playerInputSeed = _mapData.Seed;
             }
             else
             {
                 _usePlayerInputSeed = false;
             }
 
-            GeneratedSeed = mapData.Seed;
+            GeneratedSeed = _mapData.Seed;
             GenerateMap();
             // Reassign node types based on loaded data just to be sure
-            LoadNodeType(mapData);
+            LoadNodeType();
 
             GenerateMapVisuals();
             _mapTraversalController.Initialize(_mapGrid, _mapPathGenerator.PathViews);
+            _mapTraversalController.SetMapTraversalData(_mapData.MapTraversalData);
         }
 
-        private void LoadNodeType(MapData mapData)
+        private void LoadNodeType()
         {
             for (int level = 0; level < _mapGrid.GetLength(0); level++)
             {
@@ -232,7 +245,7 @@ namespace BP.MapSystem
                     if (node == null)
                         continue;
 
-                    MapNodeData loadedNodeData = mapData.Nodes.Find(n => n.Level == level && n.Index == index);
+                    MapNodeData loadedNodeData = _mapData.Nodes.Find(n => n.Level == level && n.Index == index);
                     if (loadedNodeData == null)
                         continue;
 
@@ -250,15 +263,14 @@ namespace BP.MapSystem
         }
 
         [ContextMenu("Open Save Folder")]
-        private void OpenSaveFileLocation()
+        private void OpenSaveFolder()
         {
-            string fullPath = System.IO.Path.Combine(Application.dataPath, _saveFolder);
-            if (!System.IO.Directory.Exists(fullPath))
+            if (!System.IO.Directory.Exists(_folderPath))
             {
                 Debug.LogError("Save folder does not exist.");
                 return;
             }
-            Application.OpenURL(fullPath);
+            Application.OpenURL(_folderPath);
         }
     }
 
@@ -268,6 +280,7 @@ namespace BP.MapSystem
         public int Seed;
         public List<MapNodeData> Nodes;
         public bool IsCustomSeedUsed;
+        public MapTraversalData MapTraversalData;
     }
 
     [System.Serializable]
@@ -276,5 +289,38 @@ namespace BP.MapSystem
         public int Level;
         public int Index;
         public string NodeTypeID;
+    }
+
+    [System.Serializable]
+    public class MapTraversalData
+    {
+        public List<MapNodeData> VisitedNodeDataList = new List<MapNodeData>();
+        public MapNodeData CurrentNodeData = null;
+        public int TraversalStepsTaken;
+
+        public MapTraversalData(List<MapNode> visitedNodes, int currentSteps, MapNode currentNode)
+        {
+            foreach (var node in visitedNodes)
+            {
+                VisitedNodeDataList.Add(new MapNodeData
+                {
+                    Level = node.Level,
+                    Index = node.Index,
+                    NodeTypeID = node.NodeType.ID
+                });
+            }
+
+            if (currentNode != null)
+            {
+                CurrentNodeData = new MapNodeData
+                {
+                    Level = currentNode.Level,
+                    Index = currentNode.Index,
+                    NodeTypeID = currentNode.NodeType.ID
+                };
+            }
+
+            TraversalStepsTaken = currentSteps;
+        }
     }
 }

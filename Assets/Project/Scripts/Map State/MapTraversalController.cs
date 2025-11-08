@@ -15,6 +15,10 @@ namespace BP.MapSystem
         private List<IMapPathView> _pathViews = new List<IMapPathView>();
         private MapNode[,] _mapGrid;
 
+        public List<MapNode> VisitedNodes => _visitedNodes;
+        public int CurrentTraversalSteps => _currentTraversalSteps;
+        public MapNode CurrentNode => _currentNode;
+
         private void OnDestroy()
         {
             foreach (var node in _mapGrid)
@@ -30,6 +34,49 @@ namespace BP.MapSystem
             _mapGrid = mapGrid;
             _pathViews = pathViews;
             SubscribeToMapNodeEvents();
+        }
+
+        public void SetMapTraversalData(MapTraversalData traversalData)
+        {
+            // Populate visited nodes based on traversal data
+            _visitedNodes.Clear();
+
+            foreach (var node in traversalData.VisitedNodeDataList)
+            {
+                var mapNode = _mapGrid[node.Level, node.Index];
+                if (mapNode == null)
+                    continue;
+
+                _visitedNodes.Add(mapNode);
+            }
+
+            foreach (var node in _visitedNodes)
+            {
+                node.NodeView.SetActiveVisitedState(true);
+            }
+
+            foreach (var pathView in _pathViews)
+            {
+                if (_visitedNodes.Contains(pathView.FromNode) && _visitedNodes.Contains(pathView.ToNode))
+                {
+                    pathView.ChangePathColor(Color.yellow); // Indicate traversed paths
+                }
+            }
+
+            // Set current node
+            _currentNode = _mapGrid[traversalData.CurrentNodeData.Level, traversalData.CurrentNodeData.Index];
+
+            if (_currentNode == null && _visitedNodes.Count == 0)
+            {
+                _currentNode = _visitedNodes[^1]; // Last visited node just in case of data mismatch
+            }
+
+            if (_currentNode != null)
+            {
+                _currentNode.NodeView.SetActiveSelectedState(true);
+            }
+
+            _currentTraversalSteps = traversalData.TraversalStepsTaken;
         }
 
         public void ResetTraversalState()

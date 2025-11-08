@@ -335,6 +335,8 @@ MonoBehaviour:
   _usePlayerInputSeed: 1
   _generationAttempts: 100
   <GeneratedSeed>k__BackingField: 0
+  _saveFolder: Maps/Save
+  _fileName: GeneratedMapData.json
 --- !u!4 &437789669
 Transform:
   m_ObjectHideFlags: 0
@@ -936,6 +938,8 @@ MonoBehaviour:
   _usePlayerInputSeed: 1
   _generationAttempts: 1
   <GeneratedSeed>k__BackingField: 0
+  _saveFolder: Maps/Save
+  _fileName: GeneratedMapData.json
 --- !u!4 &1061727599
 Transform:
   m_ObjectHideFlags: 0
