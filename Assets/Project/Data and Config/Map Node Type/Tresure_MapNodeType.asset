@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d5a8462403aae04191df11eb98f05f7, type: 3}
   m_Name: Tresure_MapNodeType
   m_EditorClassIdentifier: 
+  _typeID: tresure
   _displayName: Tresure
   _displayIcon: {fileID: 21300000, guid: 9f61353743bde07408202aed0c056be7, type: 3}

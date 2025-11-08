@@ -5,17 +5,21 @@ namespace BP.MapSystem
     [CreateAssetMenu(fileName = "MapNodeType", menuName = "Map System/Map Node Type")]
     public class MapNodeTypeSO : ScriptableObject
     {
+        [SerializeField] private string _typeID;
         [SerializeField] private string _displayName;
         [SerializeField] private Sprite _displayIcon;
 
         public string DisplayName => _displayName;
         public Sprite DisplayIcon => _displayIcon;
+        public string ID => _typeID;
 
 #if UNITY_EDITOR
 
         [ContextMenu("Rename File to Match Display Name")]
         public void RenameFile()
         {
+            _typeID = _displayName.Replace(" ", "_").ToLower();
+
             string suffix = "_MapNodeType";
             string assetPath = UnityEditor.AssetDatabase.GetAssetPath(this);
             string newFileName = _displayName.Replace(" ", "") + suffix;

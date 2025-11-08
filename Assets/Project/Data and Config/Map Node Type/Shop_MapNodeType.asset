@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d5a8462403aae04191df11eb98f05f7, type: 3}
   m_Name: Shop_MapNodeType
   m_EditorClassIdentifier: 
+  _typeID: shop
   _displayName: Shop
   _displayIcon: {fileID: 21300000, guid: 0b99aa1196d37e746be81e4c14b89fe4, type: 3}

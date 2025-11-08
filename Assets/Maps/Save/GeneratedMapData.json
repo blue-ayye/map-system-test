@@ -1,0 +1,236 @@
+{
+    "Seed": 1698927251,
+    "Nodes": [
+        {
+            "Level": 0,
+            "Index": 0,
+            "NodeTypeID": "shop"
+        },
+        {
+            "Level": 0,
+            "Index": 2,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 0,
+            "Index": 3,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 0,
+            "Index": 4,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 0,
+            "Index": 5,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 0,
+            "Index": 6,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 1,
+            "Index": 0,
+            "NodeTypeID": "unknown"
+        },
+        {
+            "Level": 1,
+            "Index": 1,
+            "NodeTypeID": "shop"
+        },
+        {
+            "Level": 1,
+            "Index": 2,
+            "NodeTypeID": "shop"
+        },
+        {
+            "Level": 1,
+            "Index": 5,
+            "NodeTypeID": "shop"
+        },
+        {
+            "Level": 1,
+            "Index": 6,
+            "NodeTypeID": "unknown"
+        },
+        {
+            "Level": 2,
+            "Index": 1,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 2,
+            "Index": 2,
+            "NodeTypeID": "unknown"
+        },
+        {
+            "Level": 2,
+            "Index": 3,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 2,
+            "Index": 4,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 2,
+            "Index": 6,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 3,
+            "Index": 0,
+            "NodeTypeID": "unknown"
+        },
+        {
+            "Level": 3,
+            "Index": 2,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 3,
+            "Index": 4,
+            "NodeTypeID": "unknown"
+        },
+        {
+            "Level": 3,
+            "Index": 5,
+            "NodeTypeID": "unknown"
+        },
+        {
+            "Level": 3,
+            "Index": 6,
+            "NodeTypeID": "shop"
+        },
+        {
+            "Level": 4,
+            "Index": 1,
+            "NodeTypeID": "tresure"
+        },
+        {
+            "Level": 4,
+            "Index": 3,
+            "NodeTypeID": "tresure"
+        },
+        {
+            "Level": 4,
+            "Index": 4,
+            "NodeTypeID": "tresure"
+        },
+        {
+            "Level": 4,
+            "Index": 5,
+            "NodeTypeID": "tresure"
+        },
+        {
+            "Level": 4,
+            "Index": 6,
+            "NodeTypeID": "tresure"
+        },
+        {
+            "Level": 5,
+            "Index": 0,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 5,
+            "Index": 1,
+            "NodeTypeID": "unknown"
+        },
+        {
+            "Level": 5,
+            "Index": 4,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 5,
+            "Index": 5,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 5,
+            "Index": 6,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 6,
+            "Index": 0,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 6,
+            "Index": 2,
+            "NodeTypeID": "elite"
+        },
+        {
+            "Level": 6,
+            "Index": 3,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 6,
+            "Index": 4,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 6,
+            "Index": 5,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 6,
+            "Index": 6,
+            "NodeTypeID": "unknown"
+        },
+        {
+            "Level": 7,
+            "Index": 0,
+            "NodeTypeID": "elite"
+        },
+        {
+            "Level": 7,
+            "Index": 2,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 7,
+            "Index": 5,
+            "NodeTypeID": "elite"
+        },
+        {
+            "Level": 7,
+            "Index": 6,
+            "NodeTypeID": "monster"
+        },
+        {
+            "Level": 8,
+            "Index": 0,
+            "NodeTypeID": "rest"
+        },
+        {
+            "Level": 8,
+            "Index": 1,
+            "NodeTypeID": "rest"
+        },
+        {
+            "Level": 8,
+            "Index": 3,
+            "NodeTypeID": "rest"
+        },
+        {
+            "Level": 8,
+            "Index": 4,
+            "NodeTypeID": "rest"
+        },
+        {
+            "Level": 8,
+            "Index": 5,
+            "NodeTypeID": "rest"
+        }
+    ],
+    "IsCustomSeedUsed": true
+}

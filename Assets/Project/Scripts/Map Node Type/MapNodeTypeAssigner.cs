@@ -32,6 +32,22 @@ namespace BP.MapSystem
             SetNodeTypeByRules(normalLevels);
         }
 
+        public MapNodeTypeSO GetNodeTypeByID(string nodeTypeID)
+        {
+            foreach (var rule in _nodeTypeRules)
+            {
+                foreach (var nodeType in rule.NodeTypeWeights.Keys)
+                {
+                    if (nodeType.ID == nodeTypeID)
+                    {
+                        return nodeType;
+                    }
+                }
+            }
+            Debug.LogWarning($"Node type with ID '{nodeTypeID}' not found in any rules. Returning default node type.");
+            return _defaultNodeType;
+        }
+
         public int CheckTypeRulesValidity(bool logging = false)
         {
             int violations = 0;

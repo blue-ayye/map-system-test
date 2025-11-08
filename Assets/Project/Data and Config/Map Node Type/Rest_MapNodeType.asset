@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d5a8462403aae04191df11eb98f05f7, type: 3}
   m_Name: Rest_MapNodeType
   m_EditorClassIdentifier: 
+  _typeID: rest
   _displayName: Rest
   _displayIcon: {fileID: 21300000, guid: 3e40945b19425b442b4e32c90386598a, type: 3}
