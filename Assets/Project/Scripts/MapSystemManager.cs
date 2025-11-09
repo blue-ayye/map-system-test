@@ -9,6 +9,7 @@ namespace BP.MapSystem
         [SerializeField] private MapPathGenerator _mapPathGenerator;
         [SerializeField] private MapNodeTypeAssigner _mapNodeTypeAssigner;
         [SerializeField] private MapTraversalController _mapTraversalController;
+        [SerializeField] private MapDataHandler _mapDataHandler;
         [SerializeField] private int _playerInputSeed = 0;
         [SerializeField] private bool _usePlayerInputSeed = false;
         [SerializeField] private int _generationAttempts = 1;
@@ -126,201 +127,57 @@ namespace BP.MapSystem
             _mapPathGenerator.CreatePathViews();
         }
 
-        [SerializeField] private string _saveFolder = "Maps/Save";
-        [SerializeField] private string _fileName = "GeneratedMapData.json";
-
-        private string _folderPath => System.IO.Path.Combine(Application.persistentDataPath, _saveFolder);
-        private string _fullFilePath => System.IO.Path.Combine(_folderPath, _fileName);
-
-        [ContextMenu("Save Map Data to JSON")]
-        private void SaveMapDataToJson()
+        [ContextMenu("Map Data/Save")]
+        private void SaveMap()
         {
-            if (_mapGrid == null)
-            {
-                Debug.LogError("Map grid is null. Generate the map before saving.");
-                return;
-            }
-            SaveMapData(_mapGrid, GeneratedSeed);
-            Debug.Log($"Map data saved to {_saveFolder}/{_fileName}");
+            var mapData = new MapData();
+            WriteTo(mapData);
+            _mapGridGenerator.WriteTo(mapData);
+            _mapTraversalController.WriteTo(mapData);
+
+            _mapDataHandler.SaveMapData(mapData);
         }
 
-        private void SaveMapData(MapNode[,] mapGrid, int seed)
+        [ContextMenu("Map Data/Load")]
+        private void LoadMap()
         {
-            MapData mapDataContainer = new MapData
-            {
-                Seed = seed,
-                Nodes = GetNodeDataList(mapGrid),
-                IsCustomSeedUsed = _isCustomSeedUsed,
-                MapTraversalData = new MapTraversalData(_mapTraversalController.VisitedNodes,
-                                                        _mapTraversalController.CurrentTraversalSteps,
-                                                        _mapTraversalController.CurrentNode)
-            };
-
-            string json = JsonUtility.ToJson(mapDataContainer, true);
-            if (!System.IO.Directory.Exists(_folderPath))
-            {
-                System.IO.Directory.CreateDirectory(_folderPath);
-            }
-
-            System.IO.File.WriteAllText(_fullFilePath, json);
-        }
-
-        private List<MapNodeData> GetNodeDataList(MapNode[,] mapGrid)
-        {
-            List<MapNodeData> nodeDataList = new List<MapNodeData>();
-            int levels = mapGrid.GetLength(0);
-            int nodesPerLevel = mapGrid.GetLength(1);
-            for (int level = 0; level < levels; level++)
-            {
-                for (int index = 0; index < nodesPerLevel; index++)
-                {
-                    MapNode node = mapGrid[level, index];
-                    if (node != null && node.NodeType != null)
-                    {
-                        MapNodeData nodeData = new MapNodeData
-                        {
-                            Level = node.Level,
-                            Index = node.Index,
-                            NodeTypeID = node.NodeType.ID
-                        };
-                        nodeDataList.Add(nodeData);
-                    }
-                }
-            }
-            return nodeDataList;
-        }
-
-        private MapData _mapData;
-
-        [ContextMenu("Load Map Data from JSON")]
-        private void LoadMapDataFromJson()
-        {
-            if (!System.IO.File.Exists(_fullFilePath))
-            {
-                Debug.LogError($"Map data file not found at {_fullFilePath}");
-                return;
-            }
-            string json = System.IO.File.ReadAllText(_fullFilePath);
-            _mapData = JsonUtility.FromJson<MapData>(json);
-            Debug.Log($"Map data loaded from {_saveFolder}/{_fileName}");
-
-            LoadMapData();
-        }
-
-        private void LoadMapData()
-        {
-            if (_mapData == null)
+            var mapData = _mapDataHandler.LoadMapData();
+            if (mapData == null)
             {
                 Debug.LogError("Map data is null. Cannot load map.");
                 return;
             }
 
-            if (_mapData.IsCustomSeedUsed)
+            ReadFrom(mapData);
+            GenerateMap();
+
+            // Reassign node types based on loaded data just to be sure
+            _mapNodeTypeAssigner.ReadFrom(mapData);
+
+            GenerateMapVisuals();
+
+            _mapTraversalController.Initialize(_mapGrid, _mapPathGenerator.PathViews);
+            _mapTraversalController.ReadFrom(mapData);
+        }
+
+        private void WriteTo(MapData mapData)
+        {
+            mapData.Seed = GeneratedSeed;
+            mapData.IsCustomSeedUsed = _isCustomSeedUsed;
+        }
+
+        private void ReadFrom(MapData mapData)
+        {
+            if (mapData.IsCustomSeedUsed)
             {
                 _usePlayerInputSeed = true;
-                _playerInputSeed = _mapData.Seed;
+                _playerInputSeed = mapData.Seed;
             }
             else
             {
                 _usePlayerInputSeed = false;
             }
-
-            GeneratedSeed = _mapData.Seed;
-            GenerateMap();
-            // Reassign node types based on loaded data just to be sure
-            LoadNodeType();
-
-            GenerateMapVisuals();
-            _mapTraversalController.Initialize(_mapGrid, _mapPathGenerator.PathViews);
-            _mapTraversalController.SetMapTraversalData(_mapData.MapTraversalData);
-        }
-
-        private void LoadNodeType()
-        {
-            for (int level = 0; level < _mapGrid.GetLength(0); level++)
-            {
-                for (int index = 0; index < _mapGrid.GetLength(1); index++)
-                {
-                    MapNode node = _mapGrid[level, index];
-                    if (node == null)
-                        continue;
-
-                    MapNodeData loadedNodeData = _mapData.Nodes.Find(n => n.Level == level && n.Index == index);
-                    if (loadedNodeData == null)
-                        continue;
-
-                    var nodeType = _mapNodeTypeAssigner.GetNodeTypeByID(loadedNodeData.NodeTypeID);
-                    if (nodeType != null)
-                    {
-                        node.NodeType = nodeType;
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"Node type ID {loadedNodeData.NodeTypeID} not found for node at Level {level}, Index {index}.");
-                    }
-                }
-            }
-        }
-
-        [ContextMenu("Open Save Folder")]
-        private void OpenSaveFolder()
-        {
-            if (!System.IO.Directory.Exists(_folderPath))
-            {
-                Debug.LogError("Save folder does not exist.");
-                return;
-            }
-            Application.OpenURL(_folderPath);
-        }
-    }
-
-    [System.Serializable]
-    public class MapData
-    {
-        public int Seed;
-        public List<MapNodeData> Nodes;
-        public bool IsCustomSeedUsed;
-        public MapTraversalData MapTraversalData;
-    }
-
-    [System.Serializable]
-    public class MapNodeData
-    {
-        public int Level;
-        public int Index;
-        public string NodeTypeID;
-    }
-
-    [System.Serializable]
-    public class MapTraversalData
-    {
-        public List<MapNodeData> VisitedNodeDataList = new List<MapNodeData>();
-        public MapNodeData CurrentNodeData = null;
-        public int TraversalStepsTaken;
-
-        public MapTraversalData(List<MapNode> visitedNodes, int currentSteps, MapNode currentNode)
-        {
-            foreach (var node in visitedNodes)
-            {
-                VisitedNodeDataList.Add(new MapNodeData
-                {
-                    Level = node.Level,
-                    Index = node.Index,
-                    NodeTypeID = node.NodeType.ID
-                });
-            }
-
-            if (currentNode != null)
-            {
-                CurrentNodeData = new MapNodeData
-                {
-                    Level = currentNode.Level,
-                    Index = currentNode.Index,
-                    NodeTypeID = currentNode.NodeType.ID
-                };
-            }
-
-            TraversalStepsTaken = currentSteps;
+            GeneratedSeed = mapData.Seed;
         }
     }
 }

@@ -14,6 +14,33 @@ namespace BP.MapSystem
         private MapNode[,] _mapGrid;
         private int _nodesPerLevel;
 
+        public void ReadFrom(MapData mapData)
+        {
+            for (int level = 0; level < _mapGrid.GetLength(0); level++)
+            {
+                for (int index = 0; index < _mapGrid.GetLength(1); index++)
+                {
+                    MapNode node = _mapGrid[level, index];
+                    if (node == null)
+                        continue;
+
+                    MapNodeData loadedNodeData = mapData.MapNodeDataList.Find(n => n.Level == level && n.Index == index);
+                    if (loadedNodeData == null)
+                        continue;
+
+                    var nodeType = GetNodeTypeByID(loadedNodeData.NodeTypeID);
+                    if (nodeType != null)
+                    {
+                        node.NodeType = nodeType;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Node type ID {loadedNodeData.NodeTypeID} not found for node at Level {level}, Index {index}.");
+                    }
+                }
+            }
+        }
+
         public void Initialize(MapNode[,] mapGrid, System.Random nodeTypeRNG)
         {
             _mapGrid = mapGrid;

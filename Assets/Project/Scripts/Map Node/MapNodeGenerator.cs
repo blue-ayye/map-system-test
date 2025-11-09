@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BP.MapSystem
@@ -85,6 +87,23 @@ namespace BP.MapSystem
                 UnityEditor.Handles.Label(pos + Vector3.up * radius * 1.5f, $"L{i}");
             }
 #endif
+        }
+
+        public void WriteTo(MapData mapData)
+        {
+            var nodeDataList = new List<MapNodeData>();
+            for (int level = 0; level < _maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    var node = _mapGrid[level, nodeIndex];
+                    if (node == null) continue;
+
+                    var nodeData = new MapNodeData(node);
+                    nodeDataList.Add(nodeData);
+                }
+            }
+            mapData.MapNodeDataList = nodeDataList;
         }
 
         public void Initialize(System.Random jitterRNG)

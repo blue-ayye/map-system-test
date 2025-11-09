@@ -16,7 +16,7 @@ namespace BP.MapSystem
         private MapNode[,] _mapGrid;
 
         public List<MapNode> VisitedNodes => _visitedNodes;
-        public int CurrentTraversalSteps => _currentTraversalSteps;
+        public int TraversalStepsTaken => _currentTraversalSteps;
         public MapNode CurrentNode => _currentNode;
 
         private void OnDestroy()
@@ -29,6 +29,11 @@ namespace BP.MapSystem
             }
         }
 
+        public void WriteTo(MapData mapData)
+        {
+            mapData.MapTraversalData = new MapTraversalData(VisitedNodes, CurrentNode, TraversalStepsTaken);
+        }
+
         public void Initialize(MapNode[,] mapGrid, List<IMapPathView> pathViews)
         {
             _mapGrid = mapGrid;
@@ -36,8 +41,10 @@ namespace BP.MapSystem
             SubscribeToMapNodeEvents();
         }
 
-        public void SetMapTraversalData(MapTraversalData traversalData)
+        public void ReadFrom(MapData mapData)
         {
+            var traversalData = mapData.MapTraversalData;
+
             // Populate visited nodes based on traversal data
             _visitedNodes.Clear();
 
