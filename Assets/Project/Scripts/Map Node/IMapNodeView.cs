@@ -11,5 +11,6 @@ namespace BP.MapSystem
         void Initialize(MapNode node);
         void SetActiveVisitedState(bool state);
         void SetActiveSelectedState(bool state);
+        void AnimateSpawn(float delay, float duration);
     }
 }

@@ -336,6 +336,9 @@ MonoBehaviour:
   _playerInputSeed: 1698927251
   _usePlayerInputSeed: 0
   _generationAttempts: 100
+  _delayBetweenLevels: 0.25
+  _nodeSpawnDuration: 0.25
+  _pathDrawDuration: 0.25
   <GeneratedSeed>k__BackingField: 0
 --- !u!4 &437789669
 Transform:
@@ -953,6 +956,9 @@ MonoBehaviour:
   _playerInputSeed: 817167126
   _usePlayerInputSeed: 1
   _generationAttempts: 1
+  _delayBetweenLevels: 0
+  _nodeSpawnDuration: 0
+  _pathDrawDuration: 0
   <GeneratedSeed>k__BackingField: 0
 --- !u!4 &1061727599
 Transform:

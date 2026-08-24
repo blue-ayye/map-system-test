@@ -14,6 +14,11 @@ namespace BP.MapSystem
         [SerializeField] private bool _usePlayerInputSeed = false;
         [SerializeField] private int _generationAttempts = 1;
 
+        [Header("Animation Settings")]
+        [SerializeField] private float _delayBetweenLevels = 0;
+        [SerializeField] private float _nodeSpawnDuration = 0;
+        [SerializeField] private float _pathDrawDuration = 0;
+
         private MapNode[,] _mapGrid;
         private bool _isCustomSeedUsed;
 
@@ -47,6 +52,8 @@ namespace BP.MapSystem
             // NOTE: Initialize traversal controller after map generation and visuals creation
             // It depends on the onClick events of the node views
             _mapTraversalController.Initialize(_mapGrid, _mapPathGenerator.PathViews);
+
+            AnimateMapReveal();
         }
 
         private void RegenerateMapWithBestSeed(Dictionary<int, int> seedViolationDict)
@@ -129,6 +136,37 @@ namespace BP.MapSystem
 
             _mapGridGenerator.CreateNodeViews();
             _mapPathGenerator.CreatePathViews();
+        }
+
+        private void AnimateMapReveal()
+        {
+            // 1. Animate Nodes popping in
+            for (int level = 0; level < _mapGrid.GetLength(0); level++)
+            {
+                float baseLevelDelay = level * _delayBetweenLevels;
+
+                for (int index = 0; index < _mapGrid.GetLength(1); index++)
+                {
+                    var node = _mapGrid[level, index];
+                    if (node != null && node.NodeView != null)
+                    {
+                        // Add a tiny random jitter to the delay so nodes on the same level pop organically
+                        float nodeJitter = UnityEngine.Random.Range(0f, 0.1f);
+                        float delay = baseLevelDelay > 0 ? baseLevelDelay + nodeJitter : 0f;
+                        node.NodeView.AnimateSpawn(delay, _nodeSpawnDuration);
+                    }
+                }
+            }
+
+            // 2. Animate Paths drawing themselves
+            foreach (var pathView in _mapPathGenerator.PathViews)
+            {
+                // The path should start drawing right after its 'FromNode' pops in
+                // We use FromNode.Level to calculate exactly when that happens
+                float pathStartDelay = (pathView.FromNode.Level * _delayBetweenLevels) + 0.15f;
+
+                pathView.AnimateDraw(_pathDrawDuration, pathStartDelay);
+            }
         }
 
         [ContextMenu("Map Data/Save")]

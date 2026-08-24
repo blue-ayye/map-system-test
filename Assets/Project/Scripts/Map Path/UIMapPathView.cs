@@ -1,3 +1,4 @@
+using PrimeTween;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,8 @@ namespace BP.MapSystem
     {
         public MapNode FromNode { get; private set; }
         public MapNode ToNode { get; private set; }
+
+        private float _targetDistance; // Cache the distance for the tween
 
         public void DrawPath(MapNode fromNode, MapNode toNode, Color? pathColor = null)
         {
@@ -22,13 +25,14 @@ namespace BP.MapSystem
 
             Vector2 direction = endLocalPos - startLocalPos; // Node: Since this is UI, we don't consider Z axis
             var distance = direction.magnitude;
+            _targetDistance = distance; // Cache the distance for the tween
             var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
             var pathImage = GetComponent<Image>();
             var rt = pathImage.rectTransform;
             rt.pivot = new Vector2(0, 0.5f);
             rt.localPosition = startLocalPos;
-            rt.sizeDelta = new Vector2(distance, rt.sizeDelta.y);
+            rt.sizeDelta = new Vector2(0, rt.sizeDelta.y); // Start with width 0 for the tween
             rt.rotation = Quaternion.Euler(0, 0, angle);
 
             if (pathColor.HasValue)
@@ -36,6 +40,21 @@ namespace BP.MapSystem
                 pathImage.color = pathColor.Value;
             }
             pathImage.raycastTarget = false;
+        }
+
+        public void AnimateDraw(float duration, float delay)
+        {
+            var rt = GetComponent<RectTransform>();
+
+            if (duration <= 0f)
+            {
+                rt.sizeDelta = new Vector2(_targetDistance, rt.sizeDelta.y);
+                return;
+            }
+
+            Tween.StopAll(rt);
+
+            Tween.UISizeDelta(rt, new Vector2(_targetDistance, rt.sizeDelta.y), duration, ease: Ease.InOutSine, startDelay: delay);
         }
 
         public void ChangePathColor(Color newColor)

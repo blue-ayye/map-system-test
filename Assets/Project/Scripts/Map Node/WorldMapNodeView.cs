@@ -1,3 +1,4 @@
+using PrimeTween;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,6 +20,9 @@ namespace BP.MapSystem
         public void Initialize(MapNode node)
         {
             _mapNode = node;
+
+            // Start visually hidden for the spawn animation
+            transform.localScale = Vector3.zero;
 
             if (_iconRenderer != null)
                 _iconRenderer.sprite = node.NodeType.DisplayIcon;
@@ -43,6 +47,19 @@ namespace BP.MapSystem
         public void OnPointerClick(PointerEventData eventData)
         {
             OnNodeClicked?.Invoke(_mapNode);
+        }
+
+        public void AnimateSpawn(float delay, float duration)
+        {
+            if (delay <= 0f || duration <= 0f)
+            {
+                transform.localScale = Vector3.one;
+                return;
+            }
+
+            Tween.StopAll(transform);
+
+            Tween.Scale(transform, Vector3.one, duration: duration, ease: Ease.OutBack, startDelay: delay);
         }
     }
 }
