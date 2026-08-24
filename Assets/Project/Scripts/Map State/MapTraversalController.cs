@@ -21,11 +21,19 @@ namespace BP.MapSystem
 
         private void OnDestroy()
         {
+            ClearSubscriptions();
+        }
+
+        public void ClearSubscriptions()
+        {
+            if (_mapGrid == null) return;
+
             foreach (var node in _mapGrid)
             {
-                if (node == null || node.NodeView == null) continue;
-
-                node.NodeView.OnNodeClicked -= NodeView_OnNodeClicked;
+                if (node?.NodeView != null)
+                {
+                    node.NodeView.OnNodeClicked -= NodeView_OnNodeClicked;
+                }
             }
         }
 

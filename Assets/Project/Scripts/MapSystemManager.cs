@@ -121,6 +121,8 @@ namespace BP.MapSystem
 
         private void GenerateMapVisuals()
         {
+            _mapTraversalController.ClearSubscriptions();
+
             _mapGridGenerator.ClearNodeViews();
             _mapPathGenerator.ClearPathViews();
             _mapTraversalController.ResetTraversalState();
