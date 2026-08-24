@@ -334,7 +334,7 @@ MonoBehaviour:
   _mapTraversalController: {fileID: 437789673}
   _mapDataHandler: {fileID: 437789674}
   _playerInputSeed: 1698927251
-  _usePlayerInputSeed: 1
+  _usePlayerInputSeed: 0
   _generationAttempts: 100
   <GeneratedSeed>k__BackingField: 0
 --- !u!4 &437789669

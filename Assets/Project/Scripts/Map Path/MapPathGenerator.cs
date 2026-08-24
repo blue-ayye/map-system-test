@@ -83,19 +83,24 @@ namespace BP.MapSystem
 
         public void CreatePathViews()
         {
-            for (int level = 0; level < _maxLevels; level++)
-            {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    var node = _mapGrid[level, nodeIndex];
-                    if (node == null) continue;
+            // OPTIMIZATION: Use HashSet to prevent overlapping duplicate lines
+            HashSet<(MapNode, MapNode)> drawnPaths = new HashSet<(MapNode, MapNode)>();
 
-                    foreach (var childNode in node.ChildNodes)
+            foreach (var pathNodes in _generatedPaths.Values)
+            {
+                for (int i = 0; i < pathNodes.Count - 1; i++)
+                {
+                    var fromNode = pathNodes[i];
+                    var toNode = pathNodes[i + 1];
+
+                    // If we haven't drawn this connection yet
+                    if (drawnPaths.Add((fromNode, toNode)))
                     {
                         var pathViewTransform = Instantiate(_pathViewPrefab, _pathViewParent);
-                        pathViewTransform.localPosition = Vector3.zero; // Reset local position to avoid unintended offsets
+                        pathViewTransform.localPosition = Vector3.zero;
+
                         var pathView = pathViewTransform.GetComponent<IMapPathView>();
-                        pathView.DrawPath(node, childNode);
+                        pathView.DrawPath(fromNode, toNode);
                         PathViews.Add(pathView);
                     }
                 }
@@ -108,6 +113,8 @@ namespace BP.MapSystem
             {
                 Destroy(child.gameObject);
             }
+
+            PathViews.Clear();
         }
 
         private MapNode GetValidNextNode(MapNode currentNode, int nextLevel)
