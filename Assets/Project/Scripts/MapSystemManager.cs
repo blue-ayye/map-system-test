@@ -224,6 +224,8 @@ namespace BP.MapSystem
 
             _mapTraversalController.Initialize(_mapGrid, _mapPathGenerator.PathViews);
             _mapTraversalController.ReadFrom(mapData);
+
+            AnimateMapReveal();
         }
 
         private void WriteTo(MapData mapData)
