@@ -37,26 +37,18 @@ namespace BP.MapSystem
             }
         }
 
-        public void AnimateDraw(float duration, float delay)
+        public Tween AnimateDraw(float duration)
         {
             var lineRenderer = GetComponent<LineRenderer>();
+            Tween.StopAll(lineRenderer);
 
-            if (duration <= 0f)
-            {
-                lineRenderer.SetPosition(1, _endLocalPos);
-                return;
-            }
-
-            Tween.StopAll(lineRenderer); // Safety cleanup
-
-            Tween.Custom(
+            return Tween.Custom(
                 target: lineRenderer,
                 startValue: _startLocalPos,
                 endValue: _endLocalPos,
                 duration: duration,
                 onValueChange: (lr, currentPos) => lr.SetPosition(1, currentPos),
-                ease: Ease.InOutSine,
-                startDelay: delay
+                ease: Ease.InOutSine
             );
         }
 

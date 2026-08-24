@@ -1,3 +1,4 @@
+using PrimeTween;
 using UnityEngine;
 
 namespace BP.MapSystem
@@ -13,6 +14,6 @@ namespace BP.MapSystem
         /// </summary>
         /// <param name="newColor"></param>
         void ChangePathColor(Color newColor);
-        void AnimateDraw(float duration, float delay);
+        Tween AnimateDraw(float duration);
     }
 }

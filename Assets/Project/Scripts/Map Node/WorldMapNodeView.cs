@@ -49,17 +49,10 @@ namespace BP.MapSystem
             OnNodeClicked?.Invoke(_mapNode);
         }
 
-        public void AnimateSpawn(float delay, float duration)
+        public Tween AnimateSpawn(float nodeSpawnDuration)
         {
-            if (delay <= 0f || duration <= 0f)
-            {
-                transform.localScale = Vector3.one;
-                return;
-            }
-
             Tween.StopAll(transform);
-
-            Tween.Scale(transform, Vector3.one, duration: duration, ease: Ease.OutBack, startDelay: delay);
+            return Tween.Scale(transform, Vector3.one, duration: nodeSpawnDuration, ease: Ease.OutBack);
         }
     }
 }

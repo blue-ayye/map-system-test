@@ -42,19 +42,12 @@ namespace BP.MapSystem
             pathImage.raycastTarget = false;
         }
 
-        public void AnimateDraw(float duration, float delay)
+        public Tween AnimateDraw(float duration)
         {
             var rt = GetComponent<RectTransform>();
-
-            if (duration <= 0f)
-            {
-                rt.sizeDelta = new Vector2(_targetDistance, rt.sizeDelta.y);
-                return;
-            }
-
             Tween.StopAll(rt);
 
-            Tween.UISizeDelta(rt, new Vector2(_targetDistance, rt.sizeDelta.y), duration, ease: Ease.InOutSine, startDelay: delay);
+            return Tween.UISizeDelta(rt, new Vector2(_targetDistance, rt.sizeDelta.y), duration, ease: Ease.InOutSine);
         }
 
         public void ChangePathColor(Color newColor)

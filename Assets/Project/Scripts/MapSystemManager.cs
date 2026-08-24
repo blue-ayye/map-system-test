@@ -1,3 +1,4 @@
+using PrimeTween;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -15,12 +16,12 @@ namespace BP.MapSystem
         [SerializeField] private int _generationAttempts = 1;
 
         [Header("Animation Settings")]
-        [SerializeField] private float _delayBetweenLevels = 0;
         [SerializeField] private float _nodeSpawnDuration = 0;
         [SerializeField] private float _pathDrawDuration = 0;
 
         private MapNode[,] _mapGrid;
         private bool _isCustomSeedUsed;
+        private Sequence _revealSequence;
 
         [field: SerializeField] private int GeneratedSeed { get; set; } // Set it to private later
 
@@ -140,32 +141,55 @@ namespace BP.MapSystem
 
         private void AnimateMapReveal()
         {
-            // 1. Animate Nodes popping in
+            if (_revealSequence.isAlive)
+            {
+                _revealSequence.Stop();
+            }
+
+            _revealSequence = Sequence.Create();
+
             for (int level = 0; level < _mapGrid.GetLength(0); level++)
             {
-                float baseLevelDelay = level * _delayBetweenLevels;
-
+                // 1. POP IN NODES (Waits for previous level's paths to finish)
+                bool firstNodeChained = false;
                 for (int index = 0; index < _mapGrid.GetLength(1); index++)
                 {
                     var node = _mapGrid[level, index];
                     if (node != null && node.NodeView != null)
                     {
-                        // Add a tiny random jitter to the delay so nodes on the same level pop organically
-                        float nodeJitter = UnityEngine.Random.Range(0f, 0.1f);
-                        float delay = baseLevelDelay > 0 ? baseLevelDelay + nodeJitter : 0f;
-                        node.NodeView.AnimateSpawn(delay, _nodeSpawnDuration);
+                        Tween nodeTween = node.NodeView.AnimateSpawn(_nodeSpawnDuration);
+
+                        if (!firstNodeChained)
+                        {
+                            _revealSequence.Chain(nodeTween);
+                            firstNodeChained = true;
+                        }
+                        else
+                        {
+                            _revealSequence.Group(nodeTween);
+                        }
                     }
                 }
-            }
 
-            // 2. Animate Paths drawing themselves
-            foreach (var pathView in _mapPathGenerator.PathViews)
-            {
-                // The path should start drawing right after its 'FromNode' pops in
-                // We use FromNode.Level to calculate exactly when that happens
-                float pathStartDelay = (pathView.FromNode.Level * _delayBetweenLevels) + 0.15f;
+                // 2. DRAW PATHS (Waits for THIS level's nodes to finish popping in)
+                bool firstPathChained = false;
+                foreach (var pathView in _mapPathGenerator.PathViews)
+                {
+                    if (pathView.FromNode.Level == level)
+                    {
+                        Tween pathTween = pathView.AnimateDraw(_pathDrawDuration);
 
-                pathView.AnimateDraw(_pathDrawDuration, pathStartDelay);
+                        if (!firstPathChained)
+                        {
+                            _revealSequence.Chain(pathTween);
+                            firstPathChained = true;
+                        }
+                        else
+                        {
+                            _revealSequence.Group(pathTween);
+                        }
+                    }
+                }
             }
         }
 
