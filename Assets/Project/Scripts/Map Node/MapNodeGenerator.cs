@@ -114,11 +114,15 @@ namespace BP.MapSystem
         public MapNode[,] CreateNodeGrid()
         {
             _mapGrid = new MapNode[_maxLevels, _nodesPerLevel];
+
             for (int level = 0; level < _maxLevels; level++)
             {
                 for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
                 {
-                    _mapGrid[level, nodeIndex] = new MapNode(level, nodeIndex);
+                    MapNode node = new MapNode(level, nodeIndex);
+                    node.Position = GetNodePosition(level, nodeIndex, _applyJitter);
+
+                    _mapGrid[level, nodeIndex] = node;
                 }
             }
 
@@ -142,7 +146,11 @@ namespace BP.MapSystem
         {
             if (_mapGrid == null) return;
 
-            CalculateBounds();
+            Quaternion rotation = Quaternion.Euler(
+                _mapAreaBoundsDefiner.rotation.eulerAngles.x,
+                _mapAreaBoundsDefiner.rotation.eulerAngles.y,
+                _zRotation
+            );
 
             for (int level = 0; level < _maxLevels; level++)
             {
@@ -151,15 +159,8 @@ namespace BP.MapSystem
                     var node = _mapGrid[level, nodeIndex];
                     if (node == null) continue;
 
-                    Vector3 position = GetNodePosition(level, nodeIndex, _applyJitter);
-                    Quaternion rotation = Quaternion.Euler(
-                        _mapAreaBoundsDefiner.rotation.eulerAngles.x,
-                        _mapAreaBoundsDefiner.rotation.eulerAngles.y,
-                        _zRotation
-                    );
-
                     var nodeViewTransform = Instantiate(_nodeViewPrefab, _nodeViewParent);
-                    nodeViewTransform.SetPositionAndRotation(position, rotation);
+                    nodeViewTransform.SetPositionAndRotation(node.Position, rotation);
 
                     if (nodeViewTransform.TryGetComponent(out IMapNodeView nodeView))
                     {
@@ -180,7 +181,7 @@ namespace BP.MapSystem
                 Destroy(child.gameObject);
         }
 
-        private void CalculateBounds()
+        public void CalculateBounds()
         {
             if (_mapAreaBoundsDefiner == null)
             {

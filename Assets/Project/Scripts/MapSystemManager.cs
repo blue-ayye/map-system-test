@@ -22,6 +22,8 @@ namespace BP.MapSystem
         [ContextMenu("Generate New Map")]
         private void Start()
         {
+            _mapGridGenerator.CalculateBounds();
+
             int attempts = 0;
             Dictionary<int, int> seedViolations = new Dictionary<int, int>();
             do

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace BP.MapSystem
@@ -12,11 +11,12 @@ namespace BP.MapSystem
     {
         public int Level;
         public int Index;
+        public Vector3 Position { get; set; }
+
         public List<MapNode> ParentNodes { get; } = new List<MapNode>();
         public List<MapNode> ChildNodes { get; } = new List<MapNode>();
         public IMapNodeView NodeView { get; set; }
         public MapNodeTypeSO NodeType { get; set; }
-        public Vector3 Position => NodeView != null ? NodeView.Transform.position : Vector3.zero;
 
         public MapNode(int level, int nodeIndex)
         {
