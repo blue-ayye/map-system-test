@@ -47,6 +47,7 @@ namespace BP.MapSystem
             _mapGrid = mapGrid;
             _pathViews = pathViews;
             SubscribeToMapNodeEvents();
+            UpdateAllNodeStates();
         }
 
         public void ReadFrom(MapData mapData)
@@ -67,7 +68,8 @@ namespace BP.MapSystem
 
             foreach (var node in _visitedNodes)
             {
-                node.NodeView.SetActiveVisitedState(true);
+                //node.NodeView.SetActiveVisitedState(true);
+                node.NodeView.SetState(NodeState.Visited);
             }
 
             foreach (var pathView in _pathViews)
@@ -88,10 +90,12 @@ namespace BP.MapSystem
 
             if (_currentNode != null)
             {
-                _currentNode.NodeView.SetActiveSelectedState(true);
+                //_currentNode.NodeView.SetActiveSelectedState(true);
+                _currentNode.NodeView.SetState(NodeState.Current);
             }
 
             _currentTraversalSteps = traversalData.TraversalStepsTaken;
+            UpdateAllNodeStates();
         }
 
         public void ResetTraversalState()
@@ -162,7 +166,8 @@ namespace BP.MapSystem
             // Mark node as visited
             if (!_visitedNodes.Contains(clickedNode))
             {
-                clickedNode.NodeView.SetActiveVisitedState(true);
+                //clickedNode.NodeView.SetActiveVisitedState(true);
+                clickedNode.NodeView.SetState(NodeState.Visited);
                 _visitedNodes.Add(clickedNode);
             }
 
@@ -179,11 +184,43 @@ namespace BP.MapSystem
             pathView?.ChangePathColor(Color.yellow); // Change color to indicate traversal
 
             // Update current node selection state
-            _currentNode?.NodeView.SetActiveSelectedState(false);
-            clickedNode.NodeView.SetActiveSelectedState(true);
+            // _currentNode?.NodeView.SetActiveSelectedState(false);
+            // clickedNode.NodeView.SetActiveSelectedState(true);
+            _currentNode?.NodeView.SetState(NodeState.Visited);
+            clickedNode.NodeView.SetState(NodeState.Current);
 
             // Update current node reference
             _currentNode = clickedNode;
+
+            UpdateAllNodeStates();
+        }
+
+        private void UpdateAllNodeStates()
+        {
+            foreach (var node in _mapGrid)
+            {
+                if (node == null) continue;
+
+                if (_visitedNodes.Contains(node))
+                {
+                    node.State = node == _currentNode ? NodeState.Current : NodeState.Visited;
+                }
+                else if (_currentNode == null && node.Level == 0) // Starting out
+                {
+                    node.State = NodeState.Reachable;
+                }
+                else if (_currentNode != null && _currentNode.ChildNodes.Contains(node))
+                {
+                    node.State = NodeState.Reachable;
+                }
+                else
+                {
+                    node.State = NodeState.Locked;
+                }
+
+                // Tell the view to update its visuals!
+                node.NodeView.SetState(node.State);
+            }
         }
     }
 }

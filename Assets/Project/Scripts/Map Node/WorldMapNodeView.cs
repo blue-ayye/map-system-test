@@ -9,9 +9,14 @@ namespace BP.MapSystem
     {
         public event Action<MapNode> OnNodeClicked;
 
+        public event Action<NodeState> OnStateChanged;
+
+        [Header("Visuals")]
         [SerializeField] private SpriteRenderer _iconRenderer;
         [SerializeField] private Transform _visitedStateIndicator;
         [SerializeField] private Transform _selectedStateIndicator;
+        [SerializeField] private Color _lockedColor = Color.gray;
+        [SerializeField] private Color _reachableColor = Color.white;
 
         private MapNode _mapNode;
 
@@ -23,25 +28,24 @@ namespace BP.MapSystem
 
             // Start visually hidden for the spawn animation
             transform.localScale = Vector3.zero;
+        }
 
+        public void SetState(NodeState state)
+        {
+            _mapNode.State = state;
+            UpdateUI(state);
+            OnStateChanged?.Invoke(state);
+        }
+
+        private void UpdateUI(NodeState state)
+        {
             if (_iconRenderer != null)
-                _iconRenderer.sprite = node.NodeType.DisplayIcon;
-            if (_visitedStateIndicator != null)
-                _visitedStateIndicator.gameObject.SetActive(false);
-            if (_selectedStateIndicator != null)
-                _selectedStateIndicator.gameObject.SetActive(false);
-        }
+                _iconRenderer.color = state == NodeState.Locked ? _lockedColor : _reachableColor;
 
-        public void SetActiveVisitedState(bool state)
-        {
             if (_visitedStateIndicator != null)
-                _visitedStateIndicator.gameObject.SetActive(state);
-        }
-
-        public void SetActiveSelectedState(bool state)
-        {
+                _visitedStateIndicator.gameObject.SetActive(state == NodeState.Visited);
             if (_selectedStateIndicator != null)
-                _selectedStateIndicator.gameObject.SetActive(state);
+                _selectedStateIndicator.gameObject.SetActive(state == NodeState.Current);
         }
 
         public void OnPointerClick(PointerEventData eventData)
