@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace BP.MapSystem
 {
-    public class UIMapNodeView : MonoBehaviour, IMapNodeView, IPointerClickHandler
+    public class UIMapNodeView : MonoBehaviour, IMapNodeView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public event Action<MapNode> OnNodeClicked;
 
@@ -18,6 +18,8 @@ namespace BP.MapSystem
         [SerializeField] private Transform _selectedStateIndicator;
         [SerializeField] private Color _lockedColor = Color.gray;
         [SerializeField] private Color _reachableColor = Color.white;
+        [SerializeField] private TweenSettings<Vector3> _hoverEnterScaleTweenSettings = new TweenSettings<Vector3>(Vector3.one * 1.2f, 0.2f, Ease.OutBack);
+        [SerializeField] private TweenSettings<Vector3> _hoverExitScaleTweenSettings = new TweenSettings<Vector3>(Vector3.one, 0.2f, Ease.OutBack);
 
         private MapNode _mapNode;
 
@@ -58,6 +60,18 @@ namespace BP.MapSystem
         {
             Tween.StopAll(transform);
             return Tween.Scale(transform, Vector3.one, duration: nodeSpawnDuration, ease: Ease.OutBack);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            Tween.StopAll(transform);
+            Tween.Scale(transform, _hoverEnterScaleTweenSettings);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            Tween.StopAll(transform);
+            Tween.Scale(transform, _hoverExitScaleTweenSettings);
         }
     }
 }
