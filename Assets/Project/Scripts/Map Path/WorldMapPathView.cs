@@ -6,6 +6,9 @@ namespace BP.MapSystem
     [RequireComponent(typeof(LineRenderer))]
     public class WorldMapPathView : MonoBehaviour, IMapPathView
     {
+        [SerializeField] private Color _defaultPathColor = Color.white;
+        [SerializeField] private Color _traversedPathColor = Color.green;
+
         public MapNode FromNode { get; private set; }
         public MapNode ToNode { get; private set; }
 
@@ -58,5 +61,9 @@ namespace BP.MapSystem
             lineRenderer.startColor = newColor;
             lineRenderer.endColor = newColor;
         }
+
+        public void SetTraversedColor() => ChangePathColor(_traversedPathColor);
+
+        public void SetDefaultColor() => ChangePathColor(_defaultPathColor);
     }
 }

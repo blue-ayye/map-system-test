@@ -135,6 +135,8 @@ MonoBehaviour:
   _iconRenderer: {fileID: 7241355610767803893}
   _visitedStateIndicator: {fileID: 3172534709390016239}
   _selectedStateIndicator: {fileID: 8989649775451140802}
+  _lockedColor: {r: 0.50980395, g: 0.43529412, b: 0.3764706, a: 1}
+  _reachableColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!212 &7241355610767803893
 SpriteRenderer:
   m_ObjectHideFlags: 0

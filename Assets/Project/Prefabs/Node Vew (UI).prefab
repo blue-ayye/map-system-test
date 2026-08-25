@@ -131,6 +131,8 @@ MonoBehaviour:
   _iconImage: {fileID: 8628033854585648036}
   _visitedStateIndicator: {fileID: 6070830672044786178}
   _selectedStateIndicator: {fileID: 2913591655616115187}
+  _lockedColor: {r: 0.509434, g: 0.43632174, b: 0.3772695, a: 1}
+  _reachableColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!222 &2454114565107691014
 CanvasRenderer:
   m_ObjectHideFlags: 0

@@ -7,6 +7,9 @@ namespace BP.MapSystem
     [RequireComponent(typeof(Image))]
     public class UIMapPathView : MonoBehaviour, IMapPathView
     {
+        [SerializeField] private Color _defaultPathColor = Color.white;
+        [SerializeField] private Color _traversedPathColor = Color.green;
+
         public MapNode FromNode { get; private set; }
         public MapNode ToNode { get; private set; }
 
@@ -54,6 +57,16 @@ namespace BP.MapSystem
         {
             var pathImage = GetComponent<Image>();
             pathImage.color = newColor;
+        }
+
+        public void SetTraversedColor()
+        {
+            ChangePathColor(_traversedPathColor);
+        }
+
+        public void SetDefaultColor()
+        {
+            ChangePathColor(_defaultPathColor);
         }
     }
 }

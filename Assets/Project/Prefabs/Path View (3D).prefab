@@ -45,6 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 326b8c3df0a46ee4fbf882623c09f7ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _defaultPathColor: {r: 0.6431373, g: 0.5372549, b: 0.44313726, a: 0.8}
+  _traversedPathColor: {r: 0.16862746, g: 0.14509805, b: 0.1254902, a: 1}
 --- !u!120 &1182669155208247155
 LineRenderer:
   serializedVersion: 2

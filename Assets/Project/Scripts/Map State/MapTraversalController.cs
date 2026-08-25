@@ -48,6 +48,7 @@ namespace BP.MapSystem
             _pathViews = pathViews;
             SubscribeToMapNodeEvents();
             UpdateAllNodeStates();
+            UpdatePathViewColor();
         }
 
         public void ReadFrom(MapData mapData)
@@ -72,13 +73,6 @@ namespace BP.MapSystem
                 node.NodeView.SetState(NodeState.Visited);
             }
 
-            foreach (var pathView in _pathViews)
-            {
-                if (_visitedNodes.Contains(pathView.FromNode) && _visitedNodes.Contains(pathView.ToNode))
-                {
-                    pathView.ChangePathColor(Color.yellow); // Indicate traversed paths
-                }
-            }
 
             // Set current node
             _currentNode = _mapGrid[traversalData.CurrentNodeData.Level, traversalData.CurrentNodeData.Index];
@@ -96,6 +90,23 @@ namespace BP.MapSystem
 
             _currentTraversalSteps = traversalData.TraversalStepsTaken;
             UpdateAllNodeStates();
+            UpdatePathViewColor();
+        }
+
+        private void UpdatePathViewColor()
+        {
+            foreach (var pathView in _pathViews)
+            {
+                if (_visitedNodes.Contains(pathView.FromNode) && _visitedNodes.Contains(pathView.ToNode))
+                {
+                    //pathView.ChangePathColor(Color.yellow); // Indicate traversed paths
+                    pathView.SetTraversedColor();
+                }
+                else
+                {
+                    pathView.SetDefaultColor();
+                }
+            }
         }
 
         public void ResetTraversalState()
@@ -181,7 +192,8 @@ namespace BP.MapSystem
                     break;
                 }
             }
-            pathView?.ChangePathColor(Color.yellow); // Change color to indicate traversal
+            //pathView?.ChangePathColor(Color.yellow); // Change color to indicate traversal
+            pathView?.SetTraversedColor();
 
             // Update current node selection state
             // _currentNode?.NodeView.SetActiveSelectedState(false);

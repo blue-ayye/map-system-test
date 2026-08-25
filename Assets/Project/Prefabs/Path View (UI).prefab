@@ -50,6 +50,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0070378c07049442800737a55b2d115, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _defaultPathColor: {r: 0.6415094, g: 0.53737986, b: 0.44482023, a: 0.8}
+  _traversedPathColor: {r: 0.16862746, g: 0.13333334, b: 0.10196079, a: 1}
 --- !u!222 &8930856022725894300
 CanvasRenderer:
   m_ObjectHideFlags: 0

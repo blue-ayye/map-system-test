@@ -14,6 +14,8 @@ namespace BP.MapSystem
         /// </summary>
         /// <param name="newColor"></param>
         void ChangePathColor(Color newColor);
+        void SetTraversedColor();
+        void SetDefaultColor();
         Tween AnimateDraw(float duration);
     }
 }
