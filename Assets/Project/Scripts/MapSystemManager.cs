@@ -6,6 +6,8 @@ namespace BP.MapSystem
 {
     public class MapSystemManager : MonoBehaviour
     {
+        #region Fields and Properties
+
         [SerializeField] private MapNodeGenerator _mapGridGenerator;
         [SerializeField] private MapPathGenerator _mapPathGenerator;
         [SerializeField] private MapNodeTypeAssigner _mapNodeTypeAssigner;
@@ -21,108 +23,127 @@ namespace BP.MapSystem
 
         private MapNode[,] _mapGrid;
         private bool _isCustomSeedUsed;
+        private int _generatedSeed;
         private Sequence _revealSequence;
 
-        [field: SerializeField] private int GeneratedSeed { get; set; } // Set it to private later
+        #endregion Fields and Properties
 
-        [ContextMenu("Generate New Map")]
-        private void Start()
+        #region Unity Lifecycle Methods
+
+        private void Start() => Initialize();
+
+        #endregion Unity Lifecycle Methods
+
+        #region Public APIs
+
+        public void Initialize()
         {
             _mapGridGenerator.CalculateBounds();
 
-            int attempts = 0;
-            Dictionary<int, int> seedViolations = new Dictionary<int, int>();
-            do
+            bool foundValidSeed = TryGetValidSeed(out int selectedSeed);
+
+            // Generate the final selected map.
+            GenerateMapData(selectedSeed);
+
+            if (!foundValidSeed && _usePlayerInputSeed)
             {
-                GenerateSeed();
-                GenerateMap();
+                _mapNodeTypeAssigner.CheckTypeRulesValidity(logging: true);
 
-                int violations = _mapNodeTypeAssigner.CheckTypeRulesValidity();
-                seedViolations[GeneratedSeed] = violations;
-
-                attempts++;
-            } while (attempts < _generationAttempts && seedViolations[GeneratedSeed] > 0 && !_usePlayerInputSeed);
-
-            if (seedViolations[GeneratedSeed] > 0)
+                Debug.LogWarning(
+                    $"The custom seed {_playerInputSeed} generated a map with rule violations. " +
+                    "Consider using a different seed or disable the custom seed option."
+                );
+            }
+            else if (!foundValidSeed)
             {
-                RegenerateMapWithBestSeed(seedViolations);
+                Debug.LogWarning(
+                    $"Could not generate a valid map within {_generationAttempts} attempts. " +
+                    $"Using the best available seed: {selectedSeed}."
+                );
             }
 
             GenerateMapVisuals();
-
-            // NOTE: Initialize traversal controller after map generation and visuals creation
-            // It depends on the onClick events of the node views
             _mapTraversalController.Initialize(_mapGrid, _mapPathGenerator.PathViews);
-
             AnimateMapReveal();
         }
 
-        private void RegenerateMapWithBestSeed(Dictionary<int, int> seedViolationDict)
+        private bool TryGetValidSeed(out int selectedSeed)
         {
-            if (_usePlayerInputSeed)
+            selectedSeed = default;
+
+            int attempts = _usePlayerInputSeed
+                ? 1
+                : Mathf.Max(1, _generationAttempts);
+
+            int bestSeed = default;
+            int fewestViolations = int.MaxValue;
+
+            for (int attempt = 0; attempt < attempts; attempt++)
             {
-                _mapNodeTypeAssigner.CheckTypeRulesValidity(true);
-                Debug.LogWarning($"You're using a custom seed {_playerInputSeed} that resulted in " +
-                                 $"{seedViolationDict[GeneratedSeed]} rule violations. " +
-                                 $"Consider using a different seed or toggle off the custom seed option" +
-                                 $" to allow automatic seed generation with least violations.");
-            }
-            else
-            {
-                int bestSeed = GeneratedSeed;
-                int leastViolations = seedViolationDict[GeneratedSeed];
-                foreach (var kvp in seedViolationDict)
+                int candidateSeed = GenerateSeed();
+
+                GenerateMapData(candidateSeed);
+
+                int violationCount =
+                    _mapNodeTypeAssigner.CheckTypeRulesValidity();
+
+                if (violationCount < fewestViolations)
                 {
-                    if (kvp.Value < leastViolations)
-                    {
-                        leastViolations = kvp.Value;
-                        bestSeed = kvp.Key;
-                    }
+                    fewestViolations = violationCount;
+                    bestSeed = candidateSeed;
                 }
 
-                GeneratedSeed = bestSeed;
-
-                // Re-generate the map with the best seed
-                GenerateMap();
-                _mapNodeTypeAssigner.CheckTypeRulesValidity(true);
-
-                Debug.LogWarning($"Could not generate a valid map within {_generationAttempts} attempts. " +
-                                 $"Using seed {GeneratedSeed} with {leastViolations} rule violations.");
+                if (violationCount == 0)
+                {
+                    selectedSeed = candidateSeed;
+                    return true;
+                }
             }
+
+            selectedSeed = bestSeed;
+            return false;
         }
 
-        private void GenerateSeed()
+        #endregion Public APIs
+
+        private int GenerateSeed()
         {
             if (_usePlayerInputSeed)
             {
-                GeneratedSeed = Mathf.Abs(_playerInputSeed);
                 _isCustomSeedUsed = true;
+                return Mathf.Abs(_playerInputSeed);
             }
-            else
-            {
-                int intMinMaxSeed = Random.Range(int.MinValue, int.MaxValue);
-                int dateTimeSeed = System.DateTime.Now.Millisecond;
-                GeneratedSeed = Mathf.Abs(intMinMaxSeed + dateTimeSeed);
-                _isCustomSeedUsed = false;
-            }
+
+            _isCustomSeedUsed = false;
+
+            int randomSeed = Random.Range(int.MinValue, int.MaxValue);
+            int timeSeed = System.DateTime.Now.Millisecond;
+
+            return Mathf.Abs(randomSeed + timeSeed);
         }
 
-        private void GenerateMap()
+        private void GenerateMapData(int seed)
         {
+            _generatedSeed = seed;
+
             // 1. Create map node data
-            var mapJitterRNG = new System.Random(GeneratedSeed);
+            var mapJitterRNG = new System.Random(seed);
+
             _mapGridGenerator.Initialize(mapJitterRNG);
             _mapGrid = _mapGridGenerator.CreateNodeGrid();
 
             // 2. Create map path data
-            var mapPathingRNG = new System.Random(GeneratedSeed + 1);
+            var mapPathingRNG = new System.Random(seed + 1);
+
             _mapPathGenerator.Initialize(_mapGrid, mapPathingRNG);
             _mapPathGenerator.SelectStartingNodes();
             _mapPathGenerator.GeneratePaths();
+
             _mapGridGenerator.ClearUnusedNodes();
 
             // 3. Assign node types to map node data
-            var mapNodeTypeRNG = new System.Random(GeneratedSeed + 2);
+            var mapNodeTypeRNG = new System.Random(seed + 2);
+
             _mapNodeTypeAssigner.Initialize(_mapGrid, mapNodeTypeRNG);
             _mapNodeTypeAssigner.AssignNodeTypes();
         }
@@ -215,7 +236,7 @@ namespace BP.MapSystem
             }
 
             ReadFrom(mapData);
-            GenerateMap();
+            GenerateMapData(mapData.Seed);
 
             // Reassign node types based on loaded data just to be sure
             _mapNodeTypeAssigner.ReadFrom(mapData);
@@ -230,7 +251,7 @@ namespace BP.MapSystem
 
         private void WriteTo(MapData mapData)
         {
-            mapData.Seed = GeneratedSeed;
+            mapData.Seed = _generatedSeed;
             mapData.IsCustomSeedUsed = _isCustomSeedUsed;
         }
 
@@ -245,7 +266,7 @@ namespace BP.MapSystem
             {
                 _usePlayerInputSeed = false;
             }
-            GeneratedSeed = mapData.Seed;
+            _generatedSeed = mapData.Seed;
         }
     }
 }
