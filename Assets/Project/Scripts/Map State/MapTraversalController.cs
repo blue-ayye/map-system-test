@@ -5,6 +5,8 @@ namespace BP.MapSystem
 {
     public class MapTraversalController : MonoBehaviour
     {
+        #region Fields
+
         [SerializeField] private bool _canTraverseVisitedNodes;
         [Tooltip("Maximum number of traversal steps allowed. Set to -1 (or any negative number) for unlimited steps.")]
         [SerializeField] private int _maxTraversalSteps = -1;
@@ -15,14 +17,26 @@ namespace BP.MapSystem
         private List<IMapPathView> _pathViews = new List<IMapPathView>();
         private MapNode[,] _mapGrid;
 
+        #endregion
+
+        #region Properties
+
         public List<MapNode> VisitedNodes => _visitedNodes;
         public int TraversalStepsTaken => _currentTraversalSteps;
         public MapNode CurrentNode => _currentNode;
+
+        #endregion
+
+        #region Unity Lifecycle
 
         private void OnDestroy()
         {
             ClearSubscriptions();
         }
+
+        #endregion
+
+        #region Public API
 
         public void ClearSubscriptions()
         {
@@ -51,6 +65,11 @@ namespace BP.MapSystem
             UpdatePathViewColor();
         }
 
+        /// <summary>
+        /// Restores visited-node and current-node state from <paramref name="mapData"/>.
+        /// All visual state is applied in a single <see cref="UpdateAllNodeStates"/> call at
+        /// the end to avoid redundant per-node view updates.
+        /// </summary>
         public void ReadFrom(MapData mapData)
         {
             var traversalData = mapData.MapTraversalData;
@@ -58,55 +77,36 @@ namespace BP.MapSystem
             // Populate visited nodes based on traversal data
             _visitedNodes.Clear();
 
-            foreach (var node in traversalData.VisitedNodeDataList)
+            foreach (var nodeData in traversalData.VisitedNodeDataList)
             {
-                var mapNode = _mapGrid[node.Level, node.Index];
+                var mapNode = _mapGrid[nodeData.Level, nodeData.Index];
                 if (mapNode == null)
                     continue;
 
                 _visitedNodes.Add(mapNode);
+                mapNode.State = NodeState.Visited;
             }
 
-            foreach (var node in _visitedNodes)
+            // Restore current node — may be null when the player saved before selecting a start
+            if (traversalData.CurrentNodeData != null)
             {
-                //node.NodeView.SetActiveVisitedState(true);
-                node.NodeView.SetState(NodeState.Visited);
+                _currentNode = _mapGrid[traversalData.CurrentNodeData.Level, traversalData.CurrentNodeData.Index];
             }
-
-
-            // Set current node
-            _currentNode = _mapGrid[traversalData.CurrentNodeData.Level, traversalData.CurrentNodeData.Index];
-
-            if (_currentNode == null && _visitedNodes.Count == 0)
+            else
             {
-                _currentNode = _visitedNodes[^1]; // Last visited node just in case of data mismatch
+                _currentNode = _visitedNodes.Count > 0 ? _visitedNodes[^1] : null;
             }
 
             if (_currentNode != null)
             {
-                //_currentNode.NodeView.SetActiveSelectedState(true);
-                _currentNode.NodeView.SetState(NodeState.Current);
+                _currentNode.State = NodeState.Current;
             }
 
             _currentTraversalSteps = traversalData.TraversalStepsTaken;
+
+            // Apply all visual state in one pass
             UpdateAllNodeStates();
             UpdatePathViewColor();
-        }
-
-        private void UpdatePathViewColor()
-        {
-            foreach (var pathView in _pathViews)
-            {
-                if (_visitedNodes.Contains(pathView.FromNode) && _visitedNodes.Contains(pathView.ToNode))
-                {
-                    //pathView.ChangePathColor(Color.yellow); // Indicate traversed paths
-                    pathView.SetTraversedColor();
-                }
-                else
-                {
-                    pathView.SetDefaultColor();
-                }
-            }
         }
 
         public void ResetTraversalState()
@@ -115,6 +115,10 @@ namespace BP.MapSystem
             _currentTraversalSteps = 0;
             _currentNode = null;
         }
+
+        #endregion
+
+        #region Private Helpers
 
         private void SubscribeToMapNodeEvents()
         {
@@ -177,8 +181,6 @@ namespace BP.MapSystem
             // Mark node as visited
             if (!_visitedNodes.Contains(clickedNode))
             {
-                //clickedNode.NodeView.SetActiveVisitedState(true);
-                clickedNode.NodeView.SetState(NodeState.Visited);
                 _visitedNodes.Add(clickedNode);
             }
 
@@ -192,14 +194,7 @@ namespace BP.MapSystem
                     break;
                 }
             }
-            //pathView?.ChangePathColor(Color.yellow); // Change color to indicate traversal
             pathView?.SetTraversedColor();
-
-            // Update current node selection state
-            // _currentNode?.NodeView.SetActiveSelectedState(false);
-            // clickedNode.NodeView.SetActiveSelectedState(true);
-            _currentNode?.NodeView.SetState(NodeState.Visited);
-            clickedNode.NodeView.SetState(NodeState.Current);
 
             // Update current node reference
             _currentNode = clickedNode;
@@ -230,9 +225,26 @@ namespace BP.MapSystem
                     node.State = NodeState.Locked;
                 }
 
-                // Tell the view to update its visuals!
+                // Tell the view to update its visuals
                 node.NodeView.SetState(node.State);
             }
         }
+
+        private void UpdatePathViewColor()
+        {
+            foreach (var pathView in _pathViews)
+            {
+                if (_visitedNodes.Contains(pathView.FromNode) && _visitedNodes.Contains(pathView.ToNode))
+                {
+                    pathView.SetTraversedColor();
+                }
+                else
+                {
+                    pathView.SetDefaultColor();
+                }
+            }
+        }
+
+        #endregion
     }
 }

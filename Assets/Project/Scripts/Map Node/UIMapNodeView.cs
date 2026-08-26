@@ -35,7 +35,6 @@ namespace BP.MapSystem
 
         public void SetState(NodeState state)
         {
-            _mapNode.State = state;
             UpdateUI(state);
             OnStateChanged?.Invoke(state);
         }

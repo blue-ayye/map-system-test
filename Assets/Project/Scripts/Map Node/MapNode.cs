@@ -12,13 +12,16 @@ namespace BP.MapSystem
     }
 
     /// <summary>
-    /// Pure data class representing a node in the map generation process. Helps with performance by avoiding instantiating view objects during path generation.
+    /// Pure data class representing a node in the map generation process.
+    /// Separating data from views improves performance by avoiding scene-object
+    /// instantiation during path generation.
     /// </summary>
-    ///
     public class MapNode
     {
-        public int Level;
-        public int Index;
+        #region Properties
+
+        public int Level { get; }
+        public int Index { get; }
         public Vector3 Position { get; set; }
 
         public List<MapNode> ParentNodes { get; } = new List<MapNode>();
@@ -26,6 +29,8 @@ namespace BP.MapSystem
         public IMapNodeView NodeView { get; set; }
         public MapNodeTypeSO NodeType { get; set; }
         public NodeState State { get; set; } = NodeState.Locked;
+
+        #endregion
 
         public MapNode(int level, int nodeIndex)
         {

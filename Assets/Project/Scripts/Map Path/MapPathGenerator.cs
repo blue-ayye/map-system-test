@@ -5,6 +5,8 @@ namespace BP.MapSystem
 {
     public class MapPathGenerator : MonoBehaviour
     {
+        #region Fields
+
         [Header("Path Generation Settings")]
         [SerializeField] private int _uniquePaths = 3;
         [SerializeField] private int _totalPaths = 7;
@@ -17,9 +19,17 @@ namespace BP.MapSystem
         private int _maxLevels;
         private int _nodesPerLevel;
         private System.Random _pathingRNG;
-        private Dictionary<int,List<MapNode>> _generatedPaths = new Dictionary<int,List<MapNode>>();
+        private Dictionary<int, List<MapNode>> _generatedPaths = new Dictionary<int, List<MapNode>>();
+
+        #endregion
+
+        #region Properties
 
         public List<IMapPathView> PathViews { get; private set; } = new List<IMapPathView>();
+
+        #endregion
+
+        #region Public API
 
         public void Initialize(MapNode[,] mapGrid, System.Random pRNG)
         {
@@ -33,7 +43,7 @@ namespace BP.MapSystem
         {
             int startingLevel = 0;
             _generatedPaths.Clear();
-            
+
             // Ensure at least <MinUniqueStartingPoints> number of nodes are unique
             for (int pathIndex = 0; pathIndex < _uniquePaths; pathIndex++)
             {
@@ -65,7 +75,6 @@ namespace BP.MapSystem
         {
             foreach (var pathEntry in _generatedPaths)
             {
-                int pathIndex = pathEntry.Key;
                 List<MapNode> pathNodes = pathEntry.Value;
 
                 MapNode currentNode = pathNodes[0];
@@ -117,6 +126,10 @@ namespace BP.MapSystem
             PathViews.Clear();
         }
 
+        #endregion
+
+        #region Private Helpers
+
         private MapNode GetValidNextNode(MapNode currentNode, int nextLevel)
         {
             var nextLevelNodes = GetNodesAt(nextLevel);
@@ -140,8 +153,7 @@ namespace BP.MapSystem
             if (potentialNextNodes.Count == 0) return null;
 
             // Randomly select one of the valid next nodes
-            var selectedNode = potentialNextNodes[_pathingRNG.Next(0, potentialNextNodes.Count)];
-            return selectedNode;
+            return potentialNextNodes[_pathingRNG.Next(0, potentialNextNodes.Count)];
         }
 
         private bool CanOverlapPath(MapNode fromNode, MapNode toNode)
@@ -164,7 +176,7 @@ namespace BP.MapSystem
             return fromNodeAdjacent != null && toNodeAdjacent != null && toNodeAdjacent.ParentNodes.Contains(fromNodeAdjacent);
         }
 
-        private void LinkNodes(MapNode childNode, MapNode parentNode, Color? pathColor = null)
+        private void LinkNodes(MapNode childNode, MapNode parentNode)
         {
             if (childNode == null || parentNode == null || childNode == parentNode) return;
 
@@ -188,32 +200,42 @@ namespace BP.MapSystem
             return nodes;
         }
 
+        #endregion
+
+        #region Editor / Debug
+
         /// <summary>
-        /// This is just for testing purposes. Call the individual methods from a control script to control the flow.
+        /// Standalone editor test. Uses a hardcoded seed and temporary local state
+        /// so it does not corrupt live inspector-configured values.
         /// </summary>
-        ///
-        [ContextMenu("Create Map Paths")]
-        private void CreateMapPaths()
+        [ContextMenu("Debug Create Map Paths")]
+        private void DebugCreateMapPaths()
         {
-            ClearPathViews();
+            const int debugMaxLevels = 9;
+            const int debugNodesPerLevel = 7;
+            var debugRNG = new System.Random(0);
+            var debugGrid = new MapNode[debugMaxLevels, debugNodesPerLevel];
 
-            _maxLevels = 9;
-            _nodesPerLevel = 7;
-            _pathingRNG = new System.Random(0);
-            _mapGrid = new MapNode[_maxLevels, _nodesPerLevel];
-
-            // Initialize map grid with nodes
-            for (int level = 0; level < _maxLevels; level++)
+            for (int level = 0; level < debugMaxLevels; level++)
             {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                for (int nodeIndex = 0; nodeIndex < debugNodesPerLevel; nodeIndex++)
                 {
-                    _mapGrid[level, nodeIndex] = new MapNode(level, nodeIndex);
+                    debugGrid[level, nodeIndex] = new MapNode(level, nodeIndex);
                 }
             }
 
+            // Temporarily wire up so the private helpers can run
+            _mapGrid = debugGrid;
+            _maxLevels = debugMaxLevels;
+            _nodesPerLevel = debugNodesPerLevel;
+            _pathingRNG = debugRNG;
+
+            ClearPathViews();
             SelectStartingNodes();
             GeneratePaths();
             CreatePathViews();
         }
+
+        #endregion
     }
 }

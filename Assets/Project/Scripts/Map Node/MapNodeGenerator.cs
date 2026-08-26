@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace BP.MapSystem
@@ -23,6 +22,8 @@ namespace BP.MapSystem
 
     public class MapNodeGenerator : MonoBehaviour
     {
+        #region Fields
+
         [Header("Map Grid Settings")]
         [SerializeField] private int _maxLevels = 9;
         [SerializeField] private int _nodesPerLevel = 7;
@@ -44,22 +45,32 @@ namespace BP.MapSystem
         private Vector2 _dynamicSpacing;
         private System.Random _jitterRNG;
 
+        #endregion
+
+        #region Unity Lifecycle
+
         private void OnDrawGizmos()
         {
             if (_mapAreaBoundsDefiner == null) return;
 
-            CalculateBounds();
-            float areaDiagonal = _bounds.size.magnitude;
+            // Use a local variable so editor repaints never corrupt the runtime _bounds/_dynamicSpacing fields.
+            MapBoundsData gizmoBounds = ComputeBounds();
+            Vector2 gizmoSpacing = new Vector2(
+                _nodesPerLevel > 1 ? 1f / (_nodesPerLevel - 1) : 0.5f,
+                _maxLevels > 1 ? 1f / (_maxLevels - 1) : 0.5f
+            );
+
+            float areaDiagonal = gizmoBounds.size.magnitude;
             float radius = areaDiagonal * 0.01f;
 
             // Base gizmos
             Gizmos.color = Color.blue; // Start point
-            Gizmos.DrawLine(_bounds.origin, _bounds.origin + _bounds.right * 2f);
+            Gizmos.DrawLine(gizmoBounds.origin, gizmoBounds.origin + gizmoBounds.right * 2f);
             Gizmos.color = Color.red; // End point
-            Gizmos.DrawLine(_bounds.origin + _bounds.up * 2f, _bounds.origin + _bounds.right * 2f + _bounds.up * 2f);
+            Gizmos.DrawLine(gizmoBounds.origin + gizmoBounds.up * 2f, gizmoBounds.origin + gizmoBounds.right * 2f + gizmoBounds.up * 2f);
             Gizmos.color = Color.green; // Sides
-            Gizmos.DrawLine(_bounds.origin, _bounds.origin + _bounds.up * 2f);
-            Gizmos.DrawLine(_bounds.origin + _bounds.right * 2f, _bounds.origin + _bounds.right * 2f + _bounds.up * 2f);
+            Gizmos.DrawLine(gizmoBounds.origin, gizmoBounds.origin + gizmoBounds.up * 2f);
+            Gizmos.DrawLine(gizmoBounds.origin + gizmoBounds.right * 2f, gizmoBounds.origin + gizmoBounds.right * 2f + gizmoBounds.up * 2f);
 
             // Draw node positions
             Gizmos.color = Color.yellow;
@@ -67,7 +78,7 @@ namespace BP.MapSystem
             {
                 for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
                 {
-                    Vector3 pos = GetNodePosition(level, nodeIndex);
+                    Vector3 pos = GetNodePositionFromBounds(gizmoBounds, gizmoSpacing, level, nodeIndex);
                     Gizmos.DrawSphere(pos, radius);
                 }
             }
@@ -77,33 +88,51 @@ namespace BP.MapSystem
             UnityEditor.Handles.color = Color.white;
             for (int i = 0; i < _nodesPerLevel; i++)
             {
-                Vector3 pos = GetNodePosition(-1, i);
+                Vector3 pos = GetNodePositionFromBounds(gizmoBounds, gizmoSpacing, -1, i);
                 UnityEditor.Handles.Label(pos + Vector3.up * radius * 1.5f, $"N{i}");
             }
 
             for (int i = 0; i < _maxLevels; i++)
             {
-                Vector3 pos = GetNodePosition(i, -1);
+                Vector3 pos = GetNodePositionFromBounds(gizmoBounds, gizmoSpacing, i, -1);
                 UnityEditor.Handles.Label(pos + Vector3.up * radius * 1.5f, $"L{i}");
             }
 #endif
         }
 
+        #endregion
+
+        #region Public API
+
+        /// <summary>
+        /// Writes the grid parameters required to reproduce identical node positions
+        /// into <paramref name="mapData"/>. Node type data is written by
+        /// <see cref="MapNodeTypeAssigner.WriteTo"/>.
+        /// </summary>
         public void WriteTo(MapData mapData)
         {
-            var nodeDataList = new List<MapNodeData>();
-            for (int level = 0; level < _maxLevels; level++)
+            // Persist grid parameters so the map can be reproduced identically on load
+            // even if inspector defaults change between versions.
+            mapData.GridParameters = new GridParameters
             {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    var node = _mapGrid[level, nodeIndex];
-                    if (node == null) continue;
+                MaxLevels = _maxLevels,
+                NodesPerLevel = _nodesPerLevel,
+                NodeSpaceJitterAmount = _nodeSpaceJitterAmount,
+                LevelSpaceJitterAmount = _levelSpaceJitterAmount
+            };
+        }
 
-                    var nodeData = new MapNodeData(node);
-                    nodeDataList.Add(nodeData);
-                }
-            }
-            mapData.MapNodeDataList = nodeDataList;
+        /// <summary>
+        /// Restores grid parameters from <paramref name="mapData"/> so that the next
+        /// <see cref="CreateNodeGrid"/> call produces positions matching those at save time.
+        /// </summary>
+        public void ReadFrom(MapData mapData)
+        {
+            var gp = mapData.GridParameters;
+            _maxLevels = gp.MaxLevels;
+            _nodesPerLevel = gp.NodesPerLevel;
+            _nodeSpaceJitterAmount = gp.NodeSpaceJitterAmount;
+            _levelSpaceJitterAmount = gp.LevelSpaceJitterAmount;
         }
 
         public void Initialize(System.Random jitterRNG)
@@ -129,6 +158,16 @@ namespace BP.MapSystem
             return _mapGrid;
         }
 
+        /// <summary>
+        /// Nulls out every grid slot whose node has no parent or child connections,
+        /// removing nodes that were not included in any generated path.
+        /// <para>
+        /// <b>Shared reference contract:</b> <c>_mapGrid</c> is the same array instance
+        /// passed to <see cref="MapPathGenerator"/>, <see cref="MapNodeTypeAssigner"/>, and
+        /// <see cref="MapTraversalController"/> via their <c>Initialize</c> methods. Setting a
+        /// slot to <c>null</c> here is immediately visible to all those holders.
+        /// </para>
+        /// </summary>
         public void ClearUnusedNodes()
         {
             for (int level = 0; level < _maxLevels; level++)
@@ -181,12 +220,34 @@ namespace BP.MapSystem
                 Destroy(child.gameObject);
         }
 
+        /// <summary>
+        /// Computes and caches bounds and dynamic spacing from the bounds-definer transform.
+        /// Must be called before <see cref="CreateNodeGrid"/> or any position query.
+        /// </summary>
         public void CalculateBounds()
+        {
+            _bounds = ComputeBounds();
+            _dynamicSpacing = new Vector2(
+                _nodesPerLevel > 1 ? 1f / (_nodesPerLevel - 1) : 0.5f,
+                _maxLevels > 1 ? 1f / (_maxLevels - 1) : 0.5f
+            );
+        }
+
+        #endregion
+
+        #region Private Helpers
+
+        /// <summary>
+        /// Computes bounds from the bounds-definer transform and returns the result as a local
+        /// value. Does not write to any instance fields, making it safe to call from editor-only
+        /// contexts such as <c>OnDrawGizmos</c>.
+        /// </summary>
+        private MapBoundsData ComputeBounds()
         {
             if (_mapAreaBoundsDefiner == null)
             {
                 Debug.LogError("Map Area Bounds Definer is not assigned.");
-                return;
+                return default;
             }
 
             MapBoundsData boundData = new MapBoundsData();
@@ -205,7 +266,7 @@ namespace BP.MapSystem
             else
             {
                 Debug.LogError("Map Area Bounds Definer must have RectTransform or BoxCollider component.");
-                return;
+                return default;
             }
 
             boundData.right = _mapAreaBoundsDefiner.right * (boundData.size.x * 0.5f);
@@ -224,46 +285,49 @@ namespace BP.MapSystem
                     break;
 
                 case MapDirection.LeftToRight:
-                    (boundData.right, boundData.up) = (boundData.up, boundData.right); // Rotate 90° clockwise
+                    (boundData.right, boundData.up) = (boundData.up, boundData.right); // Rotate 90 degrees clockwise
                     boundData.origin = boundData.center - boundData.right - boundData.up;
                     break;
 
                 case MapDirection.RightToLeft:
-                    (boundData.right, boundData.up) = (-boundData.up, -boundData.right); // Rotate 90° counter-clockwise
+                    (boundData.right, boundData.up) = (-boundData.up, -boundData.right); // Rotate 90 degrees counter-clockwise
                     boundData.origin = boundData.center - boundData.right - boundData.up;
                     break;
             }
 
-            _bounds = boundData;
-
-            // Dynamic spacing (normalized between 0 and 1)
-            _dynamicSpacing = new Vector2(
-                _nodesPerLevel > 1 ? 1f / (_nodesPerLevel - 1) : 0.5f,
-                _maxLevels > 1 ? 1f / (_maxLevels - 1) : 0.5f
-            );
+            return boundData;
         }
 
         private Vector3 GetNodePosition(int level, int nodeIndex, bool applyJitter = false)
         {
-            float xNorm = _dynamicSpacing.x * nodeIndex;
-            float yNorm = _dynamicSpacing.y * level;
+            return GetNodePositionFromBounds(_bounds, _dynamicSpacing, level, nodeIndex, applyJitter);
+        }
+
+        private Vector3 GetNodePositionFromBounds(MapBoundsData bounds, Vector2 spacing, int level, int nodeIndex, bool applyJitter = false)
+        {
+            float xNorm = spacing.x * nodeIndex;
+            float yNorm = spacing.y * level;
 
             if (!applyJitter)
             {
-                return _bounds.origin
-                    + _bounds.right * xNorm * 2f
-                    + _bounds.up * yNorm * 2f;
+                return bounds.origin
+                    + bounds.right * xNorm * 2f
+                    + bounds.up * yNorm * 2f;
             }
             else
             {
-                float jitterX = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.x * _nodeSpaceJitterAmount;
-                float jitterY = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.y * _levelSpaceJitterAmount;
+                float jitterX = (float)(_jitterRNG.NextDouble() * 2f - 1f) * spacing.x * _nodeSpaceJitterAmount;
+                float jitterY = (float)(_jitterRNG.NextDouble() * 2f - 1f) * spacing.y * _levelSpaceJitterAmount;
 
-                return _bounds.origin
-                    + _bounds.right * (xNorm + jitterX) * 2f
-                    + _bounds.up * (yNorm + jitterY) * 2f;
+                return bounds.origin
+                    + bounds.right * (xNorm + jitterX) * 2f
+                    + bounds.up * (yNorm + jitterY) * 2f;
             }
         }
+
+        #endregion
+
+        #region Editor / Debug
 
         [ContextMenu("Debug Create Map Grid")]
         private void DebugCreateMapGrid()
@@ -272,5 +336,7 @@ namespace BP.MapSystem
             CreateNodeGrid();
             CreateNodeViews();
         }
+
+        #endregion
     }
 }
