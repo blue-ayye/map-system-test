@@ -254,6 +254,13 @@ namespace BP.MapSystem
                 return;
             }
 
+            const int currentVersion = 1;
+            if (mapData.Version != currentVersion)
+            {
+                Debug.LogWarning($"Save data version mismatch: expected {currentVersion}, got {mapData.Version}. " +
+                                 "The data may not load correctly.");
+            }
+
             // 1. Restore seed and grid parameters
             ReadFrom(mapData);
             _mapGridGenerator.ReadFrom(mapData);

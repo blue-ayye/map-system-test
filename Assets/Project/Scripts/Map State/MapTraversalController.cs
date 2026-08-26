@@ -87,14 +87,12 @@ namespace BP.MapSystem
                 mapNode.State = NodeState.Visited;
             }
 
-            // Restore current node — may be null when the player saved before selecting a start
+            // Restore current node — may be null when the player saved before selecting a start.
+            // When CurrentNodeData is null we leave _currentNode null so the player picks a fresh
+            // starting node; we do not silently advance them to the last visited node.
             if (traversalData.CurrentNodeData != null)
             {
                 _currentNode = _mapGrid[traversalData.CurrentNodeData.Level, traversalData.CurrentNodeData.Index];
-            }
-            else
-            {
-                _currentNode = _visitedNodes.Count > 0 ? _visitedNodes[^1] : null;
             }
 
             if (_currentNode != null)
