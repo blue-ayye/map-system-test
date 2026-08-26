@@ -31,6 +31,9 @@ namespace BP.MapSystem
 
             // Start visually hidden for the spawn animation
             transform.localScale = Vector3.zero;
+
+            if (_iconImage != null)
+                _iconImage.sprite = node.NodeType.DisplayIcon;
         }
 
         public void SetState(NodeState state)
