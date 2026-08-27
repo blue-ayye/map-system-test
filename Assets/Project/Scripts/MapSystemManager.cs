@@ -5,6 +5,10 @@ namespace BP.MapSystem
 {
     public class MapSystemManager : MonoBehaviour
     {
+        private const string _customSeedWarning = "The custom seed {0} generated a map with rule violations. Consider using a different seed or disable the custom seed option.";
+        private const string _generationAttemptsWarning = "Could not generate a valid map within {0} attempts. Using the best available seed: {1}.";
+        private const string _nullMapDataError = "Map data is null or empty. Cannot load map.";
+
         [SerializeField] private MapNodeGenerator _mapGridGenerator;
         [SerializeField] private MapPathGenerator _mapPathGenerator;
         [SerializeField] private MapNodeTypeAssigner _mapNodeTypeAssigner;
@@ -22,10 +26,6 @@ namespace BP.MapSystem
         private bool _isCustomSeedUsed;
         private int _generatedSeed;
         private Sequence _revealSequence;
-
-        private const string _customSeedWarning = "The custom seed {0} generated a map with rule violations. Consider using a different seed or disable the custom seed option.";
-        private const string _generationAttemptsWarning = "Could not generate a valid map within {0} attempts. Using the best available seed: {1}.";
-        private const string _nullMapDataError = "Map data is null or empty. Cannot load map.";
 
         #region Unity API
 
@@ -53,7 +53,7 @@ namespace BP.MapSystem
             }
 
             GenerateMapVisuals();
-            _mapTraversalController.Initialize(_mapGrid, _mapPathGenerator.PathViews);
+            _mapTraversalController.ConnectMapVisuals(_mapGrid, _mapPathGenerator.PathViews);
             AnimateMapReveal();
         }
 
@@ -244,7 +244,7 @@ namespace BP.MapSystem
 
             GenerateMapVisuals();
 
-            _mapTraversalController.Initialize(_mapGrid, _mapPathGenerator.PathViews);
+            _mapTraversalController.ConnectMapVisuals(_mapGrid, _mapPathGenerator.PathViews);
             _mapTraversalController.ReadFrom(mapData);
 
             AnimateMapReveal();
