@@ -25,6 +25,29 @@ namespace BP.MapSystem
 
         public Transform Transform => transform;
 
+        #region Unity API
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            OnNodeClicked?.Invoke(_mapNode);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            Tween.StopAll(transform);
+            Tween.Scale(transform, _hoverEnterScaleTweenSettings);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            Tween.StopAll(transform);
+            Tween.Scale(transform, _hoverExitScaleTweenSettings);
+        }
+
+        #endregion Unity API
+
+        #region Public APIs
+
         public void Initialize(MapNode node)
         {
             _mapNode = node;
@@ -43,6 +66,16 @@ namespace BP.MapSystem
             OnStateChanged?.Invoke(state);
         }
 
+        public Tween AnimateSpawn(float nodeSpawnDuration)
+        {
+            Tween.StopAll(transform);
+            return Tween.Scale(transform, Vector3.one, duration: nodeSpawnDuration, ease: Ease.OutBack);
+        }
+
+        #endregion Public APIs
+
+        #region UI Updates
+
         private void UpdateUI(NodeState state)
         {
             if (_iconImage != null)
@@ -50,31 +83,11 @@ namespace BP.MapSystem
 
             if (_visitedStateIndicator != null)
                 _visitedStateIndicator.gameObject.SetActive(state == NodeState.Visited);
+
             if (_selectedStateIndicator != null)
                 _selectedStateIndicator.gameObject.SetActive(state == NodeState.Current);
         }
 
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            OnNodeClicked?.Invoke(_mapNode);
-        }
-
-        public Tween AnimateSpawn(float nodeSpawnDuration)
-        {
-            Tween.StopAll(transform);
-            return Tween.Scale(transform, Vector3.one, duration: nodeSpawnDuration, ease: Ease.OutBack);
-        }
-
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            Tween.StopAll(transform);
-            Tween.Scale(transform, _hoverEnterScaleTweenSettings);
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            Tween.StopAll(transform);
-            Tween.Scale(transform, _hoverExitScaleTweenSettings);
-        }
+        #endregion UI Updates
     }
 }

@@ -7,6 +7,8 @@ namespace BP.MapSystem
     public interface IMapNodeView
     {
         event Action<MapNode> OnNodeClicked;
+        event Action<NodeState> OnStateChanged;
+
         Transform Transform { get; }
 
         void Initialize(MapNode node);

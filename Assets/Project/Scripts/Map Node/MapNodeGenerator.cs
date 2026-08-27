@@ -23,6 +23,10 @@ namespace BP.MapSystem
 
     public class MapNodeGenerator : MonoBehaviour
     {
+        private const string _missingBoundsDefinerError = "Map Area Bounds Definer is not assigned.";
+        private const string _missingBoundsComponentError = "Map Area Bounds Definer must have RectTransform or BoxCollider component.";
+        private const string _missingNodeViewInterfaceError = "Node View Prefab does not have a component that implements IMapNodeView.";
+
         [Header("Map Grid Settings")]
         [SerializeField] private int _maxLevels = 9;
         [SerializeField] private int _nodesPerLevel = 7;
@@ -44,49 +48,11 @@ namespace BP.MapSystem
         private Vector2 _dynamicSpacing;
         private System.Random _jitterRNG;
 
-        private void OnDrawGizmos()
+        #region Public APIs
+
+        public void Initialize(System.Random jitterRNG)
         {
-            if (_mapAreaBoundsDefiner == null) return;
-
-            CalculateBounds();
-            float areaDiagonal = _bounds.size.magnitude;
-            float radius = areaDiagonal * 0.01f;
-
-            // Base gizmos
-            Gizmos.color = Color.blue; // Start point
-            Gizmos.DrawLine(_bounds.origin, _bounds.origin + _bounds.right * 2f);
-            Gizmos.color = Color.red; // End point
-            Gizmos.DrawLine(_bounds.origin + _bounds.up * 2f, _bounds.origin + _bounds.right * 2f + _bounds.up * 2f);
-            Gizmos.color = Color.green; // Sides
-            Gizmos.DrawLine(_bounds.origin, _bounds.origin + _bounds.up * 2f);
-            Gizmos.DrawLine(_bounds.origin + _bounds.right * 2f, _bounds.origin + _bounds.right * 2f + _bounds.up * 2f);
-
-            // Draw node positions
-            Gizmos.color = Color.yellow;
-            for (int level = 0; level < _maxLevels; level++)
-            {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    Vector3 pos = GetNodePosition(level, nodeIndex);
-                    Gizmos.DrawSphere(pos, radius);
-                }
-            }
-
-            // Draw index labels
-#if UNITY_EDITOR
-            UnityEditor.Handles.color = Color.white;
-            for (int i = 0; i < _nodesPerLevel; i++)
-            {
-                Vector3 pos = GetNodePosition(-1, i);
-                UnityEditor.Handles.Label(pos + Vector3.up * radius * 1.5f, $"N{i}");
-            }
-
-            for (int i = 0; i < _maxLevels; i++)
-            {
-                Vector3 pos = GetNodePosition(i, -1);
-                UnityEditor.Handles.Label(pos + Vector3.up * radius * 1.5f, $"L{i}");
-            }
-#endif
+            _jitterRNG = jitterRNG;
         }
 
         public void WriteTo(MapData mapData)
@@ -104,11 +70,6 @@ namespace BP.MapSystem
                 }
             }
             mapData.MapNodeDataList = nodeDataList;
-        }
-
-        public void Initialize(System.Random jitterRNG)
-        {
-            _jitterRNG = jitterRNG;
         }
 
         public MapNode[,] CreateNodeGrid()
@@ -137,7 +98,9 @@ namespace BP.MapSystem
                 {
                     var node = _mapGrid[level, nodeIndex];
                     if (node != null && node.ParentNodes.Count == 0 && node.ChildNodes.Count == 0)
+                    {
                         _mapGrid[level, nodeIndex] = null;
+                    }
                 }
             }
         }
@@ -169,7 +132,7 @@ namespace BP.MapSystem
                     }
                     else
                     {
-                        Debug.LogError("Node View Prefab does not have a component that implements IMapNodeView.");
+                        Debug.LogError(_missingNodeViewInterfaceError);
                     }
                 }
             }
@@ -178,14 +141,16 @@ namespace BP.MapSystem
         public void ClearNodeViews()
         {
             foreach (Transform child in _nodeViewParent)
+            {
                 Destroy(child.gameObject);
+            }
         }
 
         public void CalculateBounds()
         {
             if (_mapAreaBoundsDefiner == null)
             {
-                Debug.LogError("Map Area Bounds Definer is not assigned.");
+                Debug.LogError(_missingBoundsDefinerError);
                 return;
             }
 
@@ -204,7 +169,7 @@ namespace BP.MapSystem
             }
             else
             {
-                Debug.LogError("Map Area Bounds Definer must have RectTransform or BoxCollider component.");
+                Debug.LogError(_missingBoundsComponentError);
                 return;
             }
 
@@ -243,6 +208,10 @@ namespace BP.MapSystem
             );
         }
 
+        #endregion Public APIs
+
+        #region Internal Positioning Logic
+
         private Vector3 GetNodePosition(int level, int nodeIndex, bool applyJitter = false)
         {
             float xNorm = _dynamicSpacing.x * nodeIndex;
@@ -265,6 +234,57 @@ namespace BP.MapSystem
             }
         }
 
+        #endregion Internal Positioning Logic
+
+        #region Unity Editor & Debugging
+
+        private void OnDrawGizmos()
+        {
+            if (_mapAreaBoundsDefiner == null) return;
+
+            CalculateBounds();
+            float areaDiagonal = _bounds.size.magnitude;
+            float radius = areaDiagonal * 0.01f;
+
+            // Base gizmos
+            Gizmos.color = Color.blue; // Start point
+            Gizmos.DrawLine(_bounds.origin, _bounds.origin + _bounds.right * 2f);
+
+            Gizmos.color = Color.red; // End point
+            Gizmos.DrawLine(_bounds.origin + _bounds.up * 2f, _bounds.origin + _bounds.right * 2f + _bounds.up * 2f);
+
+            Gizmos.color = Color.green; // Sides
+            Gizmos.DrawLine(_bounds.origin, _bounds.origin + _bounds.up * 2f);
+            Gizmos.DrawLine(_bounds.origin + _bounds.right * 2f, _bounds.origin + _bounds.right * 2f + _bounds.up * 2f);
+
+            // Draw node positions
+            Gizmos.color = Color.yellow;
+            for (int level = 0; level < _maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    Vector3 pos = GetNodePosition(level, nodeIndex);
+                    Gizmos.DrawSphere(pos, radius);
+                }
+            }
+
+            // Draw index labels
+#if UNITY_EDITOR
+            UnityEditor.Handles.color = Color.white;
+            for (int i = 0; i < _nodesPerLevel; i++)
+            {
+                Vector3 pos = GetNodePosition(-1, i);
+                UnityEditor.Handles.Label(pos + Vector3.up * radius * 1.5f, $"N{i}");
+            }
+
+            for (int i = 0; i < _maxLevels; i++)
+            {
+                Vector3 pos = GetNodePosition(i, -1);
+                UnityEditor.Handles.Label(pos + Vector3.up * radius * 1.5f, $"L{i}");
+            }
+#endif
+        }
+
         [ContextMenu("Debug Create Map Grid")]
         private void DebugCreateMapGrid()
         {
@@ -272,5 +292,7 @@ namespace BP.MapSystem
             CreateNodeGrid();
             CreateNodeViews();
         }
+
+        #endregion Unity Editor & Debugging
     }
 }
