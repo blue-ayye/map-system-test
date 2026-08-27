@@ -5,6 +5,9 @@ namespace BP.MapSystem
     [CreateAssetMenu(fileName = "MapNodeType", menuName = "Map System/Map Node Type")]
     public class MapNodeTypeSO : ScriptableObject
     {
+        private const string _fileNameSuffix = "_MapNodeType";
+        private const string _duplicateAssetWarning = "An asset with the name '{0}' already exists. Cannot rename.";
+
         [SerializeField] private string _typeID;
         [SerializeField] private string _displayName;
         [SerializeField] private Sprite _displayIcon;
@@ -13,6 +16,8 @@ namespace BP.MapSystem
         public Sprite DisplayIcon => _displayIcon;
         public string ID => _typeID;
 
+        #region Unity Editor
+
 #if UNITY_EDITOR
 
         [ContextMenu("Rename File to Match Display Name")]
@@ -20,16 +25,14 @@ namespace BP.MapSystem
         {
             _typeID = _displayName.Replace(" ", "_").ToLower();
 
-            string suffix = "_MapNodeType";
             string assetPath = UnityEditor.AssetDatabase.GetAssetPath(this);
-            string newFileName = _displayName.Replace(" ", "") + suffix;
+            string newFileName = _displayName.Replace(" ", "") + _fileNameSuffix;
             string newAssetPath = System.IO.Path.GetDirectoryName(assetPath) + "/" + newFileName + ".asset";
 
-            // Check if an asset with the new name already exists
             var existingAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<MapNodeTypeSO>(newAssetPath);
             if (existingAsset != null && existingAsset != this)
             {
-                Debug.LogWarning($"An asset with the name '{newFileName}' already exists. Cannot rename.");
+                Debug.LogWarningFormat(_duplicateAssetWarning, newFileName);
                 UnityEditor.EditorGUIUtility.PingObject(existingAsset);
                 return;
             }
@@ -40,5 +43,7 @@ namespace BP.MapSystem
         }
 
 #endif
+
+        #endregion Unity Editor
     }
 }

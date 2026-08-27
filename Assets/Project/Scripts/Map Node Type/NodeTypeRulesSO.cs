@@ -1,6 +1,6 @@
+using AYellowpaper.SerializedCollections;
 using System.Collections.Generic;
 using UnityEngine;
-using AYellowpaper.SerializedCollections;
 
 namespace BP.MapSystem
 {
@@ -14,12 +14,14 @@ namespace BP.MapSystem
     [CreateAssetMenu(fileName = "NodeTypeRules", menuName = "Map System/Node Type Rules")]
     public class NodeTypeRulesSO : ScriptableObject
     {
+        private const string _fileNameSuffix = "_NodeTypeRules";
+        private const string _duplicateAssetWarning = "An asset with the name '{0}' already exists. Cannot rename.";
+
         [SerializeField] private int _startLevel;
         [SerializeField] private int _endLevel;
         [SerializeField] private bool _excludeFromOtherRules;
         [SerializedDictionary("Node Type", "Weight")]
         [SerializeField] private SerializedDictionary<MapNodeTypeSO, float> _nodeTypeWeights;
-        //[SerializeField] private float _parentTypeWeightReductionFactor = 0f;
         [SerializedDictionary("Node Type", "Weight Reduction")]
         [SerializeField] private SerializedDictionary<MapNodeTypeSO, float> _consecutiveTypeWeightReductions;
         [SerializeField] private SiblingNodeTypeConstraint _siblingNodeTypeConstraint;
@@ -28,25 +30,24 @@ namespace BP.MapSystem
         public int EndLevel => _endLevel;
         public bool ExcludeFromOtherRules => _excludeFromOtherRules;
         public Dictionary<MapNodeTypeSO, float> NodeTypeWeights => _nodeTypeWeights;
-        //public float ParentTypeWeightReductionFactor => _parentTypeWeightReductionFactor;
         public Dictionary<MapNodeTypeSO, float> ConsecutiveTypeWeightReductions => _consecutiveTypeWeightReductions;
         public SiblingNodeTypeConstraint SiblingTypeConstraint => _siblingNodeTypeConstraint;
+
+        #region Unity Editor
 
 #if UNITY_EDITOR
 
         [ContextMenu("Rename File to Match Display Name")]
         public void RenameFile()
         {
-            string suffix = "_NodeTypeRules";
             string assetPath = UnityEditor.AssetDatabase.GetAssetPath(this);
-            string newFileName = $"{_startLevel}-{_endLevel}" + suffix;
+            string newFileName = $"{_startLevel}-{_endLevel}" + _fileNameSuffix;
             string newAssetPath = System.IO.Path.GetDirectoryName(assetPath) + "/" + newFileName + ".asset";
 
-            // Check if an asset with the new name already exists
             var existingAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<MapNodeTypeSO>(newAssetPath);
             if (existingAsset != null && existingAsset != this)
             {
-                Debug.LogWarning($"An asset with the name '{newFileName}' already exists. Cannot rename.");
+                Debug.LogWarningFormat(_duplicateAssetWarning, newFileName);
                 UnityEditor.EditorGUIUtility.PingObject(existingAsset);
                 return;
             }
@@ -76,7 +77,7 @@ namespace BP.MapSystem
         private void AddOrRemoveMissingNodeTypeInConsecutiveTypeWightReductions()
         {
             var currentWeights = new Dictionary<MapNodeTypeSO, float>(_nodeTypeWeights);
-            // Add missing node types
+
             foreach (var weight in currentWeights)
             {
                 if (!_consecutiveTypeWeightReductions.ContainsKey(weight.Key))
@@ -86,7 +87,6 @@ namespace BP.MapSystem
                 }
             }
 
-            // Remove obsolete node types
             var entryToRemove = new List<MapNodeTypeSO>();
             foreach (var kvp in _consecutiveTypeWeightReductions)
             {
@@ -95,6 +95,7 @@ namespace BP.MapSystem
                     entryToRemove.Add(kvp.Key);
                 }
             }
+
             foreach (var key in entryToRemove)
             {
                 _consecutiveTypeWeightReductions.Remove(key);
@@ -103,5 +104,7 @@ namespace BP.MapSystem
         }
 
 #endif
+
+        #endregion Unity Editor
     }
 }
