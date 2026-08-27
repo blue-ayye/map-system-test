@@ -1,13 +1,10 @@
 using PrimeTween;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace BP.MapSystem
 {
     public class MapSystemManager : MonoBehaviour
     {
-        #region Fields and Properties
-
         [SerializeField] private MapNodeGenerator _mapGridGenerator;
         [SerializeField] private MapPathGenerator _mapPathGenerator;
         [SerializeField] private MapNodeTypeAssigner _mapNodeTypeAssigner;
@@ -26,40 +23,33 @@ namespace BP.MapSystem
         private int _generatedSeed;
         private Sequence _revealSequence;
 
-        #endregion Fields and Properties
+        private const string _customSeedWarning = "The custom seed {0} generated a map with rule violations. Consider using a different seed or disable the custom seed option.";
+        private const string _generationAttemptsWarning = "Could not generate a valid map within {0} attempts. Using the best available seed: {1}.";
+        private const string _nullMapDataError = "Map data is null or empty. Cannot load map.";
 
-        #region Unity Lifecycle Methods
+        #region Unity API
 
-        private void Start() => Initialize();
+        private void Start() => GemerateMap();
 
-        #endregion Unity Lifecycle Methods
+        #endregion Unity API
 
         #region Public APIs
 
-        public void Initialize()
+        [ContextMenu("Generate Map")]
+        public void GemerateMap()
         {
             _mapGridGenerator.CalculateBounds();
 
-            bool foundValidSeed = TryGetValidSeed(out int selectedSeed);
-
-            // Generate the final selected map.
-            GenerateMapData(selectedSeed);
+            bool foundValidSeed = GenerateValidMapData();
 
             if (!foundValidSeed && _usePlayerInputSeed)
             {
                 _mapNodeTypeAssigner.CheckTypeRulesValidity(logging: true);
-
-                Debug.LogWarning(
-                    $"The custom seed {_playerInputSeed} generated a map with rule violations. " +
-                    "Consider using a different seed or disable the custom seed option."
-                );
+                Debug.LogWarningFormat(_customSeedWarning, _playerInputSeed);
             }
             else if (!foundValidSeed)
             {
-                Debug.LogWarning(
-                    $"Could not generate a valid map within {_generationAttempts} attempts. " +
-                    $"Using the best available seed: {selectedSeed}."
-                );
+                Debug.LogWarningFormat(_generationAttemptsWarning, _generationAttempts, _generatedSeed);
             }
 
             GenerateMapVisuals();
@@ -67,10 +57,12 @@ namespace BP.MapSystem
             AnimateMapReveal();
         }
 
-        private bool TryGetValidSeed(out int selectedSeed)
-        {
-            selectedSeed = default;
+        #endregion Public APIs
 
+        #region Map Generation
+
+        private bool GenerateValidMapData()
+        {
             int attempts = _usePlayerInputSeed
                 ? 1
                 : Mathf.Max(1, _generationAttempts);
@@ -82,10 +74,10 @@ namespace BP.MapSystem
             {
                 int candidateSeed = GenerateSeed();
 
+                // This mutates the class state (nodes, grids, paths)
                 GenerateMapData(candidateSeed);
 
-                int violationCount =
-                    _mapNodeTypeAssigner.CheckTypeRulesValidity();
+                int violationCount = _mapNodeTypeAssigner.CheckTypeRulesValidity();
 
                 if (violationCount < fewestViolations)
                 {
@@ -95,16 +87,19 @@ namespace BP.MapSystem
 
                 if (violationCount == 0)
                 {
-                    selectedSeed = candidateSeed;
+                    // A perfect map was generated. The class state is already correct,
+                    // so we can exit immediately without regenerating.
                     return true;
                 }
             }
 
-            selectedSeed = bestSeed;
+            // If we reach this point, all attempts failed to produce a 0-violation map.
+            // The current class state belongs to the last failed attempt in the loop.
+            // We must regenerate the data one final time using the best seed we found.
+            GenerateMapData(bestSeed);
+
             return false;
         }
-
-        #endregion Public APIs
 
         private int GenerateSeed()
         {
@@ -116,10 +111,8 @@ namespace BP.MapSystem
 
             _isCustomSeedUsed = false;
 
-            int randomSeed = Random.Range(int.MinValue, int.MaxValue);
-            int timeSeed = System.DateTime.Now.Millisecond;
-
-            return Mathf.Abs(randomSeed + timeSeed);
+            // Simplified to avoid integer overflow issues when combining two large integers
+            return Random.Range(0, int.MaxValue);
         }
 
         private void GenerateMapData(int seed)
@@ -128,13 +121,11 @@ namespace BP.MapSystem
 
             // 1. Create map node data
             var mapJitterRNG = new System.Random(seed);
-
             _mapGridGenerator.Initialize(mapJitterRNG);
             _mapGrid = _mapGridGenerator.CreateNodeGrid();
 
             // 2. Create map path data
             var mapPathingRNG = new System.Random(seed + 1);
-
             _mapPathGenerator.Initialize(_mapGrid, mapPathingRNG);
             _mapPathGenerator.SelectStartingNodes();
             _mapPathGenerator.GeneratePaths();
@@ -143,7 +134,6 @@ namespace BP.MapSystem
 
             // 3. Assign node types to map node data
             var mapNodeTypeRNG = new System.Random(seed + 2);
-
             _mapNodeTypeAssigner.Initialize(_mapGrid, mapNodeTypeRNG);
             _mapNodeTypeAssigner.AssignNodeTypes();
         }
@@ -160,6 +150,10 @@ namespace BP.MapSystem
             _mapPathGenerator.CreatePathViews();
         }
 
+        #endregion Map Generation
+
+        #region Animation
+
         private void AnimateMapReveal()
         {
             if (_revealSequence.isAlive)
@@ -169,11 +163,14 @@ namespace BP.MapSystem
 
             _revealSequence = Sequence.Create();
 
-            for (int level = 0; level < _mapGrid.GetLength(0); level++)
+            int levels = _mapGrid.GetLength(0);
+            int nodesPerLevel = _mapGrid.GetLength(1);
+
+            for (int level = 0; level < levels; level++)
             {
                 // 1. POP IN NODES (Waits for previous level's paths to finish)
                 bool firstNodeChained = false;
-                for (int index = 0; index < _mapGrid.GetLength(1); index++)
+                for (int index = 0; index < nodesPerLevel; index++)
                 {
                     var node = _mapGrid[level, index];
                     if (node != null && node.NodeView != null)
@@ -214,6 +211,10 @@ namespace BP.MapSystem
             }
         }
 
+        #endregion Animation
+
+        #region Map Data Management
+
         [ContextMenu("Map Data/Save")]
         private void SaveMap()
         {
@@ -229,16 +230,16 @@ namespace BP.MapSystem
         private void LoadMap()
         {
             var mapData = _mapDataHandler.LoadMapData();
-            if (mapData == null)
+
+            if (mapData == null || mapData.MapNodeDataList == null || mapData.MapNodeDataList.Count == 0)
             {
-                Debug.LogError("Map data is null. Cannot load map.");
+                Debug.LogError(_nullMapDataError);
                 return;
             }
 
             ReadFrom(mapData);
             GenerateMapData(mapData.Seed);
 
-            // Reassign node types based on loaded data just to be sure
             _mapNodeTypeAssigner.ReadFrom(mapData);
 
             GenerateMapVisuals();
@@ -268,5 +269,7 @@ namespace BP.MapSystem
             }
             _generatedSeed = mapData.Seed;
         }
+
+        #endregion Map Data Management
     }
 }
