@@ -17,24 +17,26 @@ namespace BP.MapSystem
         private int _maxLevels;
         private int _nodesPerLevel;
         private System.Random _pathingRNG;
-        private Dictionary<int,List<MapNode>> _generatedPaths = new Dictionary<int,List<MapNode>>();
+        private Dictionary<int, List<MapNode>> _generatedPaths = new Dictionary<int, List<MapNode>>();
 
         public List<IMapPathView> PathViews { get; private set; } = new List<IMapPathView>();
 
-        public void Initialize(MapNode[,] mapGrid, System.Random pRNG)
+        #region Public APIs
+
+        public void Initialize(MapNode[,] mapGrid, System.Random pathingRNG)
         {
             _mapGrid = mapGrid;
             _maxLevels = mapGrid.GetLength(0);
             _nodesPerLevel = mapGrid.GetLength(1);
-            _pathingRNG = pRNG;
+            _pathingRNG = pathingRNG;
         }
 
         public void SelectStartingNodes()
         {
             int startingLevel = 0;
             _generatedPaths.Clear();
-            
-            // Ensure at least <MinUniqueStartingPoints> number of nodes are unique
+
+            // Ensure at least <_uniquePaths> number of nodes are unique
             for (int pathIndex = 0; pathIndex < _uniquePaths; pathIndex++)
             {
                 MapNode randomNode;
@@ -44,19 +46,22 @@ namespace BP.MapSystem
                     int randomIndex = _pathingRNG.Next(0, _nodesPerLevel);
                     randomNode = _mapGrid[startingLevel, randomIndex];
                 } while (_generatedPaths[pathIndex].Contains(randomNode));
+
                 _generatedPaths[pathIndex].Add(randomNode);
             }
 
-            // Then fill the rest allowing duplicate nodes to allow multiple paths from same starting point
+            // Then fill the rest allowing duplicate nodes for multiple paths from the same starting point
             while (_generatedPaths.Count < _totalPaths)
             {
                 int randomIndex = _pathingRNG.Next(0, _nodesPerLevel);
                 var randomNode = _mapGrid[startingLevel, randomIndex];
                 int pathIndex = _generatedPaths.Count;
+
                 if (!_generatedPaths.ContainsKey(pathIndex))
                 {
                     _generatedPaths[pathIndex] = new List<MapNode>();
                 }
+
                 _generatedPaths[pathIndex].Add(randomNode);
             }
         }
@@ -65,10 +70,9 @@ namespace BP.MapSystem
         {
             foreach (var pathEntry in _generatedPaths)
             {
-                int pathIndex = pathEntry.Key;
                 List<MapNode> pathNodes = pathEntry.Value;
-
                 MapNode currentNode = pathNodes[0];
+
                 for (int level = 0; level < _maxLevels - 1; level++)
                 {
                     var nextNode = GetValidNextNode(currentNode, level + 1);
@@ -99,9 +103,11 @@ namespace BP.MapSystem
                         var pathViewTransform = Instantiate(_pathViewPrefab, _pathViewParent);
                         pathViewTransform.localPosition = Vector3.zero;
 
-                        var pathView = pathViewTransform.GetComponent<IMapPathView>();
-                        pathView.DrawPath(fromNode, toNode);
-                        PathViews.Add(pathView);
+                        if (pathViewTransform.TryGetComponent(out IMapPathView pathView))
+                        {
+                            pathView.DrawPath(fromNode, toNode);
+                            PathViews.Add(pathView);
+                        }
                     }
                 }
             }
@@ -117,19 +123,23 @@ namespace BP.MapSystem
             PathViews.Clear();
         }
 
+        #endregion Public APIs
+
+        #region Pathing Logic
+
         private MapNode GetValidNextNode(MapNode currentNode, int nextLevel)
         {
-            var nextLevelNodes = GetNodesAt(nextLevel);
-            if (nextLevelNodes.Count == 0) return null;
-
             List<MapNode> potentialNextNodes = new List<MapNode>();
             int currentIndex = currentNode.Index;
+
             for (int offset = -1; offset <= 1; offset++) // Implements Rule 2
             {
                 int nextIndex = currentIndex + offset;
+
                 if (nextIndex >= 0 && nextIndex < _nodesPerLevel)
                 {
                     var candidateNode = _mapGrid[nextLevel, nextIndex];
+
                     if (candidateNode != null && !CanOverlapPath(currentNode, candidateNode)) // Implements Rule 3
                     {
                         potentialNextNodes.Add(candidateNode);
@@ -140,13 +150,12 @@ namespace BP.MapSystem
             if (potentialNextNodes.Count == 0) return null;
 
             // Randomly select one of the valid next nodes
-            var selectedNode = potentialNextNodes[_pathingRNG.Next(0, potentialNextNodes.Count)];
-            return selectedNode;
+            return potentialNextNodes[_pathingRNG.Next(0, potentialNextNodes.Count)];
         }
 
         private bool CanOverlapPath(MapNode fromNode, MapNode toNode)
         {
-            // If toNode.NodeIndex == fromNode.NodeIndex, no overlap is possible
+            // If toNode.NodeIndex == fromNode.NodeIndex, no overlap is possible (straight vertical path)
             if (toNode.Index == fromNode.Index) return false;
 
             // Find the path direction and the adjacent nodes in that direction
@@ -161,37 +170,28 @@ namespace BP.MapSystem
             // Check if the adjacent nodes are linked
             var fromNodeAdjacent = _mapGrid[fromNode.Level, fromNodeAdjacentIndex];
             var toNodeAdjacent = _mapGrid[toNode.Level, toNodeAdjacentIndex];
+
             return fromNodeAdjacent != null && toNodeAdjacent != null && toNodeAdjacent.ParentNodes.Contains(fromNodeAdjacent);
         }
 
-        private void LinkNodes(MapNode childNode, MapNode parentNode, Color? pathColor = null)
+        private void LinkNodes(MapNode childNode, MapNode parentNode)
         {
             if (childNode == null || parentNode == null || childNode == parentNode) return;
 
             if (!childNode.ParentNodes.Contains(parentNode))
                 childNode.ParentNodes.Add(parentNode);
+
             if (!parentNode.ChildNodes.Contains(childNode))
                 parentNode.ChildNodes.Add(childNode);
         }
 
-        private List<MapNode> GetNodesAt(int level)
-        {
-            List<MapNode> nodes = new List<MapNode>();
-            if (_mapGrid == null || level < 0 || level >= _maxLevels) return nodes;
+        #endregion Pathing Logic
 
-            for (int i = 0; i < _nodesPerLevel; i++)
-            {
-                var node = _mapGrid[level, i];
-                if (node != null) nodes.Add(node);
-            }
-
-            return nodes;
-        }
+        #region Testing
 
         /// <summary>
         /// This is just for testing purposes. Call the individual methods from a control script to control the flow.
         /// </summary>
-        ///
         [ContextMenu("Create Map Paths")]
         private void CreateMapPaths()
         {
@@ -215,5 +215,7 @@ namespace BP.MapSystem
             GeneratePaths();
             CreatePathViews();
         }
+
+        #endregion Testing
     }
 }

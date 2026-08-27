@@ -9,11 +9,23 @@ namespace BP.MapSystem
         [SerializeField] private Color _defaultPathColor = Color.white;
         [SerializeField] private Color _traversedPathColor = Color.green;
 
+        private Vector3 _startLocalPos;
+        private Vector3 _endLocalPos;
+        private LineRenderer _lineRenderer;
+
         public MapNode FromNode { get; private set; }
         public MapNode ToNode { get; private set; }
 
-        private Vector3 _startLocalPos;
-        private Vector3 _endLocalPos;
+        #region Unity API
+
+        private void Awake()
+        {
+            _lineRenderer = GetComponent<LineRenderer>();
+        }
+
+        #endregion Unity API
+
+        #region Public APIs
 
         public void DrawPath(MapNode fromNode, MapNode toNode, Color? pathColor = null)
         {
@@ -26,27 +38,25 @@ namespace BP.MapSystem
             _startLocalPos = transform.InverseTransformPoint(fromNode.Position);
             _endLocalPos = transform.InverseTransformPoint(toNode.Position);
 
-            var lineRenderer = GetComponent<LineRenderer>();
-            lineRenderer.positionCount = 2;
+            _lineRenderer.positionCount = 2;
 
-            // Start BOTH positions at the origin so the line is effectively invisible
-            lineRenderer.SetPosition(0, _startLocalPos);
-            lineRenderer.SetPosition(1, _startLocalPos);
+            // Start BOTH positions at the origin so the line is effectively invisible initially
+            _lineRenderer.SetPosition(0, _startLocalPos);
+            _lineRenderer.SetPosition(1, _startLocalPos);
 
             if (pathColor.HasValue)
             {
-                lineRenderer.startColor = pathColor.Value;
-                lineRenderer.endColor = pathColor.Value;
+                _lineRenderer.startColor = pathColor.Value;
+                _lineRenderer.endColor = pathColor.Value;
             }
         }
 
         public Tween AnimateDraw(float duration)
         {
-            var lineRenderer = GetComponent<LineRenderer>();
-            Tween.StopAll(lineRenderer);
+            Tween.StopAll(_lineRenderer);
 
             return Tween.Custom(
-                target: lineRenderer,
+                target: _lineRenderer,
                 startValue: _startLocalPos,
                 endValue: _endLocalPos,
                 duration: duration,
@@ -57,13 +67,14 @@ namespace BP.MapSystem
 
         public void ChangePathColor(Color newColor)
         {
-            var lineRenderer = GetComponent<LineRenderer>();
-            lineRenderer.startColor = newColor;
-            lineRenderer.endColor = newColor;
+            _lineRenderer.startColor = newColor;
+            _lineRenderer.endColor = newColor;
         }
 
         public void SetTraversedColor() => ChangePathColor(_traversedPathColor);
 
         public void SetDefaultColor() => ChangePathColor(_defaultPathColor);
+
+        #endregion Public APIs
     }
 }
