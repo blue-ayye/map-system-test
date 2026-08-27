@@ -77,7 +77,7 @@ namespace BP.MapSystem
             // Set current node
             _currentNode = _mapGrid[traversalData.CurrentNodeData.Level, traversalData.CurrentNodeData.Index];
 
-            if (_currentNode == null && _visitedNodes.Count == 0)
+            if (_currentNode == null && _visitedNodes.Count > 0)
             {
                 _currentNode = _visitedNodes[^1]; // Last visited node just in case of data mismatch
             }
@@ -172,66 +172,176 @@ namespace BP.MapSystem
                 $" or traverse back to visited nodes if enabled.");
         }
 
-        private void TraversePath(MapNode clickedNode)
-        {
-            // Mark node as visited
-            if (!_visitedNodes.Contains(clickedNode))
-            {
-                //clickedNode.NodeView.SetActiveVisitedState(true);
-                clickedNode.NodeView.SetState(NodeState.Visited);
-                _visitedNodes.Add(clickedNode);
-            }
+        //private void TraversePath(MapNode clickedNode)
+        //{
+        //    // Mark node as visited
+        //    if (!_visitedNodes.Contains(clickedNode))
+        //    {
+        //        //clickedNode.NodeView.SetActiveVisitedState(true);
+        //        clickedNode.NodeView.SetState(NodeState.Visited);
+        //        _visitedNodes.Add(clickedNode);
+        //    }
 
-            // Mark path as traversed
-            IMapPathView pathView = null;
-            foreach (var pv in _pathViews)
-            {
-                if (pv.FromNode == _currentNode && pv.ToNode == clickedNode)
-                {
-                    pathView = pv;
-                    break;
-                }
-            }
-            //pathView?.ChangePathColor(Color.yellow); // Change color to indicate traversal
-            pathView?.SetTraversedColor();
+        //    // Mark path as traversed
+        //    IMapPathView pathView = null;
+        //    foreach (var pv in _pathViews)
+        //    {
+        //        if (pv.FromNode == _currentNode && pv.ToNode == clickedNode)
+        //        {
+        //            pathView = pv;
+        //            break;
+        //        }
+        //    }
+        //    //pathView?.ChangePathColor(Color.yellow); // Change color to indicate traversal
+        //    pathView?.SetTraversedColor();
 
-            // Update current node selection state
-            // _currentNode?.NodeView.SetActiveSelectedState(false);
-            // clickedNode.NodeView.SetActiveSelectedState(true);
-            _currentNode?.NodeView.SetState(NodeState.Visited);
-            clickedNode.NodeView.SetState(NodeState.Current);
+        //    // Update current node selection state
+        //    // _currentNode?.NodeView.SetActiveSelectedState(false);
+        //    // clickedNode.NodeView.SetActiveSelectedState(true);
+        //    _currentNode?.NodeView.SetState(NodeState.Visited);
+        //    clickedNode.NodeView.SetState(NodeState.Current);
 
-            // Update current node reference
-            _currentNode = clickedNode;
+        //    // Update current node reference
+        //    _currentNode = clickedNode;
 
-            UpdateAllNodeStates();
-        }
+        //    UpdateAllNodeStates();
+        //}
+
+        //private void UpdateAllNodeStates()
+        //{
+        //    foreach (var node in _mapGrid)
+        //    {
+        //        if (node == null) continue;
+
+        //        if (_visitedNodes.Contains(node))
+        //        {
+        //            node.State = node == _currentNode ? NodeState.Current : NodeState.Visited;
+        //        }
+        //        else if (_currentNode == null && node.Level == 0) // Starting out
+        //        {
+        //            node.State = NodeState.Reachable;
+        //        }
+        //        else if (_currentNode != null && _currentNode.ChildNodes.Contains(node))
+        //        {
+        //            node.State = NodeState.Reachable;
+        //        }
+        //        else
+        //        {
+        //            node.State = NodeState.Locked;
+        //        }
+
+        //        // Tell the view to update its visuals!
+        //        node.NodeView.SetState(node.State);
+        //    }
+        //}
 
         private void UpdateAllNodeStates()
         {
-            foreach (var node in _mapGrid)
+            foreach (MapNode node in _mapGrid)
             {
-                if (node == null) continue;
+                if (node == null)
+                    continue;
 
-                if (_visitedNodes.Contains(node))
-                {
-                    node.State = node == _currentNode ? NodeState.Current : NodeState.Visited;
-                }
-                else if (_currentNode == null && node.Level == 0) // Starting out
-                {
-                    node.State = NodeState.Reachable;
-                }
-                else if (_currentNode != null && _currentNode.ChildNodes.Contains(node))
-                {
-                    node.State = NodeState.Reachable;
-                }
-                else
-                {
-                    node.State = NodeState.Locked;
-                }
+                SetNodeState(node, GetDesiredState(node), forceUpdate: true);
+            }
+        }
 
-                // Tell the view to update its visuals!
-                node.NodeView.SetState(node.State);
+        private void TraversePath(MapNode clickedNode)
+        {
+            MapNode previousNode = _currentNode;
+
+            if (!_visitedNodes.Contains(clickedNode))
+            {
+                _visitedNodes.Add(clickedNode);
+            }
+
+            _currentNode = clickedNode;
+
+            if (previousNode != null)
+            {
+                SetPathAsTraversed(previousNode, clickedNode);
+            }
+
+            RefreshChangedNodeStates(previousNode, clickedNode);
+        }
+
+        private void RefreshChangedNodeStates(MapNode previousNode, MapNode currentNode)
+        {
+            var affectedNodes = new HashSet<MapNode>();
+
+            // The node that stopped being current, plus the nodes it used to unlock.
+            AddNodeAndChildren(affectedNodes, previousNode);
+
+            // The new current node, plus the nodes it now unlocks.
+            AddNodeAndChildren(affectedNodes, currentNode);
+
+            // Starting a run changes every level-0 node from Reachable to either
+            // Current (the clicked node) or Locked (all other starting nodes).
+            if (previousNode == null)
+            {
+                for (int index = 0; index < _mapGrid.GetLength(1); index++)
+                {
+                    affectedNodes.Add(_mapGrid[0, index]);
+                }
+            }
+
+            foreach (MapNode node in affectedNodes)
+            {
+                if (node == null)
+                    continue;
+
+                SetNodeState(node, GetDesiredState(node));
+            }
+        }
+
+        private static void AddNodeAndChildren(HashSet<MapNode> nodes, MapNode node)
+        {
+            if (node == null)
+                return;
+
+            nodes.Add(node);
+
+            foreach (MapNode childNode in node.ChildNodes)
+            {
+                nodes.Add(childNode);
+            }
+        }
+
+        private NodeState GetDesiredState(MapNode node)
+        {
+            if (node == _currentNode)
+                return NodeState.Current;
+
+            if (_visitedNodes.Contains(node))
+                return NodeState.Visited;
+
+            if (_currentNode == null && node.Level == 0)
+                return NodeState.Reachable;
+
+            if (_currentNode != null && _currentNode.ChildNodes.Contains(node))
+                return NodeState.Reachable;
+
+            return NodeState.Locked;
+        }
+
+        private static void SetNodeState(MapNode node, NodeState newState, bool forceUpdate = false)
+        {
+            if (node == null || (!forceUpdate && node.State == newState))
+                return;
+
+            node.State = newState;
+            node.NodeView?.SetState(newState);
+        }
+
+        private void SetPathAsTraversed(MapNode fromNode, MapNode toNode)
+        {
+            foreach (IMapPathView pathView in _pathViews)
+            {
+                if (pathView.FromNode == fromNode && pathView.ToNode == toNode)
+                {
+                    pathView.SetTraversedColor();
+                    return;
+                }
             }
         }
     }
