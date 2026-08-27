@@ -15,6 +15,7 @@ namespace BP.MapSystem
         [SerializeField] private bool _canTraverseVisitedNodes;
         [Tooltip("Maximum number of traversal steps allowed. Set to -1 (or any negative number) for unlimited steps.")]
         [SerializeField] private int _maxTraversalSteps = -1;
+        [SerializeField] private float _pathTraversalDuration = 0.3f;
 
         private List<MapNode> _visitedNodes = new List<MapNode>();
         private int _currentTraversalSteps = 0;
@@ -43,7 +44,7 @@ namespace BP.MapSystem
             _pathViews = pathViews;
             SubscribeToMapNodeEvents();
             UpdateAllNodeStates();
-            UpdatePathViewColor();
+            UpdatePathVisualsOnLoad();
         }
 
         public void ClearSubscriptions()
@@ -109,7 +110,7 @@ namespace BP.MapSystem
 
             _currentTraversalSteps = traversalData.TraversalStepsTaken;
             UpdateAllNodeStates();
-            UpdatePathViewColor();
+            UpdatePathVisualsOnLoad();
         }
 
         #endregion Data Management
@@ -170,7 +171,7 @@ namespace BP.MapSystem
 
             if (previousNode != null)
             {
-                SetPathAsTraversed(previousNode, clickedNode);
+                AnimatePathTraversal(previousNode, clickedNode);
             }
 
             RefreshChangedNodeStates(previousNode, clickedNode);
@@ -258,28 +259,28 @@ namespace BP.MapSystem
 
         #region Path Visuals & Events
 
-        private void UpdatePathViewColor()
+        private void UpdatePathVisualsOnLoad()
         {
             foreach (var pathView in _pathViews)
             {
                 if (_visitedNodes.Contains(pathView.FromNode) && _visitedNodes.Contains(pathView.ToNode))
                 {
-                    pathView.SetTraversedColor();
+                    pathView.SetInstantlyTraversed();
                 }
                 else
                 {
-                    pathView.SetDefaultColor();
+                    pathView.ResetToDefault();
                 }
             }
         }
 
-        private void SetPathAsTraversed(MapNode fromNode, MapNode toNode)
+        private void AnimatePathTraversal(MapNode fromNode, MapNode toNode)
         {
             foreach (IMapPathView pathView in _pathViews)
             {
                 if (pathView.FromNode == fromNode && pathView.ToNode == toNode)
                 {
-                    pathView.SetTraversedColor();
+                    pathView.AnimateTraversal(_pathTraversalDuration);
                     return;
                 }
             }

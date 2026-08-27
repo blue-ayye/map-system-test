@@ -1,5 +1,4 @@
 using PrimeTween;
-using UnityEngine;
 
 namespace BP.MapSystem
 {
@@ -8,17 +7,18 @@ namespace BP.MapSystem
         MapNode FromNode { get; }
         MapNode ToNode { get; }
 
-        void DrawPath(MapNode fromNode, MapNode toNode, Color? pathColor = null);
+        void SetupPath(MapNode fromNode, MapNode toNode);
 
-        /// <summary>
-        /// You can use this to change material, image, sprite color, etc. depending on implementation.
-        /// </summary>
-        void ChangePathColor(Color newColor);
+        /// <summary> Animates the initial base line when the map is generated. </summary>
+        Tween AnimateInitialDraw(float duration);
 
-        void SetTraversedColor();
+        /// <summary> Animates the colored traversal line layered on top. </summary>
+        Tween AnimateTraversal(float duration);
 
-        void SetDefaultColor();
+        /// <summary> Snaps the traversal line to complete (used when loading a save file). </summary>
+        void SetInstantlyTraversed();
 
-        Tween AnimateDraw(float duration);
+        /// <summary> Snaps the traversal line back to zero (used when resetting the map). </summary>
+        void ResetToDefault();
     }
 }

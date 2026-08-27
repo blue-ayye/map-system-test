@@ -105,7 +105,7 @@ namespace BP.MapSystem
 
                         if (pathViewTransform.TryGetComponent(out IMapPathView pathView))
                         {
-                            pathView.DrawPath(fromNode, toNode);
+                            pathView.SetupPath(fromNode, toNode);
                             PathViews.Add(pathView);
                         }
                     }

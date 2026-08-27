@@ -1,18 +1,17 @@
 using PrimeTween;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace BP.MapSystem
 {
-    [RequireComponent(typeof(Image), typeof(RectTransform))]
+    [RequireComponent(typeof(RectTransform))]
     public class UIMapPathView : MonoBehaviour, IMapPathView
     {
-        [SerializeField] private Color _defaultPathColor = Color.white;
-        [SerializeField] private Color _traversedPathColor = Color.green;
+        [Header("Path References")]
+        [SerializeField] private RectTransform _basePathRect;
+        [SerializeField] private RectTransform _traversedPathRect;
 
+        private RectTransform _rootRectTransform;
         private float _targetDistance;
-        private Image _pathImage;
-        private RectTransform _rectTransform;
 
         public MapNode FromNode { get; private set; }
         public MapNode ToNode { get; private set; }
@@ -21,56 +20,64 @@ namespace BP.MapSystem
 
         private void Awake()
         {
-            _pathImage = GetComponent<Image>();
-            _rectTransform = GetComponent<RectTransform>();
+            _rootRectTransform = GetComponent<RectTransform>();
         }
 
         #endregion Unity API
 
         #region Public APIs
 
-        public void DrawPath(MapNode fromNode, MapNode toNode, Color? pathColor = null)
+        public void SetupPath(MapNode fromNode, MapNode toNode)
         {
-            if (fromNode == null || toNode == null) return;
-            if (fromNode.NodeView == null || toNode.NodeView == null) return;
+            if (fromNode?.NodeView == null || toNode?.NodeView == null) return;
 
             FromNode = fromNode;
             ToNode = toNode;
 
-            var startLocalPos = transform.InverseTransformPoint(fromNode.Position);
-            var endLocalPos = transform.InverseTransformPoint(toNode.Position);
+            // Calculate positions relative to the parent container
+            var startLocalPos = transform.parent.InverseTransformPoint(fromNode.Position);
+            var endLocalPos = transform.parent.InverseTransformPoint(toNode.Position);
 
             Vector2 direction = endLocalPos - startLocalPos;
             _targetDistance = direction.magnitude;
             var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
-            _rectTransform.pivot = new Vector2(0, 0.5f);
-            _rectTransform.localPosition = startLocalPos;
-            _rectTransform.sizeDelta = new Vector2(0, _rectTransform.sizeDelta.y);
-            _rectTransform.rotation = Quaternion.Euler(0, 0, angle);
+            // Position and rotate the root container
+            _rootRectTransform.localPosition = startLocalPos;
+            _rootRectTransform.localRotation = Quaternion.Euler(0, 0, angle);
 
-            if (pathColor.HasValue)
-            {
-                _pathImage.color = pathColor.Value;
-            }
+            // Set both child pivots to the left edge
+            _basePathRect.pivot = new Vector2(0, 0.5f);
+            _traversedPathRect.pivot = new Vector2(0, 0.5f);
 
-            _pathImage.raycastTarget = false;
+            // Reset both child widths to 0
+            _basePathRect.sizeDelta = new Vector2(0, _basePathRect.sizeDelta.y);
+            _traversedPathRect.sizeDelta = new Vector2(0, _traversedPathRect.sizeDelta.y);
         }
 
-        public Tween AnimateDraw(float duration)
+        public Tween AnimateInitialDraw(float duration)
         {
-            Tween.StopAll(_rectTransform);
-            return Tween.UISizeDelta(_rectTransform, new Vector2(_targetDistance, _rectTransform.sizeDelta.y), duration, ease: Ease.InOutSine);
+            Tween.StopAll(_basePathRect);
+            return Tween.UISizeDelta(_basePathRect, new Vector2(_targetDistance, _basePathRect.sizeDelta.y), duration, ease: Ease.InOutSine);
         }
 
-        public void ChangePathColor(Color newColor)
+        public Tween AnimateTraversal(float duration)
         {
-            _pathImage.color = newColor;
+            Tween.StopAll(_traversedPathRect);
+            return Tween.UISizeDelta(_traversedPathRect, new Vector2(_targetDistance, _traversedPathRect.sizeDelta.y), duration, ease: Ease.InOutSine);
         }
 
-        public void SetTraversedColor() => ChangePathColor(_traversedPathColor);
+        public void SetInstantlyTraversed()
+        {
+            Tween.StopAll(_traversedPathRect);
+            _traversedPathRect.sizeDelta = new Vector2(_targetDistance, _traversedPathRect.sizeDelta.y);
+        }
 
-        public void SetDefaultColor() => ChangePathColor(_defaultPathColor);
+        public void ResetToDefault()
+        {
+            Tween.StopAll(_traversedPathRect);
+            _traversedPathRect.sizeDelta = new Vector2(0, _traversedPathRect.sizeDelta.y);
+        }
 
         #endregion Public APIs
     }

@@ -3,34 +3,23 @@ using UnityEngine;
 
 namespace BP.MapSystem
 {
-    [RequireComponent(typeof(LineRenderer))]
     public class WorldMapPathView : MonoBehaviour, IMapPathView
     {
-        [SerializeField] private Color _defaultPathColor = Color.white;
-        [SerializeField] private Color _traversedPathColor = Color.green;
+        [Header("Path References")]
+        [SerializeField] private LineRenderer _baseLineRenderer;
+        [SerializeField] private LineRenderer _traversedLineRenderer;
 
         private Vector3 _startLocalPos;
         private Vector3 _endLocalPos;
-        private LineRenderer _lineRenderer;
 
         public MapNode FromNode { get; private set; }
         public MapNode ToNode { get; private set; }
 
-        #region Unity API
-
-        private void Awake()
-        {
-            _lineRenderer = GetComponent<LineRenderer>();
-        }
-
-        #endregion Unity API
-
         #region Public APIs
 
-        public void DrawPath(MapNode fromNode, MapNode toNode, Color? pathColor = null)
+        public void SetupPath(MapNode fromNode, MapNode toNode)
         {
-            if (fromNode == null || toNode == null) return;
-            if (fromNode.NodeView == null || toNode.NodeView == null) return;
+            if (fromNode?.NodeView == null || toNode?.NodeView == null) return;
 
             FromNode = fromNode;
             ToNode = toNode;
@@ -38,25 +27,23 @@ namespace BP.MapSystem
             _startLocalPos = transform.InverseTransformPoint(fromNode.Position);
             _endLocalPos = transform.InverseTransformPoint(toNode.Position);
 
-            _lineRenderer.positionCount = 2;
+            _baseLineRenderer.positionCount = 2;
+            _traversedLineRenderer.positionCount = 2;
 
-            // Start BOTH positions at the origin so the line is effectively invisible initially
-            _lineRenderer.SetPosition(0, _startLocalPos);
-            _lineRenderer.SetPosition(1, _startLocalPos);
+            // Start BOTH positions at the origin so the lines are invisible initially
+            _baseLineRenderer.SetPosition(0, _startLocalPos);
+            _baseLineRenderer.SetPosition(1, _startLocalPos);
 
-            if (pathColor.HasValue)
-            {
-                _lineRenderer.startColor = pathColor.Value;
-                _lineRenderer.endColor = pathColor.Value;
-            }
+            _traversedLineRenderer.SetPosition(0, _startLocalPos);
+            _traversedLineRenderer.SetPosition(1, _startLocalPos);
         }
 
-        public Tween AnimateDraw(float duration)
+        public Tween AnimateInitialDraw(float duration)
         {
-            Tween.StopAll(_lineRenderer);
+            Tween.StopAll(_baseLineRenderer);
 
             return Tween.Custom(
-                target: _lineRenderer,
+                target: _baseLineRenderer,
                 startValue: _startLocalPos,
                 endValue: _endLocalPos,
                 duration: duration,
@@ -65,15 +52,31 @@ namespace BP.MapSystem
             );
         }
 
-        public void ChangePathColor(Color newColor)
+        public Tween AnimateTraversal(float duration)
         {
-            _lineRenderer.startColor = newColor;
-            _lineRenderer.endColor = newColor;
+            Tween.StopAll(_traversedLineRenderer);
+
+            return Tween.Custom(
+                target: _traversedLineRenderer,
+                startValue: _startLocalPos,
+                endValue: _endLocalPos,
+                duration: duration,
+                onValueChange: (lr, currentPos) => lr.SetPosition(1, currentPos),
+                ease: Ease.InOutSine
+            );
         }
 
-        public void SetTraversedColor() => ChangePathColor(_traversedPathColor);
+        public void SetInstantlyTraversed()
+        {
+            Tween.StopAll(_traversedLineRenderer);
+            _traversedLineRenderer.SetPosition(1, _endLocalPos);
+        }
 
-        public void SetDefaultColor() => ChangePathColor(_defaultPathColor);
+        public void ResetToDefault()
+        {
+            Tween.StopAll(_traversedLineRenderer);
+            _traversedLineRenderer.SetPosition(1, _startLocalPos);
+        }
 
         #endregion Public APIs
     }

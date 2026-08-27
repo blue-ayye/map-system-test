@@ -195,7 +195,7 @@ namespace BP.MapSystem
                 {
                     if (pathView.FromNode.Level == level)
                     {
-                        Tween pathTween = pathView.AnimateDraw(_pathDrawDuration);
+                        Tween pathTween = pathView.AnimateInitialDraw(_pathDrawDuration);
 
                         if (!firstPathChained)
                         {
