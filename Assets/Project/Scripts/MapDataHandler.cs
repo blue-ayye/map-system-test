@@ -8,7 +8,7 @@ namespace BP.MapSystem
     {
         public int Seed;
         public bool IsCustomSeedUsed;
-        public List<MapNodeData> MapNodeDataList;
+        public List<MapNodeData> MapNodeDataList = new List<MapNodeData>();
         public MapTraversalData MapTraversalData;
     }
 
@@ -52,37 +52,57 @@ namespace BP.MapSystem
 
     public class MapDataHandler : MonoBehaviour
     {
+        private const string _nullDataError = "Map data is null. Cannot save map.";
+        private const string _fileNotFoundError = "Map data file not found at {0}";
+
         [SerializeField] private string _saveFolder = "Maps/Save";
         [SerializeField] private string _fileName = "GeneratedMapData.json";
 
-        private string _folderPath => System.IO.Path.Combine(Application.persistentDataPath, _saveFolder);
-        private string _fullFilePath => System.IO.Path.Combine(_folderPath, _fileName);
+        private string FolderPath => System.IO.Path.Combine(Application.persistentDataPath, _saveFolder);
+        private string FullFilePath => System.IO.Path.Combine(FolderPath, _fileName);
+
+        #region Public APIs
 
         public void SaveMapData(MapData mapData)
         {
             if (mapData == null)
             {
-                Debug.LogError("Map data is null. Cannot save map.");
+                Debug.LogError(_nullDataError);
                 return;
             }
 
             string json = JsonUtility.ToJson(mapData, true);
-            if (!System.IO.Directory.Exists(_folderPath))
+
+            if (!System.IO.Directory.Exists(FolderPath))
             {
-                System.IO.Directory.CreateDirectory(_folderPath);
+                System.IO.Directory.CreateDirectory(FolderPath);
             }
-            System.IO.File.WriteAllText(_fullFilePath, json);
+
+            System.IO.File.WriteAllText(FullFilePath, json);
         }
 
+        [ContextMenu("Load Map Data")]
         public MapData LoadMapData()
         {
-            if (!System.IO.File.Exists(_fullFilePath))
+            if (!System.IO.File.Exists(FullFilePath))
             {
-                Debug.LogError($"Map data file not found at {_fullFilePath}");
+                Debug.LogErrorFormat(_fileNotFoundError, FullFilePath);
                 return new MapData();
             }
-            string json = System.IO.File.ReadAllText(_fullFilePath);
+
+            string json = System.IO.File.ReadAllText(FullFilePath);
             return JsonUtility.FromJson<MapData>(json);
         }
+
+        [ContextMenu("Delete Map Data")]
+        public void DeleteMapData()
+        {
+            if (System.IO.File.Exists(FullFilePath))
+            {
+                System.IO.File.Delete(FullFilePath);
+            }
+        }
+
+        #endregion Public APIs
     }
 }
