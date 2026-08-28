@@ -71,12 +71,12 @@ namespace BP.MapSystem
 
         #region Data Management
 
-        public void WriteTo(MapData mapData)
+        public void WriteToMapData(MapData mapData)
         {
             mapData.MapTraversalData = new MapTraversalData(VisitedNodes, CurrentNode, TraversalStepsTaken);
         }
 
-        public void ReadFrom(MapData mapData)
+        public void ReadFromMapData(MapData mapData)
         {
             var traversalData = mapData.MapTraversalData;
 

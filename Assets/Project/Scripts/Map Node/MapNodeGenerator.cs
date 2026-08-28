@@ -63,27 +63,6 @@ namespace BP.MapSystem
         }
 
         /// <summary>
-        /// Prepares the map grid data for saving by converting each MapNode into a MapNodeData object and storing them in the provided MapData object.
-        /// </summary>
-        /// <param name="mapData">The MapData object to write the grid data to.</param>
-        public void PrepareToSaveGame(MapData mapData)
-        {
-            var nodeDataList = new List<MapNodeData>();
-            for (int level = 0; level < _maxLevels; level++)
-            {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    var node = _mapGrid[level, nodeIndex];
-                    if (node == null) continue;
-
-                    var nodeData = new MapNodeData(node);
-                    nodeDataList.Add(nodeData);
-                }
-            }
-            mapData.MapNodeDataList = nodeDataList;
-        }
-
-        /// <summary>
         /// Creates a purely logical grid of MapNodes and calculates their world-space positions based on the defined bounds and direction.
         /// </summary>
         /// <returns>The created map node grid.</returns>

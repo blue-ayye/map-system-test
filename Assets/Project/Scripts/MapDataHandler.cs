@@ -8,7 +8,6 @@ namespace BP.MapSystem
     {
         public int Seed;
         public bool IsCustomSeedUsed;
-        public List<MapNodeData> MapNodeDataList = new List<MapNodeData>();
         public MapTraversalData MapTraversalData;
     }
 
@@ -17,13 +16,11 @@ namespace BP.MapSystem
     {
         public int Level;
         public int Index;
-        public string NodeTypeID;
 
         public MapNodeData(MapNode node)
         {
             Level = node.Level;
             Index = node.Index;
-            NodeTypeID = node.NodeType.ID;
         }
     }
 
@@ -63,7 +60,7 @@ namespace BP.MapSystem
 
         #region Public APIs
 
-        public void SaveMapData(MapData mapData)
+        public void SaveGame(MapData mapData)
         {
             if (mapData == null)
             {
@@ -82,7 +79,7 @@ namespace BP.MapSystem
         }
 
         [ContextMenu("Load Map Data")]
-        public MapData LoadMapData()
+        public MapData LoadGame()
         {
             if (!System.IO.File.Exists(FullFilePath))
             {
@@ -101,6 +98,16 @@ namespace BP.MapSystem
             {
                 System.IO.File.Delete(FullFilePath);
             }
+        }
+
+        [ContextMenu("Open Save Folder")]
+        public void OpenSaveFolder()
+        {
+            if (!System.IO.Directory.Exists(FolderPath))
+            {
+                System.IO.Directory.CreateDirectory(FolderPath);
+            }
+            Application.OpenURL(FolderPath);
         }
 
         #endregion Public APIs

@@ -6,8 +6,6 @@ namespace BP.MapSystem
 {
     public class MapNodeTypeAssigner : MonoBehaviour
     {
-        private const string _missingNodeDataWarning = "Node type ID {0} not found for node at Level {1}, Index {2}.";
-        private const string _missingNodeRuleWarning = "Node type with ID '{0}' not found in any rules. Returning default node type.";
         private const string _consecutiveViolationLog = "Consecutive node type violation at Level {0}, Index {1} for Node Type '{2}'";
         private const string _siblingViolationLog = "Sibling node type violation at Level {0}, Index {1} for Node Type '{2}'";
         private const string _noWeightsWarning = "NodeTypeRulesSO '{0}' has no NodeTypeWeights defined. Assigning default node type.";
@@ -29,33 +27,6 @@ namespace BP.MapSystem
             _nodeTypeRNG = nodeTypeRNG;
         }
 
-        public void ReadFrom(MapData mapData)
-        {
-            for (int level = 0; level < _mapGrid.GetLength(0); level++)
-            {
-                for (int index = 0; index < _mapGrid.GetLength(1); index++)
-                {
-                    MapNode node = _mapGrid[level, index];
-                    if (node == null)
-                        continue;
-
-                    MapNodeData loadedNodeData = mapData.MapNodeDataList.Find(n => n.Level == level && n.Index == index);
-                    if (loadedNodeData == null)
-                        continue;
-
-                    var nodeType = GetNodeTypeByID(loadedNodeData.NodeTypeID);
-                    if (nodeType != null)
-                    {
-                        node.NodeType = nodeType;
-                    }
-                    else
-                    {
-                        Debug.LogWarningFormat(_missingNodeDataWarning, loadedNodeData.NodeTypeID, level, index);
-                    }
-                }
-            }
-        }
-
         public void AssignNodeTypes()
         {
             // 1. First, process rules that are marked to exclude from other rules
@@ -65,23 +36,6 @@ namespace BP.MapSystem
             // 2. Then, process the remaining rules so static levels influence them
             var normalLevels = _nodeTypeRules.Where(rules => !rules.ExcludeFromOtherRules).ToList();
             SetNodeTypeByRules(normalLevels);
-        }
-
-        public MapNodeTypeSO GetNodeTypeByID(string nodeTypeID)
-        {
-            foreach (var rule in _nodeTypeRules)
-            {
-                foreach (var nodeType in rule.NodeTypeWeights.Keys)
-                {
-                    if (nodeType.ID == nodeTypeID)
-                    {
-                        return nodeType;
-                    }
-                }
-            }
-
-            Debug.LogWarningFormat(_missingNodeRuleWarning, nodeTypeID);
-            return _defaultNodeType;
         }
 
         #endregion Public APIs
