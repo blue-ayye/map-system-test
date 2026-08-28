@@ -1,66 +1,50 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace BP.MapSystem
 {
-    [System.Serializable]
-    public class MapData
-    {
-        public int Seed;
-        public bool IsCustomSeedUsed;
-        public MapTraversalData MapTraversalData;
-    }
-
-    [System.Serializable]
-    public class MapNodeData
-    {
-        public int Level;
-        public int Index;
-
-        public MapNodeData(MapNode node)
-        {
-            Level = node.Level;
-            Index = node.Index;
-        }
-    }
-
-    [System.Serializable]
-    public class MapTraversalData
-    {
-        public List<MapNodeData> VisitedNodeDataList = new List<MapNodeData>();
-        public MapNodeData CurrentNodeData = null;
-        public int TraversalStepsTaken;
-
-        public MapTraversalData(List<MapNode> visitedNodes, MapNode currentNode, int stepsTaken)
-        {
-            foreach (var node in visitedNodes)
-            {
-                VisitedNodeDataList.Add(new MapNodeData(node));
-            }
-
-            if (currentNode != null)
-            {
-                CurrentNodeData = new MapNodeData(currentNode);
-            }
-
-            TraversalStepsTaken = stepsTaken;
-        }
-    }
-
+    /// <summary>
+    /// Handles saving and loading of map data to and from a JSON file in the specified save folder. Provides methods to save, load, delete, and open the save folder for map data.
+    /// </summary>
     public class MapDataHandler : MonoBehaviour
     {
-        private const string _nullDataError = "Map data is null. Cannot save map.";
-        private const string _fileNotFoundError = "Map data file not found at {0}";
-
         [SerializeField] private string _saveFolder = "Maps/Save";
         [SerializeField] private string _fileName = "GeneratedMapData.json";
+
+        private const string _nullDataError = "Map data is null. Cannot save map.";
+        private const string _fileNotFoundError = "Map data file not found at {0}";
 
         private string FolderPath => System.IO.Path.Combine(Application.persistentDataPath, _saveFolder);
         private string FullFilePath => System.IO.Path.Combine(FolderPath, _fileName);
 
         #region Public APIs
 
-        public void SaveGame(MapData mapData)
+        /// <summary>
+        /// Saves the provided map data to a JSON file in the specified save folder.
+        /// </summary>
+        /// <param name="mapData">The map data to save.</param>
+        public void SaveGame(MapData mapData) => SaveGame_Internal(mapData);
+
+        /// <summary>
+        /// Loads the map data from the JSON file in the specified save folder.
+        /// </summary>
+        /// <returns>The loaded map data.</returns>
+        public MapData LoadGame() => LoadGame_Internal();
+
+        /// <summary>
+        /// Deletes the map data JSON file from the specified save folder.
+        /// </summary>
+        public void DeleteMapData() => DeleteMapData_Internal();
+
+        /// <summary>
+        /// Opens the save folder in the file explorer.
+        /// </summary>
+        public void OpenSaveFolder() => OpenSaveFolder_Internal();
+
+        #endregion Public APIs
+
+        #region File Operations
+
+        private void SaveGame_Internal(MapData mapData)
         {
             if (mapData == null)
             {
@@ -78,8 +62,7 @@ namespace BP.MapSystem
             System.IO.File.WriteAllText(FullFilePath, json);
         }
 
-        [ContextMenu("Load Map Data")]
-        public MapData LoadGame()
+        private MapData LoadGame_Internal()
         {
             if (!System.IO.File.Exists(FullFilePath))
             {
@@ -91,8 +74,7 @@ namespace BP.MapSystem
             return JsonUtility.FromJson<MapData>(json);
         }
 
-        [ContextMenu("Delete Map Data")]
-        public void DeleteMapData()
+        private void DeleteMapData_Internal()
         {
             if (System.IO.File.Exists(FullFilePath))
             {
@@ -100,8 +82,7 @@ namespace BP.MapSystem
             }
         }
 
-        [ContextMenu("Open Save Folder")]
-        public void OpenSaveFolder()
+        private void OpenSaveFolder_Internal()
         {
             if (!System.IO.Directory.Exists(FolderPath))
             {
@@ -110,6 +91,6 @@ namespace BP.MapSystem
             Application.OpenURL(FolderPath);
         }
 
-        #endregion Public APIs
+        #endregion File Operations
     }
 }
