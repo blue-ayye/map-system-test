@@ -220,7 +220,7 @@ namespace BP.MapSystem
         {
             var mapData = new MapData();
             WriteTo(mapData);
-            _mapGridGenerator.WriteTo(mapData);
+            _mapGridGenerator.PrepareToSaveGame(mapData);
             _mapTraversalController.WriteTo(mapData);
 
             _mapDataHandler.SaveMapData(mapData);

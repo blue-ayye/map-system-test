@@ -23,30 +23,37 @@ namespace BP.MapSystem
 
     public class MapNodeGenerator : MonoBehaviour
     {
-        private const string _missingBoundsDefinerError = "Map Area Bounds Definer is not assigned.";
-        private const string _missingBoundsComponentError = "Map Area Bounds Definer must have RectTransform or BoxCollider component.";
-        private const string _missingNodeViewInterfaceError = "Node View Prefab does not have a component that implements IMapNodeView.";
-
         [Header("Map Grid Settings")]
+        [Tooltip("Maximum number of levels in the map grid.")]
         [SerializeField] private int _maxLevels = 9;
+        [Tooltip("Maximum number of nodes per level in the map grid.")]
         [SerializeField] private int _nodesPerLevel = 7;
+        [Tooltip("Use a Transform with a RectTransform or BoxCollider to define the area where the map nodes will be generated.")]
         [SerializeField] private Transform _mapAreaBoundsDefiner;
         [SerializeField] private MapDirection _direction = MapDirection.TopToBottom;
-        [Tooltip("0.25f means up to 25% of the distance between nodes (they will never overlap)")]
-        [SerializeField][Range(0f, .5f)] private float _nodeSpaceJitterAmount;
-        [Tooltip("0.25f means up to 25% of the distance between levels (they will never overlap)")]
-        [SerializeField][Range(0f, .5f)] private float _levelSpaceJitterAmount;
+        [Tooltip("Jitter percentage (0-50). 25 means up to 25% of the distance between nodes.")]
+        [SerializeField, Range(0f, 50f)] private float _nodeSpaceJitterPercentage;
+        [Tooltip("Jitter percentage (0-50). 25 means up to 25% of the distance between levels.")]
+        [SerializeField, Range(0f, 50f)] private float _levelSpaceJitterPercentage;
+        [Tooltip("Whether to apply jitter to node positions. If false, nodes will be evenly spaced.")]
         [SerializeField] private bool _applyJitter = true;
 
         [Header("Node View Settings")]
+        [Tooltip("Parent transform for the node views.")]
         [SerializeField] private Transform _nodeViewParent;
+        [Tooltip("Prefab for the node views.")]
         [SerializeField] private Transform _nodeViewPrefab;
+        [Tooltip("Z rotation for the node views.")]
         [SerializeField] private int _zRotation;
 
         private MapNode[,] _mapGrid;
         private MapBoundsData _bounds;
         private Vector2 _dynamicSpacing;
         private System.Random _jitterRNG;
+
+        private const string _missingBoundsDefinerError = "Map Area Bounds Definer is not assigned.";
+        private const string _missingBoundsComponentError = "Map Area Bounds Definer must have RectTransform or BoxCollider component.";
+        private const string _missingNodeViewInterfaceError = "Node View Prefab does not have a component that implements IMapNodeView.";
 
         #region Public APIs
 
@@ -55,7 +62,11 @@ namespace BP.MapSystem
             _jitterRNG = jitterRNG;
         }
 
-        public void WriteTo(MapData mapData)
+        /// <summary>
+        /// Prepares the map grid data for saving by converting each MapNode into a MapNodeData object and storing them in the provided MapData object.
+        /// </summary>
+        /// <param name="mapData">The MapData object to write the grid data to.</param>
+        public void PrepareToSaveGame(MapData mapData)
         {
             var nodeDataList = new List<MapNodeData>();
             for (int level = 0; level < _maxLevels; level++)
@@ -72,6 +83,10 @@ namespace BP.MapSystem
             mapData.MapNodeDataList = nodeDataList;
         }
 
+        /// <summary>
+        /// Creates a purely logical grid of MapNodes and calculates their world-space positions based on the defined bounds and direction.
+        /// </summary>
+        /// <returns>The created map node grid.</returns>
         public MapNode[,] CreateNodeGrid()
         {
             _mapGrid = new MapNode[_maxLevels, _nodesPerLevel];
@@ -80,8 +95,10 @@ namespace BP.MapSystem
             {
                 for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
                 {
-                    MapNode node = new MapNode(level, nodeIndex);
-                    node.Position = GetNodePosition(level, nodeIndex, _applyJitter);
+                    var node = new MapNode(level, nodeIndex)
+                    {
+                        Position = GetNodePosition(level, nodeIndex, _applyJitter)
+                    };
 
                     _mapGrid[level, nodeIndex] = node;
                 }
@@ -90,21 +107,9 @@ namespace BP.MapSystem
             return _mapGrid;
         }
 
-        public void ClearUnusedNodes()
-        {
-            for (int level = 0; level < _maxLevels; level++)
-            {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    var node = _mapGrid[level, nodeIndex];
-                    if (node != null && node.ParentNodes.Count == 0 && node.ChildNodes.Count == 0)
-                    {
-                        _mapGrid[level, nodeIndex] = null;
-                    }
-                }
-            }
-        }
-
+        /// <summary>
+        /// Instantiates the node view prefabs for each MapNode in the grid and initializes them with their corresponding MapNode data.
+        /// </summary>
         public void CreateNodeViews()
         {
             if (_mapGrid == null) return;
@@ -122,7 +127,7 @@ namespace BP.MapSystem
                     var node = _mapGrid[level, nodeIndex];
                     if (node == null) continue;
 
-                    var nodeViewTransform = Instantiate(_nodeViewPrefab, _nodeViewParent);
+                    Transform nodeViewTransform = Instantiate(_nodeViewPrefab, _nodeViewParent);
                     nodeViewTransform.SetPositionAndRotation(node.Position, rotation);
 
                     if (nodeViewTransform.TryGetComponent(out IMapNodeView nodeView))
@@ -138,6 +143,27 @@ namespace BP.MapSystem
             }
         }
 
+        /// <summary>
+        /// Clears any nodes from the map grid that have no parent or child connections, effectively removing unused nodes from the grid.
+        /// </summary>
+        public void ClearUnusedNodes()
+        {
+            for (int level = 0; level < _maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    var node = _mapGrid[level, nodeIndex];
+                    if (node != null && node.ParentNodes.Count == 0 && node.ChildNodes.Count == 0)
+                    {
+                        _mapGrid[level, nodeIndex] = null;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Destroys all instantiated node view GameObjects under the node view parent transform.
+        /// </summary>
         public void ClearNodeViews()
         {
             foreach (Transform child in _nodeViewParent)
@@ -146,6 +172,9 @@ namespace BP.MapSystem
             }
         }
 
+        /// <summary>
+        /// Calculates the bounds of the map area based on the defined bounds definer and direction.
+        /// </summary>
         public void CalculateBounds()
         {
             if (_mapAreaBoundsDefiner == null)
@@ -225,8 +254,12 @@ namespace BP.MapSystem
             }
             else
             {
-                float jitterX = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.x * _nodeSpaceJitterAmount;
-                float jitterY = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.y * _levelSpaceJitterAmount;
+                // Multiplier conversion for percentages
+                float nodeJitterFactor = _nodeSpaceJitterPercentage * 0.01f;
+                float levelJitterFactor = _levelSpaceJitterPercentage * 0.01f;
+
+                float jitterX = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.x * nodeJitterFactor;
+                float jitterY = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.y * levelJitterFactor;
 
                 return _bounds.origin
                     + _bounds.right * (xNorm + jitterX) * 2f
@@ -237,6 +270,8 @@ namespace BP.MapSystem
         #endregion Internal Positioning Logic
 
         #region Unity Editor & Debugging
+
+#if UNITY_EDITOR
 
         private void OnDrawGizmos()
         {
@@ -269,7 +304,6 @@ namespace BP.MapSystem
             }
 
             // Draw index labels
-#if UNITY_EDITOR
             UnityEditor.Handles.color = Color.white;
             for (int i = 0; i < _nodesPerLevel; i++)
             {
@@ -282,7 +316,6 @@ namespace BP.MapSystem
                 Vector3 pos = GetNodePosition(i, -1);
                 UnityEditor.Handles.Label(pos + Vector3.up * radius * 1.5f, $"L{i}");
             }
-#endif
         }
 
         [ContextMenu("Debug Create Map Grid")]
@@ -292,6 +325,8 @@ namespace BP.MapSystem
             CreateNodeGrid();
             CreateNodeViews();
         }
+
+#endif
 
         #endregion Unity Editor & Debugging
     }

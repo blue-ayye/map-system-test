@@ -372,8 +372,8 @@ MonoBehaviour:
   _nodesPerLevel: 7
   _mapAreaBoundsDefiner: {fileID: 1600653608}
   _direction: 2
-  _nodeSpaceJitterAmount: 0.2
-  _levelSpaceJitterAmount: 0.25
+  _nodeSpaceJitterPercentage: 21.9
+  _levelSpaceJitterPercentage: 29.7
   _applyJitter: 1
   _nodeViewParent: {fileID: 1373344873}
   _nodeViewPrefab: {fileID: 6038788913511167360, guid: 6b9064dd03afa1a489f45a384b2d7fe4, type: 3}
@@ -427,6 +427,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _canTraverseVisitedNodes: 1
   _maxTraversalSteps: 10
+  _pathTraversalDuration: 0.3
 --- !u!114 &437789674
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -928,8 +929,8 @@ MonoBehaviour:
   _nodesPerLevel: 7
   _mapAreaBoundsDefiner: {fileID: 121739639}
   _direction: 2
-  _nodeSpaceJitterAmount: 0.25
-  _levelSpaceJitterAmount: 0.25
+  _nodeSpaceJitterPercentage: 0
+  _levelSpaceJitterPercentage: 0
   _applyJitter: 1
   _nodeViewParent: {fileID: 1623811994}
   _nodeViewPrefab: {fileID: 6679694359499727540, guid: e00ed0d628de3c9468fdd37c5b6e723a, type: 3}
@@ -986,6 +987,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _canTraverseVisitedNodes: 1
   _maxTraversalSteps: -1
+  _pathTraversalDuration: 0.3
 --- !u!114 &1061727601
 MonoBehaviour:
   m_ObjectHideFlags: 0
