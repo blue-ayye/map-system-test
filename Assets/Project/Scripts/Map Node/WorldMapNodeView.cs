@@ -8,7 +8,6 @@ namespace BP.MapSystem
     public class WorldMapNodeView : MonoBehaviour, IMapNodeView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public event Action<MapNode> OnNodeClicked;
-
         public event Action<NodeState> OnStateChanged;
 
         [Header("Visuals")]

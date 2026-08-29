@@ -1,50 +1,37 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace BP.MapSystem
 {
-    public enum MapDirection
-    {
-        TopToBottom,
-        BottomToTop,
-        LeftToRight,
-        RightToLeft
-    }
-
-    public struct MapBoundsData
-    {
-        public Vector3 origin;
-        public Vector3 right;
-        public Vector3 up;
-        public Vector3 center;
-        public Vector3 size;
-    }
-
     public class MapNodeGenerator : MonoBehaviour
     {
+        [Header("References")]
+        [Tooltip("Prefab for the node views.")]
+        [SerializeField] private Transform _nodeViewPrefab;
+        [Tooltip("Parent transform for the node views.")]
+        [SerializeField] private Transform _nodeViewParent;
+        [Tooltip("Use a Transform with a RectTransform or BoxCollider to define the area where the map nodes will be generated.")]
+        [SerializeField] private Transform _mapAreaBoundsDefiner;
+
         [Header("Map Grid Settings")]
         [Tooltip("Maximum number of levels in the map grid.")]
         [SerializeField] private int _maxLevels = 9;
         [Tooltip("Maximum number of nodes per level in the map grid.")]
         [SerializeField] private int _nodesPerLevel = 7;
-        [Tooltip("Use a Transform with a RectTransform or BoxCollider to define the area where the map nodes will be generated.")]
-        [SerializeField] private Transform _mapAreaBoundsDefiner;
+
+        [Header("Rotation and Direction")]
+        [Tooltip("Direction in which the map nodes will be generated.")]
         [SerializeField] private MapDirection _direction = MapDirection.TopToBottom;
+        [Tooltip("Z rotation for the node views.")]
+        [SerializeField] private int _zRotation;
+
+        [Header("Jitter Settings")]
+        [Tooltip("Whether to apply jitter to node positions. If false, nodes will be evenly spaced and _nodeSpaceJitterPercentage and _levelSpaceJitterPercentage will be ignored.")]
+        [SerializeField] private bool _applyJitter = true;
         [Tooltip("Jitter percentage (0-50). 25 means up to 25% of the distance between nodes.")]
         [SerializeField, Range(0f, 50f)] private float _nodeSpaceJitterPercentage;
         [Tooltip("Jitter percentage (0-50). 25 means up to 25% of the distance between levels.")]
         [SerializeField, Range(0f, 50f)] private float _levelSpaceJitterPercentage;
-        [Tooltip("Whether to apply jitter to node positions. If false, nodes will be evenly spaced.")]
-        [SerializeField] private bool _applyJitter = true;
-
-        [Header("Node View Settings")]
-        [Tooltip("Parent transform for the node views.")]
-        [SerializeField] private Transform _nodeViewParent;
-        [Tooltip("Prefab for the node views.")]
-        [SerializeField] private Transform _nodeViewPrefab;
-        [Tooltip("Z rotation for the node views.")]
-        [SerializeField] private int _zRotation;
 
         private MapNode[,] _mapGrid;
         private MapBoundsData _bounds;
@@ -164,7 +151,7 @@ namespace BP.MapSystem
 
             MapBoundsData boundData = new MapBoundsData();
 
-            // Handle UI (RectTransform) or 3D (BoxCollider)
+            // Determine the size and center of the bounds based on the component type
             if (_mapAreaBoundsDefiner.TryGetComponent(out RectTransform rt))
             {
                 boundData.size = Vector3.Scale(rt.rect.size, rt.lossyScale);
@@ -181,9 +168,11 @@ namespace BP.MapSystem
                 return;
             }
 
+            // Calculate the right and up vectors based on the bounds definer's orientation and size
             boundData.right = _mapAreaBoundsDefiner.right * (boundData.size.x * 0.5f);
             boundData.up = _mapAreaBoundsDefiner.up * (boundData.size.y * 0.5f);
 
+            // Adjust the origin based on the specified direction
             switch (_direction)
             {
                 case MapDirection.TopToBottom:
@@ -209,7 +198,8 @@ namespace BP.MapSystem
 
             _bounds = boundData;
 
-            // Dynamic spacing (normalized between 0 and 1)
+            // Calculate dynamic spacing based on the number of nodes and levels
+            // Normalized between 0 and 1 so that it can be scaled to the bounds size later in GetNodePosition
             _dynamicSpacing = new Vector2(
                 _nodesPerLevel > 1 ? 1f / (_nodesPerLevel - 1) : 0.5f,
                 _maxLevels > 1 ? 1f / (_maxLevels - 1) : 0.5f
@@ -218,8 +208,15 @@ namespace BP.MapSystem
 
         #endregion Public APIs
 
-        #region Internal Positioning Logic
+        #region Helpers
 
+        /// <summary>
+        /// Calculates the world-space position of a node based on its level and index, applying jitter if specified.
+        /// </summary>
+        /// <param name="level">The level of the node (row index).</param>
+        /// <param name="nodeIndex">The index of the node within the level (column index).</param>
+        /// <param name="applyJitter">Whether to apply jitter to the node's position.</param>
+        /// <returns>The world-space position of the node.</returns>
         private Vector3 GetNodePosition(int level, int nodeIndex, bool applyJitter = false)
         {
             float xNorm = _dynamicSpacing.x * nodeIndex;
@@ -246,7 +243,7 @@ namespace BP.MapSystem
             }
         }
 
-        #endregion Internal Positioning Logic
+        #endregion Helpers
 
         #region Unity Editor & Debugging
 

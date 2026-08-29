@@ -167,9 +167,11 @@ namespace BP.MapSystem
             _mapPathGenerator.SelectStartingNodes();
             _mapPathGenerator.GeneratePaths();
 
+            // 3. Clear any unused nodes from the grid (nodes that are not part of any path)
+            // We do this after generating paths to ensure that only nodes that are part of the generated paths remain in the grid.
             _mapGridGenerator.ClearUnusedNodes();
 
-            // 3. Assign node types to map node data
+            // 4. Assign node types to map node data
             var mapNodeTypeRNG = new System.Random(seed + 2);
             _mapNodeTypeAssigner.Initialize(_mapGrid, mapNodeTypeRNG);
             _mapNodeTypeAssigner.AssignNodeTypes();

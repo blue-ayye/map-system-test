@@ -3,14 +3,6 @@ using UnityEngine;
 
 namespace BP.MapSystem
 {
-    public enum NodeState
-    {
-        Locked,     // Cannot be clicked
-        Reachable,  // Next valid move
-        Current,    // Where the player is right now
-        Visited     // Previously traversed
-    }
-
     /// <summary>
     /// Pure data class representing a node in the map generation process. 
     /// Helps with performance by avoiding instantiating view objects during path generation.
