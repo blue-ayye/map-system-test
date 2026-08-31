@@ -8,6 +8,7 @@ namespace BP.MapSystem
     public class WorldMapNodeView : MonoBehaviour, IMapNodeView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public event Action<MapNode> OnNodeClicked;
+
         public event Action<NodeState> OnStateChanged;
 
         [Header("Visuals")]
@@ -20,6 +21,8 @@ namespace BP.MapSystem
         [SerializeField] private TweenSettings<Vector3> _hoverExitScaleTweenSettings = new TweenSettings<Vector3>(Vector3.one, 0.2f, Ease.OutBack);
 
         private MapNode _mapNode;
+        private Tween _howerTween;
+        private Tween _spawnTween;
 
         public Transform Transform => transform;
 
@@ -32,14 +35,14 @@ namespace BP.MapSystem
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            Tween.StopAll(transform);
-            Tween.Scale(transform, _hoverEnterScaleTweenSettings);
+            _howerTween.Stop();
+            _howerTween = Tween.Scale(transform, _hoverEnterScaleTweenSettings);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            Tween.StopAll(transform);
-            Tween.Scale(transform, _hoverExitScaleTweenSettings);
+            _howerTween.Stop();
+            _howerTween = Tween.Scale(transform, _hoverExitScaleTweenSettings);
         }
 
         #endregion Unity API
@@ -49,8 +52,6 @@ namespace BP.MapSystem
         public void Initialize(MapNode node)
         {
             _mapNode = node;
-
-            // Start visually hidden for the spawn animation
             transform.localScale = Vector3.zero;
 
             if (_iconRenderer != null)
@@ -66,8 +67,9 @@ namespace BP.MapSystem
 
         public Tween AnimateSpawn(float nodeSpawnDuration)
         {
-            Tween.StopAll(transform);
-            return Tween.Scale(transform, Vector3.one, duration: nodeSpawnDuration, ease: Ease.OutBack);
+            _spawnTween.Stop();
+            _spawnTween = Tween.Scale(transform, Vector3.one, duration: nodeSpawnDuration, ease: Ease.OutBack);
+            return _spawnTween;
         }
 
         #endregion Public APIs

@@ -1,3 +1,4 @@
+using PrimeTween;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -5,6 +6,22 @@ namespace BP.MapSystem
 {
     public class MapTraversalController : MonoBehaviour
     {
+        [Header("Traversal Settings")]
+        [Tooltip("If true, allows the player to traverse back to previously visited nodes.")]
+        [SerializeField] private bool _canTraverseVisitedNodes;
+        [Tooltip("Maximum number of traversal steps allowed. Set to -1 (or any negative number) for unlimited steps.")]
+        [SerializeField] private int _maxTraversalSteps = -1;
+
+        [Header("Path Animation Settings")]
+        [Tooltip("Duration of the path traversal animation in seconds.")]
+        [SerializeField] private float _pathTraversalDuration = 0.3f;
+
+        private List<MapNode> _visitedNodes = new List<MapNode>();
+        private List<IMapPathView> _pathViews = new List<IMapPathView>();
+        private int _currentTraversalSteps = 0;
+        private MapNode _currentNode;
+        private MapNode[,] _mapGrid;
+
         private const string _maxTraversalReachedWarning = "Maximum traversal steps reached. Cannot traverse further.";
         private const string _startLevelZeroWarning = "Please click on a starting node at Level 0 to begin.";
         private const string _invalidMoveWarning = "Invalid: You can only move to child of the current node or traverse back to visited nodes if enabled.";
@@ -12,20 +29,10 @@ namespace BP.MapSystem
         private const string _traverseBackLog = "Traversed back to Level {0}, Index {1}";
         private const string _movedLog = "Moved to Level {0}, Index {1}";
 
-        [SerializeField] private bool _canTraverseVisitedNodes;
-        [Tooltip("Maximum number of traversal steps allowed. Set to -1 (or any negative number) for unlimited steps.")]
-        [SerializeField] private int _maxTraversalSteps = -1;
-        [SerializeField] private float _pathTraversalDuration = 0.3f;
-
-        private List<MapNode> _visitedNodes = new List<MapNode>();
-        private int _currentTraversalSteps = 0;
-        private MapNode _currentNode;
-        private List<IMapPathView> _pathViews = new List<IMapPathView>();
-        private MapNode[,] _mapGrid;
-
         public List<MapNode> VisitedNodes => _visitedNodes;
         public int TraversalStepsTaken => _currentTraversalSteps;
         public MapNode CurrentNode => _currentNode;
+        public List<(MapNode From, MapNode To)> TraversedEdges { get; private set; } = new List<(MapNode, MapNode)>();
 
         #region Unity API
 
@@ -44,7 +51,6 @@ namespace BP.MapSystem
             _pathViews = pathViews;
             SubscribeToMapNodeEvents();
             UpdateAllNodeStates();
-            UpdatePathVisualsOnLoad();
         }
 
         public void ClearSubscriptions()
@@ -63,8 +69,22 @@ namespace BP.MapSystem
         public void ResetTraversalState()
         {
             _visitedNodes.Clear();
+            TraversedEdges.Clear();
             _currentTraversalSteps = 0;
             _currentNode = null;
+        }
+
+        public Tween GetPathTraversalTween(MapNode fromNode, MapNode toNode)
+        {
+            foreach (IMapPathView pathView in _pathViews)
+            {
+                if ((pathView.FromNode == fromNode && pathView.ToNode == toNode) ||
+                    (pathView.FromNode == toNode && pathView.ToNode == fromNode))
+                {
+                    return pathView.AnimateTraversal(_pathTraversalDuration);
+                }
+            }
+            return default;
         }
 
         #endregion Public APIs
@@ -73,7 +93,7 @@ namespace BP.MapSystem
 
         public void WriteToMapData(MapData mapData)
         {
-            mapData.MapTraversalData = new MapTraversalData(VisitedNodes, CurrentNode, TraversalStepsTaken);
+            mapData.MapTraversalData = new MapTraversalData(TraversedEdges, CurrentNode, TraversalStepsTaken);
         }
 
         public void ReadFromMapData(MapData mapData)
@@ -81,26 +101,34 @@ namespace BP.MapSystem
             var traversalData = mapData.MapTraversalData;
 
             _visitedNodes.Clear();
+            TraversedEdges.Clear();
 
-            foreach (var node in traversalData.VisitedNodeDataList)
+            foreach (var pathData in traversalData.TraversedPathDataList)
             {
-                var mapNode = _mapGrid[node.Level, node.Index];
-                if (mapNode == null)
-                    continue;
+                var fromNode = _mapGrid[pathData.FromNodeData.Level, pathData.FromNodeData.Index];
+                var toNode = _mapGrid[pathData.ToNodeData.Level, pathData.ToNodeData.Index];
 
-                _visitedNodes.Add(mapNode);
+                if (fromNode != null && toNode != null)
+                {
+                    TraversedEdges.Add((fromNode, toNode));
+
+                    if (!_visitedNodes.Contains(fromNode)) _visitedNodes.Add(fromNode);
+                    if (!_visitedNodes.Contains(toNode)) _visitedNodes.Add(toNode);
+                }
             }
 
-            foreach (var node in _visitedNodes)
+            if (traversalData.CurrentNodeData != null)
             {
-                node.NodeView.SetState(NodeState.Visited);
+                _currentNode = _mapGrid[traversalData.CurrentNodeData.Level, traversalData.CurrentNodeData.Index];
+
+                if (_currentNode != null && !_visitedNodes.Contains(_currentNode))
+                {
+                    _visitedNodes.Add(_currentNode);
+                }
             }
-
-            _currentNode = _mapGrid[traversalData.CurrentNodeData.Level, traversalData.CurrentNodeData.Index];
-
-            if (_currentNode == null && _visitedNodes.Count > 0)
+            else
             {
-                _currentNode = _visitedNodes[^1];
+                _currentNode = null;
             }
 
             if (_currentNode != null)
@@ -110,7 +138,6 @@ namespace BP.MapSystem
 
             _currentTraversalSteps = traversalData.TraversalStepsTaken;
             UpdateAllNodeStates();
-            UpdatePathVisualsOnLoad();
         }
 
         #endregion Data Management
@@ -119,6 +146,8 @@ namespace BP.MapSystem
 
         private void NodeView_OnNodeClicked(MapNode clickedNode)
         {
+            if (_currentNode == clickedNode) return;
+
             if (_maxTraversalSteps >= 0 && _currentTraversalSteps >= _maxTraversalSteps)
             {
                 Debug.LogWarning(_maxTraversalReachedWarning);
@@ -142,7 +171,7 @@ namespace BP.MapSystem
             if (_canTraverseVisitedNodes && _visitedNodes.Contains(clickedNode))
             {
                 _currentTraversalSteps++;
-                TraversePath(clickedNode);
+                TraversePath(clickedNode, false);
                 Debug.LogFormat(_traverseBackLog, _currentNode.Level, _currentNode.Index);
                 return;
             }
@@ -158,7 +187,7 @@ namespace BP.MapSystem
             Debug.LogWarning(_invalidMoveWarning);
         }
 
-        private void TraversePath(MapNode clickedNode)
+        private void TraversePath(MapNode clickedNode, bool animatePath = true)
         {
             MapNode previousNode = _currentNode;
 
@@ -171,10 +200,24 @@ namespace BP.MapSystem
 
             if (previousNode != null)
             {
-                AnimatePathTraversal(previousNode, clickedNode);
+                TraversedEdges.Add((previousNode, clickedNode));
+                if (animatePath)
+                {
+                    GetPathTraversalTween(previousNode, clickedNode);
+                }
             }
 
             RefreshChangedNodeStates(previousNode, clickedNode);
+        }
+
+        private void SubscribeToMapNodeEvents()
+        {
+            foreach (var node in _mapGrid)
+            {
+                if (node == null || node.NodeView == null) continue;
+
+                node.NodeView.OnNodeClicked += NodeView_OnNodeClicked;
+            }
         }
 
         #endregion Traversal Logic
@@ -257,22 +300,7 @@ namespace BP.MapSystem
 
         #endregion Node State Management
 
-        #region Path Visuals & Events
-
-        private void UpdatePathVisualsOnLoad()
-        {
-            foreach (var pathView in _pathViews)
-            {
-                if (_visitedNodes.Contains(pathView.FromNode) && _visitedNodes.Contains(pathView.ToNode))
-                {
-                    pathView.SetInstantlyTraversed();
-                }
-                else
-                {
-                    pathView.ResetToDefault();
-                }
-            }
-        }
+        #region Visuals
 
         private void AnimatePathTraversal(MapNode fromNode, MapNode toNode)
         {
@@ -286,16 +314,6 @@ namespace BP.MapSystem
             }
         }
 
-        private void SubscribeToMapNodeEvents()
-        {
-            foreach (var node in _mapGrid)
-            {
-                if (node == null || node.NodeView == null) continue;
-
-                node.NodeView.OnNodeClicked += NodeView_OnNodeClicked;
-            }
-        }
-
-        #endregion Path Visuals & Events
+        #endregion Visuals
     }
 }

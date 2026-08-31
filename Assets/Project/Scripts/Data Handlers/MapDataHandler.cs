@@ -2,9 +2,6 @@ using UnityEngine;
 
 namespace BP.MapSystem
 {
-    /// <summary>
-    /// Handles saving and loading of map data to and from a JSON file in the specified save folder. Provides methods to save, load, delete, and open the save folder for map data.
-    /// </summary>
     public class MapDataHandler : MonoBehaviour
     {
         [SerializeField] private string _saveFolder = "Maps/Save";
@@ -18,26 +15,14 @@ namespace BP.MapSystem
 
         #region Public APIs
 
-        /// <summary>
-        /// Saves the provided map data to a JSON file in the specified save folder.
-        /// </summary>
-        /// <param name="mapData">The map data to save.</param>
         public void SaveGame(MapData mapData) => SaveGame_Internal(mapData);
 
-        /// <summary>
-        /// Loads the map data from the JSON file in the specified save folder.
-        /// </summary>
-        /// <returns>The loaded map data.</returns>
         public MapData LoadGame() => LoadGame_Internal();
 
-        /// <summary>
-        /// Deletes the map data JSON file from the specified save folder.
-        /// </summary>
+        [ContextMenu("Delete Map Data")]
         public void DeleteMapData() => DeleteMapData_Internal();
 
-        /// <summary>
-        /// Opens the save folder in the file explorer.
-        /// </summary>
+        [ContextMenu("Open Save Folder")]
         public void OpenSaveFolder() => OpenSaveFolder_Internal();
 
         #endregion Public APIs
