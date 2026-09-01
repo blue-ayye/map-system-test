@@ -72,7 +72,7 @@ namespace BP.MapSystem
             }
 
             GenerateMapVisuals();
-            _mapTraversalController.ConnectMapVisuals(_mapGrid, _mapPathGenerator.PathViews);
+            _mapTraversalController.ConnectMapVisuals(_mapGrid, _mapPathGenerator.PathViews, _mapGridGenerator.InitialNode, _mapGridGenerator.FinalNode);
             AnimateMapReveal();
         }
 
@@ -125,7 +125,7 @@ namespace BP.MapSystem
             _mapGrid = _mapGridGenerator.CreateNodeGrid();
 
             var mapPathingRNG = new System.Random(seed + 1);
-            _mapPathGenerator.Initialize(_mapGrid, mapPathingRNG);
+            _mapPathGenerator.Initialize(_mapGrid, mapPathingRNG, _mapGridGenerator.InitialNode, _mapGridGenerator.FinalNode);
             _mapPathGenerator.SelectStartingNodes();
             _mapPathGenerator.GeneratePaths();
 
@@ -176,7 +176,7 @@ namespace BP.MapSystem
             GenerateMapData(mapData.Seed);
             GenerateMapVisuals();
 
-            _mapTraversalController.ConnectMapVisuals(_mapGrid, _mapPathGenerator.PathViews);
+            _mapTraversalController.ConnectMapVisuals(_mapGrid, _mapPathGenerator.PathViews, _mapGridGenerator.InitialNode, _mapGridGenerator.FinalNode);
             _mapTraversalController.ReadFromMapData(mapData);
 
             AnimateMapReveal();
@@ -218,6 +218,34 @@ namespace BP.MapSystem
             int levels = _mapGrid.GetLength(0);
             int nodesPerLevel = _mapGrid.GetLength(1);
 
+            void ChainPathsForLevel(int targetLevel)
+            {
+                bool firstPathChained = false;
+                foreach (var pathView in _mapPathGenerator.PathViews)
+                {
+                    if (pathView.FromNode.Level == targetLevel)
+                    {
+                        Tween pathTween = pathView.AnimateInitialDraw(_pathDrawDuration);
+
+                        if (!firstPathChained)
+                        {
+                            _revealSequence.Chain(pathTween);
+                            firstPathChained = true;
+                        }
+                        else
+                        {
+                            _revealSequence.Group(pathTween);
+                        }
+                    }
+                }
+            }
+
+            if (_mapGridGenerator.InitialNode?.NodeView != null)
+            {
+                _revealSequence.Chain(_mapGridGenerator.InitialNode.NodeView.AnimateSpawn(_nodeSpawnDuration));
+                ChainPathsForLevel(_mapGridGenerator.InitialNode.Level);
+            }
+
             for (int level = 0; level < levels; level++)
             {
                 bool firstNodeChained = false;
@@ -240,24 +268,12 @@ namespace BP.MapSystem
                     }
                 }
 
-                bool firstPathChained = false;
-                foreach (var pathView in _mapPathGenerator.PathViews)
-                {
-                    if (pathView.FromNode.Level == level)
-                    {
-                        Tween pathTween = pathView.AnimateInitialDraw(_pathDrawDuration);
+                ChainPathsForLevel(level);
+            }
 
-                        if (!firstPathChained)
-                        {
-                            _revealSequence.Chain(pathTween);
-                            firstPathChained = true;
-                        }
-                        else
-                        {
-                            _revealSequence.Group(pathTween);
-                        }
-                    }
-                }
+            if (_mapGridGenerator.FinalNode?.NodeView != null)
+            {
+                _revealSequence.Chain(_mapGridGenerator.FinalNode.NodeView.AnimateSpawn(_nodeSpawnDuration));
             }
 
             var traversedEdges = _mapTraversalController.TraversedEdges;

@@ -22,8 +22,11 @@ namespace BP.MapSystem
         private MapNode _currentNode;
         private MapNode[,] _mapGrid;
 
+        private MapNode _initialNode;
+        private MapNode _finalNode;
+
         private const string _maxTraversalReachedWarning = "Maximum traversal steps reached. Cannot traverse further.";
-        private const string _startLevelZeroWarning = "Please click on a starting node at Level 0 to begin.";
+        private const string _startLevelZeroWarning = "Please click on a valid starting node to begin.";
         private const string _invalidMoveWarning = "Invalid: You can only move to child of the current node or traverse back to visited nodes if enabled.";
         private const string _startNodeLog = "Starting at Level {0}, Index {1}";
         private const string _traverseBackLog = "Traversed back to Level {0}, Index {1}";
@@ -45,16 +48,25 @@ namespace BP.MapSystem
 
         #region Public APIs
 
-        public void ConnectMapVisuals(MapNode[,] mapGrid, List<IMapPathView> pathViews)
+        public void ConnectMapVisuals(MapNode[,] mapGrid, List<IMapPathView> pathViews, MapNode initialNode = null, MapNode finalNode = null)
         {
             _mapGrid = mapGrid;
             _pathViews = pathViews;
+            _initialNode = initialNode;
+            _finalNode = finalNode;
+
             SubscribeToMapNodeEvents();
             UpdateAllNodeStates();
         }
 
         public void ClearSubscriptions()
         {
+            if (_initialNode?.NodeView != null)
+                _initialNode.NodeView.OnNodeClicked -= NodeView_OnNodeClicked;
+
+            if (_finalNode?.NodeView != null)
+                _finalNode.NodeView.OnNodeClicked -= NodeView_OnNodeClicked;
+
             if (_mapGrid == null) return;
 
             foreach (var node in _mapGrid)
@@ -105,8 +117,8 @@ namespace BP.MapSystem
 
             foreach (var pathData in traversalData.TraversedPathDataList)
             {
-                var fromNode = _mapGrid[pathData.FromNodeData.Level, pathData.FromNodeData.Index];
-                var toNode = _mapGrid[pathData.ToNodeData.Level, pathData.ToNodeData.Index];
+                var fromNode = GetNode(pathData.FromNodeData.Level, pathData.FromNodeData.Index);
+                var toNode = GetNode(pathData.ToNodeData.Level, pathData.ToNodeData.Index);
 
                 if (fromNode != null && toNode != null)
                 {
@@ -119,7 +131,7 @@ namespace BP.MapSystem
 
             if (traversalData.CurrentNodeData != null)
             {
-                _currentNode = _mapGrid[traversalData.CurrentNodeData.Level, traversalData.CurrentNodeData.Index];
+                _currentNode = GetNode(traversalData.CurrentNodeData.Level, traversalData.CurrentNodeData.Index);
 
                 if (_currentNode != null && !_visitedNodes.Contains(_currentNode))
                 {
@@ -156,7 +168,9 @@ namespace BP.MapSystem
 
             if (_currentNode == null)
             {
-                if (clickedNode.Level == 0)
+                int startLevel = _initialNode != null ? _initialNode.Level : 0;
+
+                if (clickedNode.Level == startLevel)
                 {
                     TraversePath(clickedNode);
                     Debug.LogFormat(_startNodeLog, _currentNode.Level, _currentNode.Index);
@@ -212,6 +226,12 @@ namespace BP.MapSystem
 
         private void SubscribeToMapNodeEvents()
         {
+            if (_initialNode?.NodeView != null)
+                _initialNode.NodeView.OnNodeClicked += NodeView_OnNodeClicked;
+
+            if (_finalNode?.NodeView != null)
+                _finalNode.NodeView.OnNodeClicked += NodeView_OnNodeClicked;
+
             foreach (var node in _mapGrid)
             {
                 if (node == null || node.NodeView == null) continue;
@@ -226,6 +246,9 @@ namespace BP.MapSystem
 
         private void UpdateAllNodeStates()
         {
+            if (_initialNode != null) SetNodeState(_initialNode, GetDesiredState(_initialNode), forceUpdate: true);
+            if (_finalNode != null) SetNodeState(_finalNode, GetDesiredState(_finalNode), forceUpdate: true);
+
             foreach (MapNode node in _mapGrid)
             {
                 if (node == null)
@@ -244,9 +267,16 @@ namespace BP.MapSystem
 
             if (previousNode == null)
             {
-                for (int index = 0; index < _mapGrid.GetLength(1); index++)
+                if (_initialNode != null)
                 {
-                    affectedNodes.Add(_mapGrid[0, index]);
+                    affectedNodes.Add(_initialNode);
+                }
+                else
+                {
+                    for (int index = 0; index < _mapGrid.GetLength(1); index++)
+                    {
+                        affectedNodes.Add(_mapGrid[0, index]);
+                    }
                 }
             }
 
@@ -267,7 +297,8 @@ namespace BP.MapSystem
             if (_visitedNodes.Contains(node))
                 return NodeState.Visited;
 
-            if (_currentNode == null && node.Level == 0)
+            int startLevel = _initialNode != null ? _initialNode.Level : 0;
+            if (_currentNode == null && node.Level == startLevel)
                 return NodeState.Reachable;
 
             if (_currentNode != null && _currentNode.ChildNodes.Contains(node))
@@ -315,5 +346,20 @@ namespace BP.MapSystem
         }
 
         #endregion Visuals
+
+        #region Helpers
+
+        private MapNode GetNode(int level, int index)
+        {
+            if (_initialNode != null && level == _initialNode.Level) return _initialNode;
+            if (_finalNode != null && level == _finalNode.Level) return _finalNode;
+
+            if (level >= 0 && level < _mapGrid.GetLength(0) && index >= 0 && index < _mapGrid.GetLength(1))
+                return _mapGrid[level, index];
+
+            return null;
+        }
+
+        #endregion Helpers
     }
 }

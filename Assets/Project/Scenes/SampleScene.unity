@@ -336,7 +336,7 @@ MonoBehaviour:
   _playerInputSeed: 1698927251
   _usePlayerInputSeed: 0
   _generationAttempts: 100
-  _nodeSpawnDuration: 0.5
+  _nodeSpawnDuration: 0.0001
   _pathDrawDuration: 0.0001
 --- !u!4 &437789669
 Transform:
