@@ -13,6 +13,16 @@ namespace BP.MapSystem
         [Tooltip("Use a Transform with a RectTransform or BoxCollider to define the area where the map nodes will be generated.")]
         [SerializeField] private Transform _mapAreaBoundsDefiner;
 
+        [Header("Special Node Settings")]
+        [Tooltip("If not null, we're creating a single node before level 0 which will be later marked as current node automatically. This node will be connected to all nodes in level 0.")]
+        [SerializeField] private MapNodeTypeSO _intialNodeType;
+        [Tooltip("If not null, we're creating a single node after the last level which will be later marked as final node automatically. This node will be connected to all nodes in the last level.")]
+        [SerializeField] private MapNodeTypeSO _finalNodeType;
+        [SerializeField] private float _intialNodeSizeMultiplier = 1.5f;
+        [SerializeField] private float _finalNodeSizeMultiplier = 1.5f;
+        [SerializeField] private float _initialNodeDistanceMultiplier = 1.5f;
+        [SerializeField] private float _finalNodeDistanceMultiplier = 1.5f;
+
         [Header("Map Grid Settings")]
         [Tooltip("Maximum number of levels in the map grid.")]
         [SerializeField] private int _maxLevels = 9;
@@ -279,8 +289,57 @@ namespace BP.MapSystem
                 }
             }
 
+            var tempRandom = new System.Random((int)Time.time); // Use a temporary random generator for consistent results in the editor
+
+            // Draw special nodes if they exist
+            Gizmos.color = Color.green;
+            if (_intialNodeType != null)
+            {
+                var centerIndex = _nodesPerLevel / 2;
+                var randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
+                Vector3 pos = GetNodePosition(-1, randomIndex);
+                pos -= (_bounds.up * _dynamicSpacing.y * _initialNodeDistanceMultiplier * 2f);
+                Gizmos.DrawSphere(pos, radius * _intialNodeSizeMultiplier);
+
+                // Draw lines from the initial node to all nodes in level 0
+                Gizmos.color = Color.white;
+                for (int i = 0; i < _nodesPerLevel; i++)
+                {
+                    Vector3 level0Pos = GetNodePosition(0, i);
+                    Gizmos.DrawLine(pos, level0Pos);
+                }
+
+                UnityEditor.Handles.color = Color.cyan;
+                pos.x -= radius * _intialNodeSizeMultiplier * 3f;
+                pos.y += radius * _intialNodeSizeMultiplier * 2f;
+                UnityEditor.Handles.Label(pos, "Initial Node");
+            }
+
+            Gizmos.color = Color.red;
+            if (_finalNodeType != null)
+            {
+                var centerIndex = _nodesPerLevel / 2;
+                var randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
+                Vector3 pos = GetNodePosition(_maxLevels, randomIndex);
+                pos += (_bounds.up * _dynamicSpacing.y * _finalNodeDistanceMultiplier * 2f);
+                Gizmos.DrawSphere(pos, radius * _finalNodeSizeMultiplier);
+
+                // Draw lines from all nodes in the last level to the final node
+                Gizmos.color = Color.white;
+                for (int i = 0; i < _nodesPerLevel; i++)
+                {
+                    Vector3 lastLevelPos = GetNodePosition(_maxLevels - 1, i);
+                    Gizmos.DrawLine(lastLevelPos, pos);
+                }
+
+                UnityEditor.Handles.color = Color.cyan;
+                pos.x -= radius * _finalNodeSizeMultiplier * 1f;
+                pos.y += radius * _finalNodeSizeMultiplier * 2f;
+                UnityEditor.Handles.Label(pos, "Final Node");
+            }
+
             // Draw index labels
-            UnityEditor.Handles.color = Color.white;
+            UnityEditor.Handles.color = Color.cyan;
             for (int i = 0; i < _nodesPerLevel; i++)
             {
                 Vector3 pos = GetNodePosition(-1, i);
