@@ -23,6 +23,9 @@ namespace BP.MapSystem
         [SerializeField] private float _hoverScaleFactor = 1.2f;
         [SerializeField] private TweenSettings<Vector3> _hoverTweenSettings;
 
+        [Header("Spawn Animation")]
+        [SerializeField] private TweenSettings<Vector3> _spawnTweenSettings;
+
         private MapNode _mapNode;
         private Tween _hoverTween;
         private Tween _spawnTween;
@@ -77,7 +80,10 @@ namespace BP.MapSystem
         public Tween AnimateSpawn(float nodeSpawnDuration)
         {
             _spawnTween.Stop();
-            _spawnTween = Tween.Scale(transform, _mapNode.Scale, duration: nodeSpawnDuration, ease: Ease.OutBack);
+            _spawnTweenSettings.settings.duration = nodeSpawnDuration;
+            _spawnTweenSettings.startValue = transform.localScale;
+            _spawnTweenSettings.endValue = _mapNode.Scale;
+            _spawnTween = Tween.Scale(transform, _spawnTweenSettings);
             return _spawnTween;
         }
 
