@@ -154,8 +154,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -131.45111, y: 0}
-  m_SizeDelta: {x: -536.1144, y: -144.3386}
+  m_AnchoredPosition: {x: -46.310425, y: 0}
+  m_SizeDelta: {x: -706.3957, y: -144.3386}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &148710048
 GameObject:
@@ -373,14 +373,15 @@ MonoBehaviour:
   _mapAreaBoundsDefiner: {fileID: 1600653608}
   _intialNodeType: {fileID: 11400000, guid: 0c2a029ea57a58b4cbe3f7962383141f, type: 2}
   _finalNodeType: {fileID: 11400000, guid: f243db2e1789e464cbb4198c5288e966, type: 2}
-  _intialNodeSizeMultiplier: 2
-  _finalNodeSizeMultiplier: 5
-  _initialNodeDistanceMultiplier: 0.5
-  _finalNodeDistanceMultiplier: 2
+  _nodeScaleMultiplier: 1
+  _initialNodeScaleMultiplier: 1.2
+  _finalNodeScaleMultiplier: 3
   _maxLevels: 9
   _nodesPerLevel: 7
   _direction: 2
   _zRotation: 0
+  _initialNodeDistanceMultiplier: 0.5
+  _finalNodeDistanceMultiplier: 2
   _applyJitter: 1
   _nodeSpaceJitterPercentage: 21.9
   _levelSpaceJitterPercentage: 29.7
@@ -934,19 +935,20 @@ MonoBehaviour:
   _nodeViewPrefab: {fileID: 6679694359499727540, guid: e00ed0d628de3c9468fdd37c5b6e723a, type: 3}
   _nodeViewParent: {fileID: 1623811994}
   _mapAreaBoundsDefiner: {fileID: 121739639}
-  _intialNodeType: {fileID: 0}
-  _finalNodeType: {fileID: 0}
-  _intialNodeSizeMultiplier: 1.5
-  _finalNodeSizeMultiplier: 1.5
-  _initialNodeDistanceMultiplier: 1.5
-  _finalNodeDistanceMultiplier: 1.5
+  _intialNodeType: {fileID: 11400000, guid: 0c2a029ea57a58b4cbe3f7962383141f, type: 2}
+  _finalNodeType: {fileID: 11400000, guid: f243db2e1789e464cbb4198c5288e966, type: 2}
+  _nodeScaleMultiplier: 0.6
+  _initialNodeScaleMultiplier: 1.2
+  _finalNodeScaleMultiplier: 2
   _maxLevels: 9
   _nodesPerLevel: 7
   _direction: 2
   _zRotation: 0
+  _initialNodeDistanceMultiplier: 1
+  _finalNodeDistanceMultiplier: 1.5
   _applyJitter: 1
-  _nodeSpaceJitterPercentage: 0
-  _levelSpaceJitterPercentage: 0
+  _nodeSpaceJitterPercentage: 21
+  _levelSpaceJitterPercentage: 30
 --- !u!114 &1061727598
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -137,32 +137,13 @@ MonoBehaviour:
   _selectedStateIndicator: {fileID: 8989649775451140802}
   _lockedColor: {r: 0.50980395, g: 0.43529412, b: 0.3764706, a: 1}
   _reachableColor: {r: 1, g: 1, b: 1, a: 1}
-  _hoverEnterScaleTweenSettings:
-    startFromCurrent: 1
+  _hoverScaleFactor: 1.2
+  _hoverTweenSettings:
+    startFromCurrent: 0
     startValue: {x: 0, y: 0, z: 0}
-    endValue: {x: 1.2, y: 1.2, z: 1.2}
+    endValue: {x: 0, y: 0, z: 0}
     settings:
-      duration: 0.2
-      ease: 27
-      customEase:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      cycles: 1
-      cycleMode: 0
-      startDelay: 0
-      endDelay: 0
-      useUnscaledTime: 0
-      _useFixedUpdate: 0
-      _updateType: 0
-  _hoverExitScaleTweenSettings:
-    startFromCurrent: 1
-    startValue: {x: 0, y: 0, z: 0}
-    endValue: {x: 1, y: 1, z: 1}
-    settings:
-      duration: 0.2
+      duration: 0.28
       ease: 27
       customEase:
         serializedVersion: 2

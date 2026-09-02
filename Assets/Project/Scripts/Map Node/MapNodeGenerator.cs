@@ -9,14 +9,13 @@ namespace BP.MapSystem
         [SerializeField] private Transform _nodeViewPrefab;
         [SerializeField] private Transform _nodeViewParent;
         [SerializeField] private Transform _mapAreaBoundsDefiner;
-
-        [Header("Special Node Settings")]
         [SerializeField] private MapNodeTypeSO _intialNodeType;
         [SerializeField] private MapNodeTypeSO _finalNodeType;
-        [SerializeField] private float _intialNodeSizeMultiplier = 1.5f;
-        [SerializeField] private float _finalNodeSizeMultiplier = 1.5f;
-        [SerializeField] private float _initialNodeDistanceMultiplier = 1.5f;
-        [SerializeField] private float _finalNodeDistanceMultiplier = 1.5f;
+
+        [Header("Scale Settings")]
+        [SerializeField] private float _nodeScaleMultiplier = 1f;
+        [SerializeField] private float _initialNodeScaleMultiplier = 1.5f;
+        [SerializeField] private float _finalNodeScaleMultiplier = 1.5f;
 
         [Header("Map Grid Settings")]
         [SerializeField] private int _maxLevels = 9;
@@ -26,7 +25,9 @@ namespace BP.MapSystem
         [SerializeField] private MapDirection _direction = MapDirection.TopToBottom;
         [SerializeField] private int _zRotation;
 
-        [Header("Jitter Settings")]
+        [Header("Position Settings")]
+        [SerializeField] private float _initialNodeDistanceMultiplier = 1.5f;
+        [SerializeField] private float _finalNodeDistanceMultiplier = 1.5f;
         [SerializeField] private bool _applyJitter = true;
         [SerializeField, Range(0f, 50f)] private float _nodeSpaceJitterPercentage;
         [SerializeField, Range(0f, 50f)] private float _levelSpaceJitterPercentage;
@@ -110,8 +111,8 @@ namespace BP.MapSystem
                 _zRotation
             );
 
-            if (InitialNode != null) CreateSingleNodeView(InitialNode, rotation);
-            if (FinalNode != null) CreateSingleNodeView(FinalNode, rotation);
+            if (InitialNode != null) CreateSingleNodeView(InitialNode, rotation, _initialNodeScaleMultiplier);
+            if (FinalNode != null) CreateSingleNodeView(FinalNode, rotation, _finalNodeScaleMultiplier);
 
             for (int level = 0; level < _maxLevels; level++)
             {
@@ -120,7 +121,7 @@ namespace BP.MapSystem
                     var node = _mapGrid[level, nodeIndex];
                     if (node == null) continue;
 
-                    CreateSingleNodeView(node, rotation);
+                    CreateSingleNodeView(node, rotation, _nodeScaleMultiplier);
                 }
             }
         }
@@ -183,14 +184,17 @@ namespace BP.MapSystem
                     boundData.origin = boundData.center - boundData.right + boundData.up;
                     boundData.up = -boundData.up;
                     break;
+
                 case MapDirection.BottomToTop:
                     boundData.origin = boundData.center + boundData.right - boundData.up;
                     boundData.right = -boundData.right;
                     break;
+
                 case MapDirection.LeftToRight:
                     (boundData.right, boundData.up) = (boundData.up, boundData.right);
                     boundData.origin = boundData.center - boundData.right - boundData.up;
                     break;
+
                 case MapDirection.RightToLeft:
                     (boundData.right, boundData.up) = (-boundData.up, -boundData.right);
                     boundData.origin = boundData.center - boundData.right - boundData.up;
@@ -208,15 +212,17 @@ namespace BP.MapSystem
 
         #region Helpers
 
-        private void CreateSingleNodeView(MapNode node, Quaternion rotation)
+        private void CreateSingleNodeView(MapNode node, Quaternion rotation, float nodeScaleMultiplier)
         {
             Transform nodeViewTransform = Instantiate(_nodeViewPrefab, _nodeViewParent);
             nodeViewTransform.SetPositionAndRotation(node.Position, rotation);
+            nodeViewTransform.localScale *= nodeScaleMultiplier;
 
             if (nodeViewTransform.TryGetComponent(out IMapNodeView nodeView))
             {
-                nodeView.Initialize(node);
                 node.NodeView = nodeView;
+                node.Scale = nodeViewTransform.localScale;
+                nodeView.Initialize(node);
             }
             else
             {
@@ -295,7 +301,7 @@ namespace BP.MapSystem
                 var randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
                 Vector3 pos = GetNodePosition(-1, randomIndex);
                 pos -= (_bounds.up * _dynamicSpacing.y * _initialNodeDistanceMultiplier * 2f);
-                Gizmos.DrawSphere(pos, radius * _intialNodeSizeMultiplier);
+                Gizmos.DrawSphere(pos, radius * _initialNodeScaleMultiplier);
 
                 Gizmos.color = Color.white;
                 for (int i = 0; i < _nodesPerLevel; i++)
@@ -305,8 +311,8 @@ namespace BP.MapSystem
                 }
 
                 UnityEditor.Handles.color = Color.cyan;
-                pos.x -= radius * _intialNodeSizeMultiplier * 3f;
-                pos.y += radius * _intialNodeSizeMultiplier * 2f;
+                pos.x -= radius * _initialNodeScaleMultiplier * 3f;
+                pos.y += radius * _initialNodeScaleMultiplier * 2f;
                 UnityEditor.Handles.Label(pos, "Initial Node");
             }
 
@@ -317,7 +323,7 @@ namespace BP.MapSystem
                 var randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
                 Vector3 pos = GetNodePosition(_maxLevels, randomIndex);
                 pos += (_bounds.up * _dynamicSpacing.y * _finalNodeDistanceMultiplier * 2f);
-                Gizmos.DrawSphere(pos, radius * _finalNodeSizeMultiplier);
+                Gizmos.DrawSphere(pos, radius * _finalNodeScaleMultiplier);
 
                 Gizmos.color = Color.white;
                 for (int i = 0; i < _nodesPerLevel; i++)
@@ -327,8 +333,8 @@ namespace BP.MapSystem
                 }
 
                 UnityEditor.Handles.color = Color.cyan;
-                pos.x -= radius * _finalNodeSizeMultiplier * 1f;
-                pos.y += radius * _finalNodeSizeMultiplier * 2f;
+                pos.x -= radius * _finalNodeScaleMultiplier * 1f;
+                pos.y += radius * _finalNodeScaleMultiplier * 2f;
                 UnityEditor.Handles.Label(pos, "Final Node");
             }
 

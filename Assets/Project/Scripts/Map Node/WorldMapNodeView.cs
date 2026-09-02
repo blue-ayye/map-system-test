@@ -17,8 +17,10 @@ namespace BP.MapSystem
         [SerializeField] private Transform _selectedStateIndicator;
         [SerializeField] private Color _lockedColor = Color.gray;
         [SerializeField] private Color _reachableColor = Color.white;
-        [SerializeField] private TweenSettings<Vector3> _hoverEnterScaleTweenSettings = new TweenSettings<Vector3>(Vector3.one * 1.2f, 0.2f, Ease.OutBack);
-        [SerializeField] private TweenSettings<Vector3> _hoverExitScaleTweenSettings = new TweenSettings<Vector3>(Vector3.one, 0.2f, Ease.OutBack);
+
+        [Header("Hover Animation")]
+        [SerializeField] private float _hoverScaleFactor = 1.2f;
+        [SerializeField] private TweenSettings<Vector3> _hoverTweenSettings;
 
         private MapNode _mapNode;
         private Tween _howerTween;
@@ -36,13 +38,17 @@ namespace BP.MapSystem
         public void OnPointerEnter(PointerEventData eventData)
         {
             _howerTween.Stop();
-            _howerTween = Tween.Scale(transform, _hoverEnterScaleTweenSettings);
+            _hoverTweenSettings.startValue = transform.localScale;
+            _hoverTweenSettings.endValue = _mapNode.Scale * _hoverScaleFactor;
+            _howerTween = Tween.Scale(transform, _hoverTweenSettings);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             _howerTween.Stop();
-            _howerTween = Tween.Scale(transform, _hoverExitScaleTweenSettings);
+            _hoverTweenSettings.startValue = transform.localScale;
+            _hoverTweenSettings.endValue = _mapNode.Scale;
+            _howerTween = Tween.Scale(transform, _hoverTweenSettings);
         }
 
         #endregion Unity API
@@ -68,7 +74,7 @@ namespace BP.MapSystem
         public Tween AnimateSpawn(float nodeSpawnDuration)
         {
             _spawnTween.Stop();
-            _spawnTween = Tween.Scale(transform, Vector3.one, duration: nodeSpawnDuration, ease: Ease.OutBack);
+            _spawnTween = Tween.Scale(transform, _mapNode.Scale, duration: nodeSpawnDuration, ease: Ease.OutBack);
             return _spawnTween;
         }
 
