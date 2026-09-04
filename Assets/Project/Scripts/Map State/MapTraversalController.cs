@@ -1,6 +1,7 @@
 using PrimeTween;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace BP.MapSystem
 {
@@ -17,6 +18,12 @@ namespace BP.MapSystem
         [SerializeField, Min(0.0001f)] private float _pathTraversalDuration = 0.3f;
         [SerializeField] private float _delayBeforeRestoringTravelledPaths = 0f;
         [SerializeField, Min(0.0001f)] private float _pathTravelRestoreDuration = 0.3f;
+
+        [Header("Traversal Events")]
+        public UnityEvent<MapNode> OnMaxTraversalStepsReached = new UnityEvent<MapNode>();
+        public UnityEvent<MapNode> OnVisitVeryFirstNode = new UnityEvent<MapNode>();
+        public UnityEvent<MapNode> OnRevisitNode = new UnityEvent<MapNode>();
+        public UnityEvent<MapNode> OnVisitNewNode = new UnityEvent<MapNode>();
 
         private List<MapNode> _visitedNodes = new List<MapNode>();
         private List<IMapPathView> _pathViews = new List<IMapPathView>();
@@ -149,8 +156,10 @@ namespace BP.MapSystem
         {
             if (_currentNode == clickedNode) return;
 
+            // Max traversal steps check
             if (_maxTraversalSteps >= 0 && _currentTraversalSteps >= _maxTraversalSteps)
             {
+                OnMaxTraversalStepsReached?.Invoke(clickedNode);
                 Debug.LogWarning(_maxTraversalReachedWarning);
                 return;
             }
@@ -159,9 +168,11 @@ namespace BP.MapSystem
             {
                 int startLevel = _initialNode != null ? _initialNode.Level : 0;
 
+                // Very first node (starting node)
                 if (clickedNode.Level == startLevel)
                 {
                     TraversePath(clickedNode);
+                    OnVisitVeryFirstNode?.Invoke(clickedNode);
                     Debug.LogFormat(_startNodeLog, _currentNode.Level, _currentNode.Index);
                 }
                 else
@@ -171,18 +182,22 @@ namespace BP.MapSystem
                 return;
             }
 
+            // Visiting a previously visited node (if allowed)
             if (_canTraverseVisitedNodes && _visitedNodes.Contains(clickedNode))
             {
                 _currentTraversalSteps++;
                 TraversePath(clickedNode, false);
+                OnRevisitNode?.Invoke(clickedNode);
                 Debug.LogFormat(_traverseBackLog, _currentNode.Level, _currentNode.Index);
                 return;
             }
 
+            // Travelling to new node (must be a child of the current node)
             if (_currentNode.ChildNodes.Contains(clickedNode))
             {
                 _currentTraversalSteps++;
                 TraversePath(clickedNode);
+                OnVisitNewNode?.Invoke(clickedNode);
                 Debug.LogFormat(_movedLog, _currentNode.Level, _currentNode.Index);
                 return;
             }
