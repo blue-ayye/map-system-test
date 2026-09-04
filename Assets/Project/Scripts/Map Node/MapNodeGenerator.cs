@@ -1,3 +1,4 @@
+using PrimeTween;
 using System;
 using UnityEngine;
 
@@ -31,6 +32,9 @@ namespace BP.MapSystem
         [SerializeField] private bool _applyJitter = true;
         [SerializeField, Range(0f, 50f)] private float _nodeSpaceJitterPercentage;
         [SerializeField, Range(0f, 50f)] private float _levelSpaceJitterPercentage;
+
+        [Header("Spawn Settings")]
+        [SerializeField, Min(0.0001f)] private float _nodeSpawnDuration = 0.3f;
 
         private MapNode[,] _mapGrid;
         private MapBoundsData _bounds;
@@ -209,6 +213,41 @@ namespace BP.MapSystem
         }
 
         #endregion Public APIs
+
+        #region Animation
+
+        public void AppendNodeSpawnToSequence(ref Sequence sequence, MapNode node)
+        {
+            if (node?.NodeView != null)
+            {
+                sequence.Chain(node.NodeView.AnimateSpawn(_nodeSpawnDuration));
+            }
+        }
+
+        public void AppendLevelNodesToSequence(ref Sequence sequence, int level)
+        {
+            bool firstChained = false;
+            for (int index = 0; index < _nodesPerLevel; index++)
+            {
+                var node = _mapGrid[level, index];
+                if (node?.NodeView != null)
+                {
+                    Tween nodeTween = node.NodeView.AnimateSpawn(_nodeSpawnDuration);
+
+                    if (!firstChained)
+                    {
+                        sequence.Chain(nodeTween);
+                        firstChained = true;
+                    }
+                    else
+                    {
+                        sequence.Group(nodeTween);
+                    }
+                }
+            }
+        }
+
+        #endregion Animation
 
         #region Helpers
 

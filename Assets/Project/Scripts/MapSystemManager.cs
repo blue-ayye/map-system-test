@@ -18,10 +18,6 @@ namespace BP.MapSystem
         [SerializeField] private bool _usePlayerInputSeed = false;
         [SerializeField] private int _generationAttempts = 1;
 
-        [Header("Animation Settings")]
-        [SerializeField] private float _nodeSpawnDuration = 0.001f;
-        [SerializeField] private float _pathDrawDuration = 0.001f;
-
         private MapNode[,] _mapGrid;
         private bool _isCustomSeedUsed;
         private int _generatedSeed;
@@ -208,96 +204,33 @@ namespace BP.MapSystem
 
         private void AnimateMapReveal()
         {
-            if (_revealSequence.isAlive)
-            {
-                _revealSequence.Stop();
-            }
+            if (_revealSequence.isAlive) _revealSequence.Stop();
 
             _revealSequence = Sequence.Create();
 
+            // 1. Initial Node
+            if (_mapGridGenerator.InitialNode != null)
+            {
+                _mapGridGenerator.AppendNodeSpawnToSequence(ref _revealSequence, _mapGridGenerator.InitialNode);
+                _mapPathGenerator.AppendLevelPathsToSequence(ref _revealSequence, _mapGridGenerator.InitialNode.Level);
+            }
+
+            // 2. Main Grid
             int levels = _mapGrid.GetLength(0);
-            int nodesPerLevel = _mapGrid.GetLength(1);
-
-            void ChainPathsForLevel(int targetLevel)
-            {
-                bool firstPathChained = false;
-                foreach (var pathView in _mapPathGenerator.PathViews)
-                {
-                    if (pathView.FromNode.Level == targetLevel)
-                    {
-                        Tween pathTween = pathView.AnimateInitialDraw(_pathDrawDuration);
-
-                        if (!firstPathChained)
-                        {
-                            _revealSequence.Chain(pathTween);
-                            firstPathChained = true;
-                        }
-                        else
-                        {
-                            _revealSequence.Group(pathTween);
-                        }
-                    }
-                }
-            }
-
-            if (_mapGridGenerator.InitialNode?.NodeView != null)
-            {
-                _revealSequence.Chain(_mapGridGenerator.InitialNode.NodeView.AnimateSpawn(_nodeSpawnDuration));
-                ChainPathsForLevel(_mapGridGenerator.InitialNode.Level);
-            }
-
             for (int level = 0; level < levels; level++)
             {
-                bool firstNodeChained = false;
-                for (int index = 0; index < nodesPerLevel; index++)
-                {
-                    var node = _mapGrid[level, index];
-                    if (node != null && node.NodeView != null)
-                    {
-                        Tween nodeTween = node.NodeView.AnimateSpawn(_nodeSpawnDuration);
-
-                        if (!firstNodeChained)
-                        {
-                            _revealSequence.Chain(nodeTween);
-                            firstNodeChained = true;
-                        }
-                        else
-                        {
-                            _revealSequence.Group(nodeTween);
-                        }
-                    }
-                }
-
-                ChainPathsForLevel(level);
+                _mapGridGenerator.AppendLevelNodesToSequence(ref _revealSequence, level);
+                _mapPathGenerator.AppendLevelPathsToSequence(ref _revealSequence, level);
             }
 
-            if (_mapGridGenerator.FinalNode?.NodeView != null)
+            // 3. Final Node
+            if (_mapGridGenerator.FinalNode != null)
             {
-                _revealSequence.Chain(_mapGridGenerator.FinalNode.NodeView.AnimateSpawn(_nodeSpawnDuration));
+                _mapGridGenerator.AppendNodeSpawnToSequence(ref _revealSequence, _mapGridGenerator.FinalNode);
             }
 
-            var traversedEdges = _mapTraversalController.TraversedEdges;
-            if (traversedEdges.Count > 0)
-            {
-                _revealSequence.Chain(Tween.Delay(0.3f));
-
-                var animatedPaths = new HashSet<(MapNode, MapNode)>();
-
-                foreach (var edge in traversedEdges)
-                {
-                    if (!animatedPaths.Contains((edge.From, edge.To)) &&
-                        !animatedPaths.Contains((edge.To, edge.From)))
-                    {
-                        animatedPaths.Add((edge.From, edge.To));
-
-                        Tween pathTween = _mapTraversalController.GetPathTraversalTween(edge.From, edge.To);
-                        if (pathTween.isAlive)
-                        {
-                            _revealSequence.Chain(pathTween);
-                        }
-                    }
-                }
-            }
+            // 4. Restored Data
+            _mapTraversalController.AppendRestoredTraversalsToSequence(ref _revealSequence);
         }
 
         #endregion Animation

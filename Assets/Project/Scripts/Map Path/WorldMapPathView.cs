@@ -9,8 +9,14 @@ namespace BP.MapSystem
         [SerializeField] private LineRenderer _baseLineRenderer;
         [SerializeField] private LineRenderer _traversedLineRenderer;
 
+        [Header("Path Animation Settings")]
+        [SerializeField] private TweenSettings<Vector3> _initialDrawTweenSettings;
+        [SerializeField] private TweenSettings<Vector3> _traversalTweenSettings;
+
         private Vector3 _startLocalPos;
         private Vector3 _endLocalPos;
+        private Tween _initialDrawTween;
+        private Tween _traversalTween;
 
         public MapNode FromNode { get; private set; }
         public MapNode ToNode { get; private set; }
@@ -40,41 +46,37 @@ namespace BP.MapSystem
 
         public Tween AnimateInitialDraw(float duration)
         {
-            Tween.StopAll(_baseLineRenderer);
+            _initialDrawTween.Stop();
 
-            return Tween.Custom(
-                target: _baseLineRenderer,
-                startValue: _startLocalPos,
-                endValue: _endLocalPos,
-                duration: duration,
-                onValueChange: (lr, currentPos) => lr.SetPosition(1, currentPos),
-                ease: Ease.InOutSine
-            );
+            _initialDrawTweenSettings.settings.duration = duration;
+            _initialDrawTweenSettings.startValue = _startLocalPos;
+            _initialDrawTweenSettings.endValue = _endLocalPos;
+
+            _initialDrawTween = Tween.Custom(_baseLineRenderer, _initialDrawTweenSettings, (lr, currentPos) => lr.SetPosition(1, currentPos));
+            return _initialDrawTween;
         }
 
         public Tween AnimateTraversal(float duration)
         {
-            Tween.StopAll(_traversedLineRenderer);
+            _traversalTween.Stop();
 
-            return Tween.Custom(
-                target: _traversedLineRenderer,
-                startValue: _startLocalPos,
-                endValue: _endLocalPos,
-                duration: duration,
-                onValueChange: (lr, currentPos) => lr.SetPosition(1, currentPos),
-                ease: Ease.InOutSine
-            );
+            _traversalTweenSettings.settings.duration = duration;
+            _traversalTweenSettings.startValue = _startLocalPos;
+            _traversalTweenSettings.endValue = _endLocalPos;
+
+            _traversalTween = Tween.Custom(_traversedLineRenderer, _traversalTweenSettings, (lr, currentPos) => lr.SetPosition(1, currentPos));
+            return _traversalTween;
         }
 
         public void SetInstantlyTraversed()
         {
-            Tween.StopAll(_traversedLineRenderer);
+            _traversalTween.Stop();
             _traversedLineRenderer.SetPosition(1, _endLocalPos);
         }
 
         public void ResetToDefault()
         {
-            Tween.StopAll(_traversedLineRenderer);
+            _traversalTween.Stop();
             _traversedLineRenderer.SetPosition(1, _startLocalPos);
         }
 

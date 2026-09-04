@@ -337,7 +337,7 @@ MonoBehaviour:
   _usePlayerInputSeed: 0
   _generationAttempts: 100
   _nodeSpawnDuration: 0.4
-  _pathDrawDuration: 0.18
+  _initialPathDrawDuration: 0.18
 --- !u!4 &437789669
 Transform:
   m_ObjectHideFlags: 0
@@ -385,6 +385,7 @@ MonoBehaviour:
   _applyJitter: 1
   _nodeSpaceJitterPercentage: 21.9
   _levelSpaceJitterPercentage: 29.7
+  _nodeSpawnDuration: 0.15
 --- !u!114 &437789671
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -401,6 +402,7 @@ MonoBehaviour:
   _totalPaths: 7
   _pathViewParent: {fileID: 1666124770}
   _pathViewPrefab: {fileID: 7287899494070656532, guid: ab7a40d863718f045adcf25ca38ae32d, type: 3}
+  _backgroundPathDrawDuration: 0.5
 --- !u!114 &437789672
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -434,7 +436,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _canTraverseVisitedNodes: 1
   _maxTraversalSteps: 10
-  _pathTraversalDuration: 0.3
+  _pathTraversalDuration: 1
+  _delayBeforeRestoringTravelledPaths: 2
+  _pathTravelRestoreDuration: 0.3
 --- !u!114 &437789674
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -920,6 +924,7 @@ MonoBehaviour:
   _totalPaths: 7
   _pathViewParent: {fileID: 749590720}
   _pathViewPrefab: {fileID: 5681419231260104886, guid: 2d94f5f2301851043ad8e5c41c019674, type: 3}
+  _backgroundPathDrawDuration: 0.3
 --- !u!114 &1061727597
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -949,6 +954,7 @@ MonoBehaviour:
   _applyJitter: 1
   _nodeSpaceJitterPercentage: 21
   _levelSpaceJitterPercentage: 30
+  _nodeSpawnDuration: 0.3
 --- !u!114 &1061727598
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -969,8 +975,8 @@ MonoBehaviour:
   _playerInputSeed: 817167126
   _usePlayerInputSeed: 1
   _generationAttempts: 1
-  _nodeSpawnDuration: 0.1
-  _pathDrawDuration: 0.1
+  _nodeSpawnDuration: 0.4
+  _initialPathDrawDuration: 0.001
 --- !u!4 &1061727599
 Transform:
   m_ObjectHideFlags: 0
@@ -1002,6 +1008,8 @@ MonoBehaviour:
   _canTraverseVisitedNodes: 1
   _maxTraversalSteps: -1
   _pathTraversalDuration: 0.3
+  _delayBeforeRestoringTravelledPaths: 0
+  _pathTravelRestoreDuration: 0.3
 --- !u!114 &1061727601
 MonoBehaviour:
   m_ObjectHideFlags: 0

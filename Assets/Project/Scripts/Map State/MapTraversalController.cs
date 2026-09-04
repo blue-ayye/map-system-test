@@ -14,7 +14,9 @@ namespace BP.MapSystem
 
         [Header("Path Animation Settings")]
         [Tooltip("Duration of the path traversal animation in seconds.")]
-        [SerializeField] private float _pathTraversalDuration = 0.3f;
+        [SerializeField, Min(0.0001f)] private float _pathTraversalDuration = 0.3f;
+        [SerializeField] private float _delayBeforeRestoringTravelledPaths = 0f;
+        [SerializeField, Min(0.0001f)] private float _pathTravelRestoreDuration = 0.3f;
 
         private List<MapNode> _visitedNodes = new List<MapNode>();
         private List<IMapPathView> _pathViews = new List<IMapPathView>();
@@ -84,19 +86,6 @@ namespace BP.MapSystem
             TraversedEdges.Clear();
             _currentTraversalSteps = 0;
             _currentNode = null;
-        }
-
-        public Tween GetPathTraversalTween(MapNode fromNode, MapNode toNode)
-        {
-            foreach (IMapPathView pathView in _pathViews)
-            {
-                if ((pathView.FromNode == fromNode && pathView.ToNode == toNode) ||
-                    (pathView.FromNode == toNode && pathView.ToNode == fromNode))
-                {
-                    return pathView.AnimateTraversal(_pathTraversalDuration);
-                }
-            }
-            return default;
         }
 
         #endregion Public APIs
@@ -217,7 +206,7 @@ namespace BP.MapSystem
                 TraversedEdges.Add((previousNode, clickedNode));
                 if (animatePath)
                 {
-                    GetPathTraversalTween(previousNode, clickedNode);
+                    GetPathTraversalTween(previousNode, clickedNode, _pathTraversalDuration);
                 }
             }
 
@@ -331,21 +320,44 @@ namespace BP.MapSystem
 
         #endregion Node State Management
 
-        #region Visuals
+        #region Animation
 
-        private void AnimatePathTraversal(MapNode fromNode, MapNode toNode)
+        public void AppendRestoredTraversalsToSequence(ref Sequence sequence)
         {
-            foreach (IMapPathView pathView in _pathViews)
+            if (TraversedEdges.Count == 0) return;
+
+            sequence.Chain(Tween.Delay(_delayBeforeRestoringTravelledPaths));
+            var animatedPaths = new HashSet<(MapNode, MapNode)>();
+
+            foreach (var edge in TraversedEdges)
             {
-                if (pathView.FromNode == fromNode && pathView.ToNode == toNode)
+                if (animatedPaths.Contains((edge.From, edge.To)) || animatedPaths.Contains((edge.To, edge.From)))
+                    continue;
+
+                animatedPaths.Add((edge.From, edge.To));
+
+                Tween pathTween = GetPathTraversalTween(edge.From, edge.To, _pathTravelRestoreDuration);
+                if (pathTween.isAlive)
                 {
-                    pathView.AnimateTraversal(_pathTraversalDuration);
-                    return;
+                    sequence.Chain(pathTween);
                 }
             }
         }
 
-        #endregion Visuals
+        private Tween GetPathTraversalTween(MapNode fromNode, MapNode toNode, float duration)
+        {
+            foreach (IMapPathView pathView in _pathViews)
+            {
+                if ((pathView.FromNode == fromNode && pathView.ToNode == toNode) ||
+                    (pathView.FromNode == toNode && pathView.ToNode == fromNode))
+                {
+                    return pathView.AnimateTraversal(duration);
+                }
+            }
+            return default;
+        }
+
+        #endregion Animation
 
         #region Helpers
 

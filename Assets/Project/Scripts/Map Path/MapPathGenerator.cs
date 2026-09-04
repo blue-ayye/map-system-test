@@ -1,3 +1,4 @@
+using PrimeTween;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,6 +13,9 @@ namespace BP.MapSystem
         [Header("Path View Settings")]
         [SerializeField] private Transform _pathViewParent;
         [SerializeField] private Transform _pathViewPrefab;
+
+        [Header("Spawn Settings")]
+        [SerializeField, Min(0.0001f)] private float _backgroundPathDrawDuration = 0.3f;
 
         private MapNode[,] _mapGrid;
         private int _maxLevels;
@@ -198,6 +202,32 @@ namespace BP.MapSystem
         }
 
         #endregion Pathing Logic
+
+        #region Animation
+
+        public void AppendLevelPathsToSequence(ref Sequence sequence, int targetLevel)
+        {
+            bool firstChained = false;
+            foreach (var pathView in PathViews)
+            {
+                if (pathView.FromNode.Level == targetLevel)
+                {
+                    Tween pathTween = pathView.AnimateInitialDraw(_backgroundPathDrawDuration);
+
+                    if (!firstChained)
+                    {
+                        sequence.Chain(pathTween);
+                        firstChained = true;
+                    }
+                    else
+                    {
+                        sequence.Group(pathTween);
+                    }
+                }
+            }
+        }
+
+        #endregion Animation
 
         #region Testing
 
