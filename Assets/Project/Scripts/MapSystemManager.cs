@@ -27,6 +27,9 @@ namespace BP.MapSystem
         private const string _generationAttemptsWarning = "Could not generate a valid map within {0} attempts. Using the best available seed: {1}.";
         private const string _nullMapDataError = "Map data is null or empty. Cannot load map.";
 
+        public int PlayerInputSeed { get => _playerInputSeed; set => _playerInputSeed = value; }
+        public bool UsePlayerInputSeed { get => _usePlayerInputSeed; set => _usePlayerInputSeed = value; }
+
         #region Unity API
 
         private void Start() => GenerateMap();

@@ -10462,10 +10462,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e706560a1c113d48a25f6874d543679, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _uiMapSystemManager: {fileID: 927686314}
+  _3DMapSystemManager: {fileID: 1994524043}
   _uiMapPanel: {fileID: 927686311}
   _3DMapPanel: {fileID: 1994524037}
   _uiMapToggle: {fileID: 633140}
   _3DMapToggle: {fileID: 1586983892}
+  _generateMapButton: {fileID: 1309837103}
+  _randomSeedToggle: {fileID: 692409358}
+  _seedInputField: {fileID: 397576349}
 --- !u!4 &1603097744
 Transform:
   m_ObjectHideFlags: 0
