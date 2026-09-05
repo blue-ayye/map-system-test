@@ -1,3 +1,4 @@
+using PrimeTween;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,16 +7,41 @@ namespace BP.MapSystem
 {
     public class MapSystemDemo : MonoBehaviour
     {
+        [Header("References")]
         [SerializeField] private MapSystemManager _uiMapSystemManager;
         [SerializeField] private MapSystemManager _3DMapSystemManager;
-
         [SerializeField] private GameObject _uiMapPanel;
         [SerializeField] private GameObject _3DMapPanel;
         [SerializeField] private Toggle _uiMapToggle;
         [SerializeField] private Toggle _3DMapToggle;
+
+        [Header("Error Display")]
+        [SerializeField] private TMP_Text _errorText;
+        [SerializeField] private TweenSettings _errorDisplayTweenSettings;
+
+        [Header("Map Generation UI")]
         [SerializeField] private Button _generateMapButton;
         [SerializeField] private Toggle _randomSeedToggle;
         [SerializeField] private TMP_InputField _seedInputField;
+
+        [Header("Additional Settings")]
+        [SerializeField] private TMP_InputField _maxAttemptsInputField;
+        [SerializeField] private TMP_InputField _maxLevelsInputField;
+        [SerializeField] private TMP_InputField _maxNodesPerLevelInputField;
+        [SerializeField] private TMP_Dropdown _mapOrientationDropdown;
+        [SerializeField] private TMP_InputField _nodeFacingDirectionInputField;
+        [SerializeField] private Toggle _animateSpawnToggle;
+        [SerializeField] private Toggle _animateLoadingToggle;
+        [SerializeField] private TMP_InputField _uniquePathCountInputField;
+        [SerializeField] private TMP_InputField _totalPathCountInputField;
+        [SerializeField] private Button _saveMapButton;
+        [SerializeField] private Button _loadMapButton;
+        [SerializeField] private Button _deleteSaveFileButton;
+        [SerializeField] private Button _randomizeMapRotationButton;
+        [SerializeField] private Button _resetMapRotationButton;
+
+        private Tween _errorScaleTween;
+        private Tween _errorAlphaTween;
 
         private void Awake()
         {
@@ -32,6 +58,12 @@ namespace BP.MapSystem
             _randomSeedToggle.onValueChanged.RemoveAllListeners();
             _randomSeedToggle.onValueChanged.AddListener((isOn) => { _seedInputField.interactable = !isOn; });
             _seedInputField.text = _uiMapSystemManager.PlayerInputSeed.ToString();
+
+            _errorText.gameObject.SetActive(false);
+
+            _maxAttemptsInputField.text = _uiMapSystemManager.GenerationAttempts.ToString();
+            _maxAttemptsInputField.onEndEdit.RemoveAllListeners();
+            _maxAttemptsInputField.onEndEdit.AddListener(EditMaxAttempts);
         }
 
         private void Start()
@@ -64,7 +96,7 @@ namespace BP.MapSystem
 
             if (targetManager == null)
             {
-                Debug.LogError("MapSystemManager reference is missing.");
+                DisplayError("MapSystemManager reference is missing. Please assign it in the inspector.");
                 return;
             }
 
@@ -72,6 +104,8 @@ namespace BP.MapSystem
             {
                 targetManager.UsePlayerInputSeed = false;
                 targetManager.GenerateMap();
+
+                _seedInputField.text = targetManager.GeneratedSeed.ToString();
             }
             else
             {
@@ -83,11 +117,46 @@ namespace BP.MapSystem
                 }
                 else
                 {
-                    Debug.LogError("Invalid seed input. Please enter a valid integer.");
+                    DisplayError("Invalid seed input. Please enter a valid integer.");
                 }
             }
+        }
 
-            _seedInputField.text = _uiMapSystemManager.PlayerInputSeed.ToString();
+        private void EditMaxAttempts(string input)
+        {
+            if (int.TryParse(input, out int maxAttempts))
+            {
+                _uiMapSystemManager.GenerationAttempts = maxAttempts;
+                _3DMapSystemManager.GenerationAttempts = maxAttempts;
+            }
+            else
+            {
+                DisplayError("Invalid max attempts input. Please enter a valid integer.");
+            }
+        }
+
+        private void DisplayError(string msg, float duration = 3f)
+        {
+            if (_errorText != null)
+            {
+                _errorScaleTween.Stop();
+                _errorAlphaTween.Stop();
+
+                _errorText.text = msg;
+                _errorText.alpha = 1f;
+                _errorText.transform.localScale = Vector3.zero;
+                _errorText.gameObject.SetActive(true);
+                _errorScaleTween = Tween.Scale(_errorText.transform, Vector3.one, _errorDisplayTweenSettings).OnComplete(() =>
+                 {
+                     Tween.Delay(duration, onComplete: () =>
+                     {
+                         _errorAlphaTween = Tween.Alpha(_errorText, 0f, _errorDisplayTweenSettings).OnComplete(() =>
+                                {
+                                    _errorText.gameObject.SetActive(false);
+                                });
+                     });
+                 });
+            }
         }
     }
 }

@@ -28,7 +28,9 @@ namespace BP.MapSystem
         private const string _nullMapDataError = "Map data is null or empty. Cannot load map.";
 
         public int PlayerInputSeed { get => _playerInputSeed; set => _playerInputSeed = value; }
+        public int GeneratedSeed => _generatedSeed;
         public bool UsePlayerInputSeed { get => _usePlayerInputSeed; set => _usePlayerInputSeed = value; }
+        public int GenerationAttempts { get => _generationAttempts; set => _generationAttempts = value; }
 
         #region Unity API
 
