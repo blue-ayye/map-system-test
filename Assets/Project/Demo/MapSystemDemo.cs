@@ -1,4 +1,5 @@
 using PrimeTween;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -64,6 +65,51 @@ namespace BP.MapSystem
             _maxAttemptsInputField.text = _uiMapSystemManager.GenerationAttempts.ToString();
             _maxAttemptsInputField.onEndEdit.RemoveAllListeners();
             _maxAttemptsInputField.onEndEdit.AddListener(EditMaxAttempts);
+
+            _maxLevelsInputField.text = _uiMapSystemManager.MapLevels.ToString();
+            _maxLevelsInputField.onEndEdit.RemoveAllListeners();
+            _maxLevelsInputField.onEndEdit.AddListener(EditMaxLevels);
+
+            _maxNodesPerLevelInputField.text = _uiMapSystemManager.NodesPerLevel.ToString();
+            _maxNodesPerLevelInputField.onEndEdit.RemoveAllListeners();
+            _maxNodesPerLevelInputField.onEndEdit.AddListener(EditMaxNodesPerLevel);
+
+            //// Populate the dropdown with the enum values
+            //_mapOrientationDropdown.ClearOptions();
+            //_mapOrientationDropdown.AddOptions(System.Enum.GetNames(typeof(MapOrientation)).ToList());
+            //_mapOrientationDropdown.value = (int)_uiMapSystemManager.MapOrientation;
+            //_mapOrientationDropdown.onValueChanged.RemoveAllListeners();
+            //_mapOrientationDropdown.onValueChanged.AddListener(EditMapOrientation);
+
+            //_nodeFacingDirectionInputField.text = _uiMapSystemManager.NodeFacingDirection.ToString();
+            //_nodeFacingDirectionInputField.onEndEdit.RemoveAllListeners();
+            //_nodeFacingDirectionInputField.onEndEdit.AddListener(EditNodeFacingDirection);
+        }
+
+        private void EditMaxNodesPerLevel(string input)
+        {
+            if (int.TryParse(input, out int maxNodesPerLevel))
+            {
+                _uiMapSystemManager.NodesPerLevel = maxNodesPerLevel;
+                _3DMapSystemManager.NodesPerLevel = maxNodesPerLevel;
+            }
+            else
+            {
+                DisplayError("Invalid max nodes per level input. Please enter a valid integer.");
+            }
+        }
+
+        private void EditMaxLevels(string input)
+        {
+            if (int.TryParse(input, out int maxLevels))
+            {
+                _uiMapSystemManager.MapLevels = maxLevels;
+                _3DMapSystemManager.MapLevels = maxLevels;
+            }
+            else
+            {
+                DisplayError("Invalid max levels input. Please enter a valid integer.");
+            }
         }
 
         private void Start()

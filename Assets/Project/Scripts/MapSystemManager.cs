@@ -31,6 +31,8 @@ namespace BP.MapSystem
         public int GeneratedSeed => _generatedSeed;
         public bool UsePlayerInputSeed { get => _usePlayerInputSeed; set => _usePlayerInputSeed = value; }
         public int GenerationAttempts { get => _generationAttempts; set => _generationAttempts = value; }
+        public int MapLevels { get; set; } = 1;
+        public int NodesPerLevel { get; set; } = 1;
 
         #region Unity API
 
@@ -55,6 +57,9 @@ namespace BP.MapSystem
 
         private void GenerateMap_Internal()
         {
+            _mapGridGenerator.MaxLevels = MapLevels;
+            _mapGridGenerator.NodesPerLevel = NodesPerLevel;
+
             _mapGridGenerator.CalculateBounds();
 
             if (!TryGenerateValidMapData(out int bestSeed))

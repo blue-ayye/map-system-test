@@ -10624,7 +10624,7 @@ MonoBehaviour:
   _seedInputField: {fileID: 397576349}
   _maxAttemptsInputField: {fileID: 1778791461}
   _maxLevelsInputField: {fileID: 1801040865}
-  _maxNodesPerLevelInputField: {fileID: 0}
+  _maxNodesPerLevelInputField: {fileID: 779436646}
   _mapOrientationDropdown: {fileID: 0}
   _nodeFacingDirectionInputField: {fileID: 0}
   _animateSpawnToggle: {fileID: 0}

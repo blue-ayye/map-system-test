@@ -48,6 +48,9 @@ namespace BP.MapSystem
         public MapNode InitialNode { get; private set; }
         public MapNode FinalNode { get; private set; }
 
+        public int MaxLevels { get => _maxLevels; set => _maxLevels = value; }
+        public int NodesPerLevel { get => _nodesPerLevel; set => _nodesPerLevel = value; }
+
         #region Public APIs
 
         public void Initialize(System.Random jitterRNG)

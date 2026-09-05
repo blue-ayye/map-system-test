@@ -61,6 +61,8 @@ namespace BP.MapSystem
                 {
                     for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
                     {
+                        if (OutOfBounds(level, nodeIndex)) continue;
+
                         var node = _mapGrid[level, nodeIndex];
                         if (node == null) continue;
 
@@ -199,6 +201,7 @@ namespace BP.MapSystem
                 {
                     for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
                     {
+                        if (OutOfBounds(level, nodeIndex)) continue;
                         var node = _mapGrid[level, nodeIndex];
                         if (node == null) continue;
 
@@ -285,6 +288,11 @@ namespace BP.MapSystem
             if (nextSibling != null) siblingsToCheck.Add(nextSibling);
 
             return siblingsToCheck;
+        }
+
+        private bool OutOfBounds(int level, int nodeIndex)
+        {
+            return level < 0 || level >= _mapGrid.GetLength(0) || nodeIndex < 0 || nodeIndex >= _mapGrid.GetLength(1);
         }
 
         #endregion Helper Methods
