@@ -10626,7 +10626,7 @@ MonoBehaviour:
   _maxAttemptsInputField: {fileID: 1778791461}
   _maxLevelsInputField: {fileID: 1801040865}
   _maxNodesPerLevelInputField: {fileID: 779436646}
-  _mapOrientationDropdown: {fileID: 0}
+  _mapOrientationDropdown: {fileID: 738729321}
   _nodeFacingDirectionInputField: {fileID: 0}
   _animateSpawnToggle: {fileID: 0}
   _animateLoadingToggle: {fileID: 0}
@@ -13102,7 +13102,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 32767
+  m_SortingOrder: 1000
   m_TargetDisplay: 0
 --- !u!1 &1990814574
 GameObject:

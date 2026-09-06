@@ -1,4 +1,5 @@
 using PrimeTween;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -73,12 +74,8 @@ namespace BP.MapSystem
             _maxNodesPerLevelInputField.onEndEdit.RemoveAllListeners();
             _maxNodesPerLevelInputField.onEndEdit.AddListener(EditMaxNodesPerLevel);
 
-            //// Populate the dropdown with the enum values
-            //_mapOrientationDropdown.ClearOptions();
-            //_mapOrientationDropdown.AddOptions(System.Enum.GetNames(typeof(MapOrientation)).ToList());
-            //_mapOrientationDropdown.value = (int)_uiMapSystemManager.MapOrientation;
-            //_mapOrientationDropdown.onValueChanged.RemoveAllListeners();
-            //_mapOrientationDropdown.onValueChanged.AddListener(EditMapOrientation);
+            _mapOrientationDropdown.onValueChanged.RemoveAllListeners();
+            _mapOrientationDropdown.onValueChanged.AddListener(EditMapOrientation);
 
             //_nodeFacingDirectionInputField.text = _uiMapSystemManager.NodeFacingDirection.ToString();
             //_nodeFacingDirectionInputField.onEndEdit.RemoveAllListeners();
@@ -104,6 +101,11 @@ namespace BP.MapSystem
                 {
                     _maxLevelsInputField.text = nodeGenerator.MaxLevels.ToString();
                     _maxNodesPerLevelInputField.text = nodeGenerator.NodesPerLevel.ToString();
+
+                    // Populate the dropdown with the enum values
+                    _mapOrientationDropdown.ClearOptions();
+                    _mapOrientationDropdown.AddOptions(System.Enum.GetNames(typeof(MapDirection)).ToList());
+                    _mapOrientationDropdown.value = (int)nodeGenerator.Direction;
                 }
             }
         }
@@ -121,6 +123,10 @@ namespace BP.MapSystem
                 {
                     _maxLevelsInputField.text = nodeGenerator3D.MaxLevels.ToString();
                     _maxNodesPerLevelInputField.text = nodeGenerator3D.NodesPerLevel.ToString();
+
+                    _mapOrientationDropdown.ClearOptions();
+                    _mapOrientationDropdown.AddOptions(System.Enum.GetNames(typeof(MapDirection)).ToList());
+                    _mapOrientationDropdown.value = (int)nodeGenerator3D.Direction;
                 }
             }
         }
@@ -192,6 +198,22 @@ namespace BP.MapSystem
             else
             {
                 DisplayError("Invalid max nodes per level input. Please enter a valid integer.");
+            }
+        }
+
+        private void EditMapOrientation(int index)
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            if (targetManager.TryGetComponent(out MapNodeGenerator nodeGenerator))
+            {
+                if (System.Enum.IsDefined(typeof(MapDirection), index))
+                {
+                    nodeGenerator.Direction = (MapDirection)index;
+                }
+                else
+                {
+                    DisplayError("Invalid map orientation selection.");
+                }
             }
         }
 
