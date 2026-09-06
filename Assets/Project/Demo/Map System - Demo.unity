@@ -3943,7 +3943,7 @@ GameObject:
   - component: {fileID: 664693269}
   - component: {fileID: 664693270}
   m_Layer: 5
-  m_Name: Advance Options Toggle
+  m_Name: Additional Settings Toggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6416,8 +6416,8 @@ MonoBehaviour:
   _nodeScaleMultiplier: 0.8
   _initialNodeScaleMultiplier: 1.2
   _finalNodeScaleMultiplier: 1.8
-  _maxLevels: 9
-  _nodesPerLevel: 7
+  _maxLevels: 3
+  _nodesPerLevel: 1
   _direction: 2
   _zRotation: 0
   _initialNodeDistance: 91.3
@@ -10602,6 +10602,7 @@ MonoBehaviour:
   _3DMapPanel: {fileID: 1994524037}
   _uiMapToggle: {fileID: 633140}
   _3DMapToggle: {fileID: 1586983892}
+  _additionalSettingsToggle: {fileID: 664693270}
   _errorText: {fileID: 248952608}
   _errorDisplayTweenSettings:
     duration: 0.5

@@ -1,5 +1,4 @@
 using PrimeTween;
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,6 +14,7 @@ namespace BP.MapSystem
         [SerializeField] private GameObject _3DMapPanel;
         [SerializeField] private Toggle _uiMapToggle;
         [SerializeField] private Toggle _3DMapToggle;
+        [SerializeField] private Toggle _additionalSettingsToggle;
 
         [Header("Error Display")]
         [SerializeField] private TMP_Text _errorText;
@@ -51,8 +51,10 @@ namespace BP.MapSystem
 
             _uiMapToggle.onValueChanged.RemoveAllListeners();
             _3DMapToggle.onValueChanged.RemoveAllListeners();
+            _additionalSettingsToggle.onValueChanged.RemoveAllListeners();
             _uiMapToggle.onValueChanged.AddListener(OnUIToggleChanged);
             _3DMapToggle.onValueChanged.AddListener(On3DToggleChanged);
+            _additionalSettingsToggle.onValueChanged.AddListener(OnAdditionalSettingsToggleChanged);
 
             _generateMapButton.onClick.RemoveAllListeners();
             _generateMapButton.onClick.AddListener(GenerateMap);
@@ -62,15 +64,12 @@ namespace BP.MapSystem
 
             _errorText.gameObject.SetActive(false);
 
-            _maxAttemptsInputField.text = _uiMapSystemManager.GenerationAttempts.ToString();
             _maxAttemptsInputField.onEndEdit.RemoveAllListeners();
             _maxAttemptsInputField.onEndEdit.AddListener(EditMaxAttempts);
 
-            _maxLevelsInputField.text = _uiMapSystemManager.MapLevels.ToString();
             _maxLevelsInputField.onEndEdit.RemoveAllListeners();
             _maxLevelsInputField.onEndEdit.AddListener(EditMaxLevels);
 
-            _maxNodesPerLevelInputField.text = _uiMapSystemManager.NodesPerLevel.ToString();
             _maxNodesPerLevelInputField.onEndEdit.RemoveAllListeners();
             _maxNodesPerLevelInputField.onEndEdit.AddListener(EditMaxNodesPerLevel);
 
@@ -86,32 +85,6 @@ namespace BP.MapSystem
             //_nodeFacingDirectionInputField.onEndEdit.AddListener(EditNodeFacingDirection);
         }
 
-        private void EditMaxNodesPerLevel(string input)
-        {
-            if (int.TryParse(input, out int maxNodesPerLevel))
-            {
-                _uiMapSystemManager.NodesPerLevel = maxNodesPerLevel;
-                _3DMapSystemManager.NodesPerLevel = maxNodesPerLevel;
-            }
-            else
-            {
-                DisplayError("Invalid max nodes per level input. Please enter a valid integer.");
-            }
-        }
-
-        private void EditMaxLevels(string input)
-        {
-            if (int.TryParse(input, out int maxLevels))
-            {
-                _uiMapSystemManager.MapLevels = maxLevels;
-                _3DMapSystemManager.MapLevels = maxLevels;
-            }
-            else
-            {
-                DisplayError("Invalid max levels input. Please enter a valid integer.");
-            }
-        }
-
         private void Start()
         {
             _uiMapToggle.isOn = true;
@@ -124,6 +97,14 @@ namespace BP.MapSystem
             {
                 _uiMapPanel.SetActive(true);
                 _3DMapPanel.SetActive(false);
+
+                _maxAttemptsInputField.text = _uiMapSystemManager.GenerationAttempts.ToString();
+
+                if (_uiMapSystemManager.TryGetComponent(out MapNodeGenerator nodeGenerator))
+                {
+                    _maxLevelsInputField.text = nodeGenerator.MaxLevels.ToString();
+                    _maxNodesPerLevelInputField.text = nodeGenerator.NodesPerLevel.ToString();
+                }
             }
         }
 
@@ -133,7 +114,24 @@ namespace BP.MapSystem
             {
                 _uiMapPanel.SetActive(false);
                 _3DMapPanel.SetActive(true);
+
+                _maxAttemptsInputField.text = _3DMapSystemManager.GenerationAttempts.ToString();
+
+                if (_3DMapSystemManager.TryGetComponent(out MapNodeGenerator nodeGenerator3D))
+                {
+                    _maxLevelsInputField.text = nodeGenerator3D.MaxLevels.ToString();
+                    _maxNodesPerLevelInputField.text = nodeGenerator3D.NodesPerLevel.ToString();
+                }
             }
+        }
+
+        private void OnAdditionalSettingsToggleChanged(bool isOn)
+        {
+            // Just a hack to update the settings
+            if (_uiMapToggle.isOn)
+                OnUIToggleChanged(_uiMapToggle.isOn);
+            else if (_3DMapToggle.isOn)
+                On3DToggleChanged(_3DMapToggle.isOn);
         }
 
         private void GenerateMap()
@@ -170,14 +168,45 @@ namespace BP.MapSystem
 
         private void EditMaxAttempts(string input)
         {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+
             if (int.TryParse(input, out int maxAttempts))
             {
-                _uiMapSystemManager.GenerationAttempts = maxAttempts;
-                _3DMapSystemManager.GenerationAttempts = maxAttempts;
+                targetManager.GenerationAttempts = maxAttempts;
             }
             else
             {
                 DisplayError("Invalid max attempts input. Please enter a valid integer.");
+            }
+        }
+
+        private void EditMaxNodesPerLevel(string input)
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+
+            if (int.TryParse(input, out int maxNodesPerLevel))
+            {
+                if (targetManager.TryGetComponent(out MapNodeGenerator nodeGenerator))
+                    nodeGenerator.NodesPerLevel = maxNodesPerLevel;
+            }
+            else
+            {
+                DisplayError("Invalid max nodes per level input. Please enter a valid integer.");
+            }
+        }
+
+        private void EditMaxLevels(string input)
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+
+            if (int.TryParse(input, out int maxLevels))
+            {
+                if (targetManager.TryGetComponent(out MapNodeGenerator nodeGenerator))
+                    nodeGenerator.MaxLevels = maxLevels;
+            }
+            else
+            {
+                DisplayError("Invalid max levels input. Please enter a valid integer.");
             }
         }
 
