@@ -27,8 +27,8 @@ namespace BP.MapSystem
         [SerializeField] private int _zRotation;
 
         [Header("Position Settings")]
-        [SerializeField] private float _initialNodeDistanceMultiplier = 1.5f;
-        [SerializeField] private float _finalNodeDistanceMultiplier = 1.5f;
+        [SerializeField] private float _initialNodeDistance = 2f;
+        [SerializeField] private float _finalNodeDistance = 2f;
         [SerializeField] private bool _applyJitter = true;
         [SerializeField, Range(0f, 50f)] private float _nodeSpaceJitterPercentage;
         [SerializeField, Range(0f, 50f)] private float _levelSpaceJitterPercentage;
@@ -79,14 +79,16 @@ namespace BP.MapSystem
             if (_intialNodeType != null)
             {
                 int centerIndex = _nodesPerLevel / 2;
-                int randomIndex = Mathf.Clamp(centerIndex + _jitterRNG.Next(-1, 2), 0, _nodesPerLevel - 1);
+                int randomIndex = 0;
+                if (_nodesPerLevel > 1)
+                    randomIndex = Mathf.Clamp(centerIndex + _jitterRNG.Next(-1, 2), 0, _nodesPerLevel - 1);
                 InitialNode = new MapNode(-1, randomIndex)
                 {
                     NodeType = _intialNodeType,
                 };
 
-                Vector3 pos = GetNodePosition(-1, randomIndex, _applyJitter);
-                pos -= (_bounds.up * _dynamicSpacing.y * _initialNodeDistanceMultiplier * 2f);
+                Vector3 pos = GetNodePosition(0, randomIndex, _applyJitter);
+                pos -= _bounds.up.normalized * _initialNodeDistance;
                 InitialNode.Position = pos;
             }
 
@@ -94,14 +96,16 @@ namespace BP.MapSystem
             if (_finalNodeType != null)
             {
                 int centerIndex = _nodesPerLevel / 2;
-                int randomIndex = Mathf.Clamp(centerIndex + _jitterRNG.Next(-1, 2), 0, _nodesPerLevel - 1);
+                int randomIndex = 0;
+                if (_nodesPerLevel > 1)
+                    randomIndex = Mathf.Clamp(centerIndex + _jitterRNG.Next(-1, 2), 0, _nodesPerLevel - 1);
                 FinalNode = new MapNode(_maxLevels, randomIndex)
                 {
                     NodeType = _finalNodeType,
                 };
 
-                Vector3 pos = GetNodePosition(_maxLevels, randomIndex, _applyJitter);
-                pos += (_bounds.up * _dynamicSpacing.y * _finalNodeDistanceMultiplier * 2f);
+                Vector3 pos = GetNodePosition(_maxLevels - 1, randomIndex, _applyJitter);
+                pos += _bounds.up.normalized * _finalNodeDistance;
                 FinalNode.Position = pos;
             }
 
@@ -339,10 +343,12 @@ namespace BP.MapSystem
             Gizmos.color = Color.green;
             if (_intialNodeType != null)
             {
-                var centerIndex = _nodesPerLevel / 2;
-                var randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
-                Vector3 pos = GetNodePosition(-1, randomIndex);
-                pos -= (_bounds.up * _dynamicSpacing.y * _initialNodeDistanceMultiplier * 2f);
+                int centerIndex = _nodesPerLevel / 2;
+                int randomIndex = 0;
+                if (_nodesPerLevel > 1)
+                    randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
+                Vector3 pos = GetNodePosition(0, randomIndex);
+                pos -= _bounds.up.normalized * _initialNodeDistance;
                 Gizmos.DrawSphere(pos, radius * _initialNodeScaleMultiplier);
 
                 Gizmos.color = Color.white;
@@ -361,10 +367,12 @@ namespace BP.MapSystem
             Gizmos.color = Color.red;
             if (_finalNodeType != null)
             {
-                var centerIndex = _nodesPerLevel / 2;
-                var randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
-                Vector3 pos = GetNodePosition(_maxLevels, randomIndex);
-                pos += (_bounds.up * _dynamicSpacing.y * _finalNodeDistanceMultiplier * 2f);
+                int centerIndex = _nodesPerLevel / 2;
+                int randomIndex = 0;
+                if (_nodesPerLevel > 1)
+                    randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
+                Vector3 pos = GetNodePosition(_maxLevels - 1, randomIndex);
+                pos += _bounds.up.normalized * _finalNodeDistance;
                 Gizmos.DrawSphere(pos, radius * _finalNodeScaleMultiplier);
 
                 Gizmos.color = Color.white;

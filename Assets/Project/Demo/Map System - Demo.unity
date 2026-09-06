@@ -6420,8 +6420,8 @@ MonoBehaviour:
   _nodesPerLevel: 7
   _direction: 2
   _zRotation: 0
-  _initialNodeDistanceMultiplier: 0.5
-  _finalNodeDistanceMultiplier: 1.5
+  _initialNodeDistance: 91.3
+  _finalNodeDistance: 126.9
   _applyJitter: 1
   _nodeSpaceJitterPercentage: 19.5
   _levelSpaceJitterPercentage: 8.7
@@ -13362,8 +13362,8 @@ MonoBehaviour:
   _nodesPerLevel: 7
   _direction: 2
   _zRotation: 0
-  _initialNodeDistanceMultiplier: 0.5
-  _finalNodeDistanceMultiplier: 1.5
+  _initialNodeDistance: 2
+  _finalNodeDistance: 2
   _applyJitter: 1
   _nodeSpaceJitterPercentage: 19.5
   _levelSpaceJitterPercentage: 8.7
