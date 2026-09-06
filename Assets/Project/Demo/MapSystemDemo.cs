@@ -36,11 +36,16 @@ namespace BP.MapSystem
         [SerializeField] private Toggle _animateLoadingToggle;
         [SerializeField] private TMP_InputField _uniquePathCountInputField;
         [SerializeField] private TMP_InputField _totalPathCountInputField;
+        [SerializeField] private TMP_InputField _maxTraversalStepsInputField;
+        [SerializeField] private Toggle _canVisitTravelledNodesToggle;
         [SerializeField] private Button _saveMapButton;
         [SerializeField] private Button _loadMapButton;
         [SerializeField] private Button _deleteSaveFileButton;
         [SerializeField] private Button _randomizeMapRotationButton;
         [SerializeField] private Button _resetMapRotationButton;
+
+        [SerializeField] private float _nodeSpawnAnimationDuration = 0.5f;
+        [SerializeField] private float _pathSpawnAnimationDuration = 0.5f;
 
         private Tween _errorScaleTween;
         private Tween _errorAlphaTween;
@@ -80,9 +85,23 @@ namespace BP.MapSystem
             _nodeFacingDirectionInputField.onEndEdit.RemoveAllListeners();
             _nodeFacingDirectionInputField.onEndEdit.AddListener(EditNodeFacingDirection);
 
-            //_nodeFacingDirectionInputField.text = _uiMapSystemManager.NodeFacingDirection.ToString();
-            //_nodeFacingDirectionInputField.onEndEdit.RemoveAllListeners();
-            //_nodeFacingDirectionInputField.onEndEdit.AddListener(EditNodeFacingDirection);
+            _animateSpawnToggle.onValueChanged.RemoveAllListeners();
+            _animateSpawnToggle.onValueChanged.AddListener(EditAnimateSpawn);
+
+            //_animateLoadingToggle.onValueChanged.RemoveAllListeners();
+            //_animateLoadingToggle.onValueChanged.AddListener(EditAnimateLoading);
+
+            //_uniquePathCountInputField.onEndEdit.RemoveAllListeners();
+            //_uniquePathCountInputField.onEndEdit.AddListener(EditUniquePathCount);
+
+            //_totalPathCountInputField.onEndEdit.RemoveAllListeners();
+            //_totalPathCountInputField.onEndEdit.AddListener(EditTotalPathCount);
+
+            //_maxTraversalStepsInputField.onEndEdit.RemoveAllListeners();
+            //_maxTraversalStepsInputField.onEndEdit.AddListener(EditMaxTraversalSteps);
+
+            //_canVisitTravelledNodesToggle.onValueChanged.RemoveAllListeners();
+            //_canVisitTravelledNodesToggle.onValueChanged.AddListener(EditCanVisitTravelledNodes);
         }
 
         private void Start()
@@ -109,8 +128,10 @@ namespace BP.MapSystem
                     _mapOrientationDropdown.ClearOptions();
                     _mapOrientationDropdown.AddOptions(System.Enum.GetNames(typeof(MapDirection)).ToList());
                     _mapOrientationDropdown.value = (int)nodeGenerator.Direction;
-                    
+
                     _nodeFacingDirectionInputField.text = nodeGenerator.NodeFacingDirection.ToString();
+
+                    _animateSpawnToggle.isOn = nodeGenerator.NodeSpawnAnimationDuration > .001f;
                 }
             }
         }
@@ -134,6 +155,8 @@ namespace BP.MapSystem
                     _mapOrientationDropdown.value = (int)nodeGenerator3D.Direction;
 
                     _nodeFacingDirectionInputField.text = nodeGenerator3D.NodeFacingDirection.ToString();
+
+                    _animateSpawnToggle.isOn = nodeGenerator3D.NodeSpawnAnimationDuration > .001f;
                 }
             }
         }
@@ -248,6 +271,20 @@ namespace BP.MapSystem
                 {
                     nodeGenerator.NodeFacingDirection = zRotation;
                 }
+            }
+        }
+
+        private void EditAnimateSpawn(bool isOn)
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            if (targetManager.TryGetComponent(out MapNodeGenerator nodeGenerator))
+            {
+                nodeGenerator.NodeSpawnAnimationDuration = isOn ? _nodeSpawnAnimationDuration : .0001f;
+            }
+
+            if (targetManager.TryGetComponent(out MapPathGenerator pathGenerator))
+            {
+                pathGenerator.PathSpawnAnimationDuration = isOn ? _pathSpawnAnimationDuration : .0001f;
             }
         }
 

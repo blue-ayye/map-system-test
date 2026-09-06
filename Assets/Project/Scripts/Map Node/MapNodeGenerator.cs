@@ -34,7 +34,7 @@ namespace BP.MapSystem
         [SerializeField, Range(0f, 50f)] private float _levelSpaceJitterPercentage;
 
         [Header("Spawn Settings")]
-        [SerializeField, Min(0.0001f)] private float _nodeSpawnDuration = 0.3f;
+        [SerializeField, Min(0.0001f)] private float _nodeSpawnAnimationDuration = 0.3f;
 
         private MapNode[,] _mapGrid;
         private MapBoundsData _bounds;
@@ -52,6 +52,7 @@ namespace BP.MapSystem
         public int NodesPerLevel { get => _nodesPerLevel; set => _nodesPerLevel = value; }
         public MapDirection Direction { get => _direction; set => _direction = value; }
         public int NodeFacingDirection { get => _zRotation; set => _zRotation = value; }
+        public float NodeSpawnAnimationDuration { get => _nodeSpawnAnimationDuration; set => _nodeSpawnAnimationDuration = value; }
 
         #region Public APIs
 
@@ -229,7 +230,7 @@ namespace BP.MapSystem
         {
             if (node?.NodeView != null)
             {
-                sequence.Chain(node.NodeView.AnimateSpawn(_nodeSpawnDuration));
+                sequence.Chain(node.NodeView.AnimateSpawn(_nodeSpawnAnimationDuration));
             }
         }
 
@@ -241,7 +242,7 @@ namespace BP.MapSystem
                 var node = _mapGrid[level, index];
                 if (node?.NodeView != null)
                 {
-                    Tween nodeTween = node.NodeView.AnimateSpawn(_nodeSpawnDuration);
+                    Tween nodeTween = node.NodeView.AnimateSpawn(_nodeSpawnAnimationDuration);
 
                     if (!firstChained)
                     {

@@ -15,7 +15,7 @@ namespace BP.MapSystem
         [SerializeField] private Transform _pathViewPrefab;
 
         [Header("Spawn Settings")]
-        [SerializeField, Min(0.0001f)] private float _backgroundPathDrawDuration = 0.3f;
+        [SerializeField, Min(0.0001f)] private float _pathSpawnAnimationDuration = 0.3f;
 
         private MapNode[,] _mapGrid;
         private int _maxLevels;
@@ -28,6 +28,8 @@ namespace BP.MapSystem
         private readonly MapNode[] _nextNodeBuffer = new MapNode[3];
 
         public List<IMapPathView> PathViews { get; private set; } = new List<IMapPathView>();
+
+        public float PathSpawnAnimationDuration { get => _pathSpawnAnimationDuration; set => _pathSpawnAnimationDuration = value; }
 
         #region Public APIs
 
@@ -212,7 +214,7 @@ namespace BP.MapSystem
             {
                 if (pathView.FromNode.Level == targetLevel)
                 {
-                    Tween pathTween = pathView.AnimateInitialDraw(_backgroundPathDrawDuration);
+                    Tween pathTween = pathView.AnimateInitialDraw(_pathSpawnAnimationDuration);
 
                     if (!firstChained)
                     {
