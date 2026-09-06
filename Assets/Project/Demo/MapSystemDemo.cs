@@ -77,6 +77,9 @@ namespace BP.MapSystem
             _mapOrientationDropdown.onValueChanged.RemoveAllListeners();
             _mapOrientationDropdown.onValueChanged.AddListener(EditMapOrientation);
 
+            _nodeFacingDirectionInputField.onEndEdit.RemoveAllListeners();
+            _nodeFacingDirectionInputField.onEndEdit.AddListener(EditNodeFacingDirection);
+
             //_nodeFacingDirectionInputField.text = _uiMapSystemManager.NodeFacingDirection.ToString();
             //_nodeFacingDirectionInputField.onEndEdit.RemoveAllListeners();
             //_nodeFacingDirectionInputField.onEndEdit.AddListener(EditNodeFacingDirection);
@@ -106,6 +109,8 @@ namespace BP.MapSystem
                     _mapOrientationDropdown.ClearOptions();
                     _mapOrientationDropdown.AddOptions(System.Enum.GetNames(typeof(MapDirection)).ToList());
                     _mapOrientationDropdown.value = (int)nodeGenerator.Direction;
+                    
+                    _nodeFacingDirectionInputField.text = nodeGenerator.NodeFacingDirection.ToString();
                 }
             }
         }
@@ -127,6 +132,8 @@ namespace BP.MapSystem
                     _mapOrientationDropdown.ClearOptions();
                     _mapOrientationDropdown.AddOptions(System.Enum.GetNames(typeof(MapDirection)).ToList());
                     _mapOrientationDropdown.value = (int)nodeGenerator3D.Direction;
+
+                    _nodeFacingDirectionInputField.text = nodeGenerator3D.NodeFacingDirection.ToString();
                 }
             }
         }
@@ -186,6 +193,21 @@ namespace BP.MapSystem
             }
         }
 
+        private void EditMaxLevels(string input)
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+
+            if (int.TryParse(input, out int maxLevels))
+            {
+                if (targetManager.TryGetComponent(out MapNodeGenerator nodeGenerator))
+                    nodeGenerator.MaxLevels = maxLevels;
+            }
+            else
+            {
+                DisplayError("Invalid max levels input. Please enter a valid integer.");
+            }
+        }
+
         private void EditMaxNodesPerLevel(string input)
         {
             var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
@@ -217,18 +239,15 @@ namespace BP.MapSystem
             }
         }
 
-        private void EditMaxLevels(string input)
+        private void EditNodeFacingDirection(string input)
         {
             var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
-
-            if (int.TryParse(input, out int maxLevels))
+            if (int.TryParse(input, out int zRotation))
             {
                 if (targetManager.TryGetComponent(out MapNodeGenerator nodeGenerator))
-                    nodeGenerator.MaxLevels = maxLevels;
-            }
-            else
-            {
-                DisplayError("Invalid max levels input. Please enter a valid integer.");
+                {
+                    nodeGenerator.NodeFacingDirection = zRotation;
+                }
             }
         }
 

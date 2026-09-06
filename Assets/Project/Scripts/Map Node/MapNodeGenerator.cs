@@ -51,6 +51,7 @@ namespace BP.MapSystem
         public int MaxLevels { get => _maxLevels; set => _maxLevels = value; }
         public int NodesPerLevel { get => _nodesPerLevel; set => _nodesPerLevel = value; }
         public MapDirection Direction { get => _direction; set => _direction = value; }
+        public int NodeFacingDirection { get => _zRotation; set => _zRotation = value; }
 
         #region Public APIs
 

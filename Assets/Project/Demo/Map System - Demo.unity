@@ -10627,7 +10627,7 @@ MonoBehaviour:
   _maxLevelsInputField: {fileID: 1801040865}
   _maxNodesPerLevelInputField: {fileID: 779436646}
   _mapOrientationDropdown: {fileID: 738729321}
-  _nodeFacingDirectionInputField: {fileID: 0}
+  _nodeFacingDirectionInputField: {fileID: 84306824}
   _animateSpawnToggle: {fileID: 0}
   _animateLoadingToggle: {fileID: 0}
   _uniquePathCountInputField: {fileID: 0}
