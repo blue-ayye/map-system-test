@@ -33,7 +33,8 @@ namespace BP.MapSystem
         [SerializeField] private TMP_Dropdown _mapOrientationDropdown;
         [SerializeField] private TMP_InputField _nodeFacingDirectionInputField;
         [SerializeField] private Toggle _animateSpawnToggle;
-        [SerializeField] private Toggle _animateLoadingToggle;
+        [SerializeField] private Toggle _animatePathTraversalToggle;
+        [SerializeField] private Toggle _animatePathOnLoadToggle;
         [SerializeField] private TMP_InputField _uniquePathCountInputField;
         [SerializeField] private TMP_InputField _totalPathCountInputField;
         [SerializeField] private TMP_InputField _maxTraversalStepsInputField;
@@ -46,6 +47,8 @@ namespace BP.MapSystem
 
         [SerializeField] private float _nodeSpawnAnimationDuration = 0.5f;
         [SerializeField] private float _pathSpawnAnimationDuration = 0.5f;
+        [SerializeField] private float _pathTraversalAnimationDuration = 0.5f;
+        [SerializeField] private float _pathAnimationOnLoadDuration = 0.5f;
 
         private Tween _errorScaleTween;
         private Tween _errorAlphaTween;
@@ -88,8 +91,11 @@ namespace BP.MapSystem
             _animateSpawnToggle.onValueChanged.RemoveAllListeners();
             _animateSpawnToggle.onValueChanged.AddListener(EditAnimateSpawn);
 
-            //_animateLoadingToggle.onValueChanged.RemoveAllListeners();
-            //_animateLoadingToggle.onValueChanged.AddListener(EditAnimateLoading);
+            _animatePathOnLoadToggle.onValueChanged.RemoveAllListeners();
+            _animatePathOnLoadToggle.onValueChanged.AddListener(EditAnimatePathOnLoad);
+
+            _animatePathTraversalToggle.onValueChanged.RemoveAllListeners();
+            _animatePathTraversalToggle.onValueChanged.AddListener(EditAnimatePathTraversal);
 
             //_uniquePathCountInputField.onEndEdit.RemoveAllListeners();
             //_uniquePathCountInputField.onEndEdit.AddListener(EditUniquePathCount);
@@ -133,6 +139,12 @@ namespace BP.MapSystem
 
                     _animateSpawnToggle.isOn = nodeGenerator.NodeSpawnAnimationDuration > .001f;
                 }
+
+                if (_uiMapSystemManager.TryGetComponent(out MapTraversalController traversalController))
+                {
+                    _animatePathOnLoadToggle.isOn = traversalController.PathTraversalAnimationOnLoadDuration > .001f;
+                    _animatePathTraversalToggle.isOn = traversalController.PathTraversalAnimationDuration > .001f;
+                }
             }
         }
 
@@ -157,6 +169,12 @@ namespace BP.MapSystem
                     _nodeFacingDirectionInputField.text = nodeGenerator3D.NodeFacingDirection.ToString();
 
                     _animateSpawnToggle.isOn = nodeGenerator3D.NodeSpawnAnimationDuration > .001f;
+                }
+
+                if (_3DMapSystemManager.TryGetComponent(out MapTraversalController traversalController3D))
+                {
+                    _animatePathOnLoadToggle.isOn = traversalController3D.PathTraversalAnimationOnLoadDuration > .001f;
+                    _animatePathTraversalToggle.isOn = traversalController3D.PathTraversalAnimationDuration > .001f;
                 }
             }
         }
@@ -285,6 +303,24 @@ namespace BP.MapSystem
             if (targetManager.TryGetComponent(out MapPathGenerator pathGenerator))
             {
                 pathGenerator.PathSpawnAnimationDuration = isOn ? _pathSpawnAnimationDuration : .0001f;
+            }
+        }
+
+        private void EditAnimatePathOnLoad(bool isOn)
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            if (targetManager.TryGetComponent(out MapTraversalController controller))
+            {
+                controller.PathTraversalAnimationOnLoadDuration = isOn ? _pathTraversalAnimationDuration : .0001f;
+            }
+        }
+
+        private void EditAnimatePathTraversal(bool isOn)
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            if (targetManager.TryGetComponent(out MapTraversalController controller))
+            {
+                controller.PathTraversalAnimationDuration = isOn ? _pathTraversalAnimationDuration : .0001f;
             }
         }
 
