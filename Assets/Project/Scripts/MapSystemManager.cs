@@ -7,6 +7,7 @@ namespace BP.MapSystem
     public class MapSystemManager : MonoBehaviour
     {
         [Header("References")]
+        [SerializeField] private Transform _mapContainer;
         [SerializeField] private MapNodeGenerator _mapGridGenerator;
         [SerializeField] private MapPathGenerator _mapPathGenerator;
         [SerializeField] private MapNodeTypeAssigner _mapNodeTypeAssigner;
@@ -31,6 +32,7 @@ namespace BP.MapSystem
         public int GeneratedSeed => _generatedSeed;
         public bool UsePlayerInputSeed { get => _usePlayerInputSeed; set => _usePlayerInputSeed = value; }
         public int GenerationAttempts { get => _generationAttempts; set => _generationAttempts = value; }
+        public Transform MapContainer => _mapContainer;
 
         #region Unity API
 

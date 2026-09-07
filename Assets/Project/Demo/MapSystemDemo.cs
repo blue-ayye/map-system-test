@@ -55,6 +55,9 @@ namespace BP.MapSystem
 
         private void Awake()
         {
+            _uiMapInitialRotation = _uiMapSystemManager.MapContainer.localEulerAngles;
+            _3DMapInitialRotation = _3DMapSystemManager.MapContainer.localEulerAngles;
+
             _uiMapPanel.SetActive(false);
             _3DMapPanel.SetActive(false);
 
@@ -118,11 +121,11 @@ namespace BP.MapSystem
             _deleteSaveFileButton.onClick.RemoveAllListeners();
             _deleteSaveFileButton.onClick.AddListener(OnDeleteSaveFileButtonClicked);
 
-            //_randomizeMapRotationButton.onClick.RemoveAllListeners();
-            //_randomizeMapRotationButton.onClick.AddListener(OnRandomizeMapRotationButtonClicked);
+            _randomizeMapRotationButton.onClick.RemoveAllListeners();
+            _randomizeMapRotationButton.onClick.AddListener(OnRandomizeMapRotationButtonClicked);
 
-            //_resetMapRotationButton.onClick.RemoveAllListeners();
-            //_resetMapRotationButton.onClick.AddListener(OnResetMapRotationButtonClicked);
+            _resetMapRotationButton.onClick.RemoveAllListeners();
+            _resetMapRotationButton.onClick.AddListener(OnResetMapRotationButtonClicked);
         }
 
         private void Start()
@@ -416,6 +419,32 @@ namespace BP.MapSystem
         {
             var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
             targetManager.DeleteSave();
+        }
+
+        private Tween _rotationTween;
+        private Vector3 _uiMapInitialRotation;
+        private Vector3 _3DMapInitialRotation;
+
+        private void OnRandomizeMapRotationButtonClicked()
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            if (targetManager.MapContainer != null)
+            {
+                var randomRotation = Quaternion.Euler(Random.Range(-30f, 30f), Random.Range(0f, 360f), Random.Range(-30f, 30f));
+
+                _rotationTween.Stop();
+                _rotationTween = Tween.Rotation(targetManager.MapContainer, randomRotation, 5f);
+            }
+        }
+
+        private void OnResetMapRotationButtonClicked()
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            if (targetManager.MapContainer != null)
+            {
+                _rotationTween.Stop();
+                _rotationTween = Tween.Rotation(targetManager.MapContainer, Quaternion.Euler(targetManager == _uiMapSystemManager ? _uiMapInitialRotation : _3DMapInitialRotation), 5f);
+            }
         }
 
         private void DisplayError(string msg, float duration = 3f)
