@@ -103,8 +103,8 @@ namespace BP.MapSystem
             _totalPathCountInputField.onEndEdit.RemoveAllListeners();
             _totalPathCountInputField.onEndEdit.AddListener(EditTotalPathCount);
 
-            //_maxTraversalStepsInputField.onEndEdit.RemoveAllListeners();
-            //_maxTraversalStepsInputField.onEndEdit.AddListener(EditMaxTraversalSteps);
+            _maxTraversalStepsInputField.onEndEdit.RemoveAllListeners();
+            _maxTraversalStepsInputField.onEndEdit.AddListener(EditMaxTraversalSteps);
 
             //_canVisitTravelledNodesToggle.onValueChanged.RemoveAllListeners();
             //_canVisitTravelledNodesToggle.onValueChanged.AddListener(EditCanVisitTravelledNodes);
@@ -144,6 +144,7 @@ namespace BP.MapSystem
                 {
                     _animatePathOnLoadToggle.isOn = traversalController.PathTraversalAnimationOnLoadDuration > .001f;
                     _animatePathTraversalToggle.isOn = traversalController.PathTraversalAnimationDuration > .001f;
+                    _maxTraversalStepsInputField.text = traversalController.MaxTraversalSteps.ToString();
                 }
 
                 if (_uiMapSystemManager.TryGetComponent(out MapPathGenerator pathGenerator))
@@ -181,6 +182,7 @@ namespace BP.MapSystem
                 {
                     _animatePathOnLoadToggle.isOn = traversalController3D.PathTraversalAnimationOnLoadDuration > .001f;
                     _animatePathTraversalToggle.isOn = traversalController3D.PathTraversalAnimationDuration > .001f;
+                    _maxTraversalStepsInputField.text = traversalController3D.MaxTraversalSteps.ToString();
                 }
 
                 if (_3DMapSystemManager.TryGetComponent(out MapPathGenerator pathGenerator3D))
@@ -356,6 +358,18 @@ namespace BP.MapSystem
                 if (targetManager.TryGetComponent(out MapPathGenerator pathGenerator))
                 {
                     pathGenerator.TotalPaths = totalPathCount;
+                }
+            }
+        }
+
+        private void EditMaxTraversalSteps(string input)
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            if (int.TryParse(input, out int maxTraversalSteps))
+            {
+                if (targetManager.TryGetComponent(out MapTraversalController controller))
+                {
+                    controller.MaxTraversalSteps = maxTraversalSteps;
                 }
             }
         }
