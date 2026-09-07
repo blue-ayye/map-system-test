@@ -97,11 +97,11 @@ namespace BP.MapSystem
             _animatePathTraversalToggle.onValueChanged.RemoveAllListeners();
             _animatePathTraversalToggle.onValueChanged.AddListener(EditAnimatePathTraversal);
 
-            //_uniquePathCountInputField.onEndEdit.RemoveAllListeners();
-            //_uniquePathCountInputField.onEndEdit.AddListener(EditUniquePathCount);
+            _uniquePathCountInputField.onEndEdit.RemoveAllListeners();
+            _uniquePathCountInputField.onEndEdit.AddListener(EditUniquePathCount);
 
-            //_totalPathCountInputField.onEndEdit.RemoveAllListeners();
-            //_totalPathCountInputField.onEndEdit.AddListener(EditTotalPathCount);
+            _totalPathCountInputField.onEndEdit.RemoveAllListeners();
+            _totalPathCountInputField.onEndEdit.AddListener(EditTotalPathCount);
 
             //_maxTraversalStepsInputField.onEndEdit.RemoveAllListeners();
             //_maxTraversalStepsInputField.onEndEdit.AddListener(EditMaxTraversalSteps);
@@ -145,6 +145,12 @@ namespace BP.MapSystem
                     _animatePathOnLoadToggle.isOn = traversalController.PathTraversalAnimationOnLoadDuration > .001f;
                     _animatePathTraversalToggle.isOn = traversalController.PathTraversalAnimationDuration > .001f;
                 }
+
+                if (_uiMapSystemManager.TryGetComponent(out MapPathGenerator pathGenerator))
+                {
+                    _uniquePathCountInputField.text = pathGenerator.UniquePaths.ToString();
+                    _totalPathCountInputField.text = pathGenerator.TotalPaths.ToString();
+                }
             }
         }
 
@@ -175,6 +181,12 @@ namespace BP.MapSystem
                 {
                     _animatePathOnLoadToggle.isOn = traversalController3D.PathTraversalAnimationOnLoadDuration > .001f;
                     _animatePathTraversalToggle.isOn = traversalController3D.PathTraversalAnimationDuration > .001f;
+                }
+
+                if (_3DMapSystemManager.TryGetComponent(out MapPathGenerator pathGenerator3D))
+                {
+                    _uniquePathCountInputField.text = pathGenerator3D.UniquePaths.ToString();
+                    _totalPathCountInputField.text = pathGenerator3D.TotalPaths.ToString();
                 }
             }
         }
@@ -321,6 +333,30 @@ namespace BP.MapSystem
             if (targetManager.TryGetComponent(out MapTraversalController controller))
             {
                 controller.PathTraversalAnimationDuration = isOn ? _pathTraversalAnimationDuration : .0001f;
+            }
+        }
+
+        private void EditUniquePathCount(string input)
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            if (int.TryParse(input, out int uniquePathCount))
+            {
+                if (targetManager.TryGetComponent(out MapPathGenerator pathGenerator))
+                {
+                    pathGenerator.UniquePaths = uniquePathCount;
+                }
+            }
+        }
+
+        private void EditTotalPathCount(string input)
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            if (int.TryParse(input, out int totalPathCount))
+            {
+                if (targetManager.TryGetComponent(out MapPathGenerator pathGenerator))
+                {
+                    pathGenerator.TotalPaths = totalPathCount;
+                }
             }
         }
 
