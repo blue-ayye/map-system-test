@@ -106,8 +106,8 @@ namespace BP.MapSystem
             _maxTraversalStepsInputField.onEndEdit.RemoveAllListeners();
             _maxTraversalStepsInputField.onEndEdit.AddListener(EditMaxTraversalSteps);
 
-            //_canVisitTravelledNodesToggle.onValueChanged.RemoveAllListeners();
-            //_canVisitTravelledNodesToggle.onValueChanged.AddListener(EditCanVisitTravelledNodes);
+            _canVisitTravelledNodesToggle.onValueChanged.RemoveAllListeners();
+            _canVisitTravelledNodesToggle.onValueChanged.AddListener(EditCanVisitTravelledNodes);
         }
 
         private void Start()
@@ -145,6 +145,7 @@ namespace BP.MapSystem
                     _animatePathOnLoadToggle.isOn = traversalController.PathTraversalAnimationOnLoadDuration > .001f;
                     _animatePathTraversalToggle.isOn = traversalController.PathTraversalAnimationDuration > .001f;
                     _maxTraversalStepsInputField.text = traversalController.MaxTraversalSteps.ToString();
+                    _canVisitTravelledNodesToggle.isOn = traversalController.CanTraverseVisitedNodes;
                 }
 
                 if (_uiMapSystemManager.TryGetComponent(out MapPathGenerator pathGenerator))
@@ -183,6 +184,7 @@ namespace BP.MapSystem
                     _animatePathOnLoadToggle.isOn = traversalController3D.PathTraversalAnimationOnLoadDuration > .001f;
                     _animatePathTraversalToggle.isOn = traversalController3D.PathTraversalAnimationDuration > .001f;
                     _maxTraversalStepsInputField.text = traversalController3D.MaxTraversalSteps.ToString();
+                    _canVisitTravelledNodesToggle.isOn = traversalController3D.CanTraverseVisitedNodes;
                 }
 
                 if (_3DMapSystemManager.TryGetComponent(out MapPathGenerator pathGenerator3D))
@@ -371,6 +373,15 @@ namespace BP.MapSystem
                 {
                     controller.MaxTraversalSteps = maxTraversalSteps;
                 }
+            }
+        }
+
+        private void EditCanVisitTravelledNodes(bool isOn)
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            if (targetManager.TryGetComponent(out MapTraversalController controller))
+            {
+                controller.CanTraverseVisitedNodes = isOn;
             }
         }
 

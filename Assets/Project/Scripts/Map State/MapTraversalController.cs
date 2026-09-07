@@ -50,6 +50,7 @@ namespace BP.MapSystem
         public float DelayBeforeRestoringTravelledPaths { get => _delayBeforeRestoringTravelledPaths; set => _delayBeforeRestoringTravelledPaths = value; }
         public float PathTraversalAnimationOnLoadDuration { get => _pathTraversalAnimationOnLoadDuration; set => _pathTraversalAnimationOnLoadDuration = value; }
         public int MaxTraversalSteps { get => _maxTraversalSteps; set => _maxTraversalSteps = value; }
+        public bool CanTraverseVisitedNodes { get => _canTraverseVisitedNodes; set => _canTraverseVisitedNodes = value; }
 
         #region Unity API
 
