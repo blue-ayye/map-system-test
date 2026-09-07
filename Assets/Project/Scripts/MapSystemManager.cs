@@ -49,6 +49,9 @@ namespace BP.MapSystem
         [ContextMenu("Load Map")]
         public void LoadMap() => StartLoadingGame();
 
+        [ContextMenu("Delete Save")]
+        public void DeleteSave() => _mapDataHandler.DeleteMapData();
+
         #endregion Public APIs
 
         #region Map Generation
@@ -168,7 +171,7 @@ namespace BP.MapSystem
 
             if (mapData == null)
             {
-                Debug.LogError(_nullMapDataError);
+                Debug.LogWarning(_nullMapDataError);
                 return;
             }
 

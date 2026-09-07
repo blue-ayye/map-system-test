@@ -114,6 +114,8 @@ namespace BP.MapSystem
         {
             var traversalData = mapData.MapTraversalData;
 
+            if (traversalData == null) return;
+
             _visitedNodes.Clear();
             TraversedEdges.Clear();
 

@@ -33,7 +33,7 @@ namespace BP.MapSystem
         {
             if (mapData == null)
             {
-                Debug.LogError(_nullDataError);
+                Debug.LogWarning(_nullDataError);
                 return;
             }
 
@@ -51,8 +51,8 @@ namespace BP.MapSystem
         {
             if (!System.IO.File.Exists(FullFilePath))
             {
-                Debug.LogErrorFormat(_fileNotFoundError, FullFilePath);
-                return new MapData();
+                Debug.LogWarningFormat(_fileNotFoundError, FullFilePath);
+                return null;
             }
 
             string json = System.IO.File.ReadAllText(FullFilePath);
@@ -61,18 +61,23 @@ namespace BP.MapSystem
 
         private void DeleteMapData_Internal()
         {
-            if (System.IO.File.Exists(FullFilePath))
+            if (!System.IO.File.Exists(FullFilePath))
             {
-                System.IO.File.Delete(FullFilePath);
+                Debug.LogWarningFormat(_fileNotFoundError, FullFilePath);
+                return;
             }
+
+            System.IO.File.Delete(FullFilePath);
         }
 
         private void OpenSaveFolder_Internal()
         {
+            // Create the folder if it doesn't exist
             if (!System.IO.Directory.Exists(FolderPath))
             {
                 System.IO.Directory.CreateDirectory(FolderPath);
             }
+
             Application.OpenURL(FolderPath);
         }
 

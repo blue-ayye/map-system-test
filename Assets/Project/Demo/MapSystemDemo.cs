@@ -108,6 +108,21 @@ namespace BP.MapSystem
 
             _canVisitTravelledNodesToggle.onValueChanged.RemoveAllListeners();
             _canVisitTravelledNodesToggle.onValueChanged.AddListener(EditCanVisitTravelledNodes);
+
+            _saveMapButton.onClick.RemoveAllListeners();
+            _saveMapButton.onClick.AddListener(OnSaveMapButtonClicked);
+
+            _loadMapButton.onClick.RemoveAllListeners();
+            _loadMapButton.onClick.AddListener(OnLoadMapButtonClicked);
+
+            _deleteSaveFileButton.onClick.RemoveAllListeners();
+            _deleteSaveFileButton.onClick.AddListener(OnDeleteSaveFileButtonClicked);
+
+            //_randomizeMapRotationButton.onClick.RemoveAllListeners();
+            //_randomizeMapRotationButton.onClick.AddListener(OnRandomizeMapRotationButtonClicked);
+
+            //_resetMapRotationButton.onClick.RemoveAllListeners();
+            //_resetMapRotationButton.onClick.AddListener(OnResetMapRotationButtonClicked);
         }
 
         private void Start()
@@ -383,6 +398,24 @@ namespace BP.MapSystem
             {
                 controller.CanTraverseVisitedNodes = isOn;
             }
+        }
+
+        private void OnSaveMapButtonClicked()
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            targetManager.SaveMap();
+        }
+
+        private void OnLoadMapButtonClicked()
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            targetManager.LoadMap();
+        }
+
+        private void OnDeleteSaveFileButtonClicked()
+        {
+            var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
+            targetManager.DeleteSave();
         }
 
         private void DisplayError(string msg, float duration = 3f)
