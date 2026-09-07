@@ -43,6 +43,9 @@ namespace BP.MapSystem
             // 2. Then, process the remaining rules so fixed levels influence them
             List<NodeTypeRulesSO> proceduralLevels = _nodeTypeRules.Where(rules => !rules.ExcludeFromOtherRules).ToList();
             SetNodeTypeByRules(proceduralLevels);
+
+            // 3. Finally, assign default node types to any unassigned nodes (happens if level is not covered by any rule)
+            SetDefaultNodeTypesForUnassignedNodes();
         }
 
         #endregion Public APIs
@@ -67,6 +70,23 @@ namespace BP.MapSystem
                         if (node == null) continue;
 
                         node.NodeType = GetValidNodeType(node, rule);
+                    }
+                }
+            }
+        }
+
+        private void SetDefaultNodeTypesForUnassignedNodes()
+        {
+            for (int level = 0; level < _mapGrid.GetLength(0); level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    if (OutOfBounds(level, nodeIndex)) continue;
+                    var node = _mapGrid[level, nodeIndex];
+                    if (node == null) continue;
+                    if (node.NodeType == null)
+                    {
+                        node.NodeType = _defaultNodeType;
                     }
                 }
             }
