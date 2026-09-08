@@ -345,7 +345,7 @@ namespace BP.MapSystem
             var targetManager = _uiMapToggle.isOn ? _uiMapSystemManager : _3DMapSystemManager;
             if (targetManager.TryGetComponent(out MapTraversalController controller))
             {
-                controller.PathTraversalAnimationOnLoadDuration = isOn ? _pathTraversalAnimationDuration : .0001f;
+                controller.PathTraversalAnimationOnLoadDuration = isOn ? _pathAnimationOnLoadDuration : .0001f;
             }
         }
 
@@ -458,6 +458,7 @@ namespace BP.MapSystem
                 _errorText.alpha = 1f;
                 _errorText.transform.localScale = Vector3.zero;
                 _errorText.gameObject.SetActive(true);
+#pragma warning disable CS0618
                 _errorScaleTween = Tween.Scale(_errorText.transform, Vector3.one, _errorDisplayTweenSettings).OnComplete(() =>
                  {
                      Tween.Delay(duration, onComplete: () =>
@@ -468,6 +469,7 @@ namespace BP.MapSystem
                                 });
                      });
                  });
+#pragma warning restore CS0618
             }
         }
     }
