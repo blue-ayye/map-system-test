@@ -15,9 +15,9 @@ namespace BP.MapSystem
 
         [Header("Path Animation Settings")]
         [Tooltip("Duration of the path traversal animation in seconds.")]
-        [SerializeField, Min(0.0001f)] private float _pathTraversalDuration = 0.3f;
+        [SerializeField, Min(0.0001f)] private float _pathTraversalAnimationDuration = 0.3f;
         [SerializeField] private float _delayBeforeRestoringTravelledPaths = 0f;
-        [SerializeField, Min(0.0001f)] private float _pathTravelRestoreDuration = 0.3f;
+        [SerializeField, Min(0.0001f)] private float _pathTraversalAnimationOnLoadDuration = 0.3f;
 
         [Header("Traversal Events")]
         public UnityEvent<MapNode> OnMaxTraversalStepsReached = new UnityEvent<MapNode>();
@@ -45,6 +45,12 @@ namespace BP.MapSystem
         public int TraversalStepsTaken => _currentTraversalSteps;
         public MapNode CurrentNode => _currentNode;
         public List<(MapNode From, MapNode To)> TraversedEdges { get; private set; } = new List<(MapNode, MapNode)>();
+
+        public float PathTraversalAnimationDuration { get => _pathTraversalAnimationDuration; set => _pathTraversalAnimationDuration = value; }
+        public float DelayBeforeRestoringTravelledPaths { get => _delayBeforeRestoringTravelledPaths; set => _delayBeforeRestoringTravelledPaths = value; }
+        public float PathTraversalAnimationOnLoadDuration { get => _pathTraversalAnimationOnLoadDuration; set => _pathTraversalAnimationOnLoadDuration = value; }
+        public int MaxTraversalSteps { get => _maxTraversalSteps; set => _maxTraversalSteps = value; }
+        public bool CanTraverseVisitedNodes { get => _canTraverseVisitedNodes; set => _canTraverseVisitedNodes = value; }
 
         #region Unity API
 
@@ -107,6 +113,8 @@ namespace BP.MapSystem
         public void ReadFromMapData(MapData mapData)
         {
             var traversalData = mapData.MapTraversalData;
+
+            if (traversalData == null) return;
 
             _visitedNodes.Clear();
             TraversedEdges.Clear();
@@ -221,7 +229,7 @@ namespace BP.MapSystem
                 TraversedEdges.Add((previousNode, clickedNode));
                 if (animatePath)
                 {
-                    GetPathTraversalTween(previousNode, clickedNode, _pathTraversalDuration);
+                    GetPathTraversalTween(previousNode, clickedNode, _pathTraversalAnimationDuration);
                 }
             }
 
@@ -351,7 +359,7 @@ namespace BP.MapSystem
 
                 animatedPaths.Add((edge.From, edge.To));
 
-                Tween pathTween = GetPathTraversalTween(edge.From, edge.To, _pathTravelRestoreDuration);
+                Tween pathTween = GetPathTraversalTween(edge.From, edge.To, _pathTraversalAnimationOnLoadDuration);
                 if (pathTween.isAlive)
                 {
                     sequence.Chain(pathTween);

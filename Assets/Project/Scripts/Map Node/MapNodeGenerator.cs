@@ -27,14 +27,14 @@ namespace BP.MapSystem
         [SerializeField] private int _zRotation;
 
         [Header("Position Settings")]
-        [SerializeField] private float _initialNodeDistanceMultiplier = 1.5f;
-        [SerializeField] private float _finalNodeDistanceMultiplier = 1.5f;
+        [SerializeField] private float _initialNodeDistance = 2f;
+        [SerializeField] private float _finalNodeDistance = 2f;
         [SerializeField] private bool _applyJitter = true;
         [SerializeField, Range(0f, 50f)] private float _nodeSpaceJitterPercentage;
         [SerializeField, Range(0f, 50f)] private float _levelSpaceJitterPercentage;
 
         [Header("Spawn Settings")]
-        [SerializeField, Min(0.0001f)] private float _nodeSpawnDuration = 0.3f;
+        [SerializeField, Min(0.0001f)] private float _nodeSpawnAnimationDuration = 0.3f;
 
         private MapNode[,] _mapGrid;
         private MapBoundsData _bounds;
@@ -47,6 +47,12 @@ namespace BP.MapSystem
 
         public MapNode InitialNode { get; private set; }
         public MapNode FinalNode { get; private set; }
+
+        public int MaxLevels { get => _maxLevels; set => _maxLevels = value; }
+        public int NodesPerLevel { get => _nodesPerLevel; set => _nodesPerLevel = value; }
+        public MapDirection Direction { get => _direction; set => _direction = value; }
+        public int NodeFacingDirection { get => _zRotation; set => _zRotation = value; }
+        public float NodeSpawnAnimationDuration { get => _nodeSpawnAnimationDuration; set => _nodeSpawnAnimationDuration = value; }
 
         #region Public APIs
 
@@ -76,14 +82,16 @@ namespace BP.MapSystem
             if (_intialNodeType != null)
             {
                 int centerIndex = _nodesPerLevel / 2;
-                int randomIndex = Mathf.Clamp(centerIndex + _jitterRNG.Next(-1, 2), 0, _nodesPerLevel - 1);
+                int randomIndex = 0;
+                if (_nodesPerLevel > 1)
+                    randomIndex = Mathf.Clamp(centerIndex + _jitterRNG.Next(-1, 2), 0, _nodesPerLevel - 1);
                 InitialNode = new MapNode(-1, randomIndex)
                 {
                     NodeType = _intialNodeType,
                 };
 
-                Vector3 pos = GetNodePosition(-1, randomIndex, _applyJitter);
-                pos -= (_bounds.up * _dynamicSpacing.y * _initialNodeDistanceMultiplier * 2f);
+                Vector3 pos = GetNodePosition(0, randomIndex, _applyJitter);
+                pos -= _bounds.up.normalized * _initialNodeDistance;
                 InitialNode.Position = pos;
             }
 
@@ -91,14 +99,16 @@ namespace BP.MapSystem
             if (_finalNodeType != null)
             {
                 int centerIndex = _nodesPerLevel / 2;
-                int randomIndex = Mathf.Clamp(centerIndex + _jitterRNG.Next(-1, 2), 0, _nodesPerLevel - 1);
+                int randomIndex = 0;
+                if (_nodesPerLevel > 1)
+                    randomIndex = Mathf.Clamp(centerIndex + _jitterRNG.Next(-1, 2), 0, _nodesPerLevel - 1);
                 FinalNode = new MapNode(_maxLevels, randomIndex)
                 {
                     NodeType = _finalNodeType,
                 };
 
-                Vector3 pos = GetNodePosition(_maxLevels, randomIndex, _applyJitter);
-                pos += (_bounds.up * _dynamicSpacing.y * _finalNodeDistanceMultiplier * 2f);
+                Vector3 pos = GetNodePosition(_maxLevels - 1, randomIndex, _applyJitter);
+                pos += _bounds.up.normalized * _finalNodeDistance;
                 FinalNode.Position = pos;
             }
 
@@ -220,7 +230,7 @@ namespace BP.MapSystem
         {
             if (node?.NodeView != null)
             {
-                sequence.Chain(node.NodeView.AnimateSpawn(_nodeSpawnDuration));
+                sequence.Chain(node.NodeView.AnimateSpawn(_nodeSpawnAnimationDuration));
             }
         }
 
@@ -232,7 +242,7 @@ namespace BP.MapSystem
                 var node = _mapGrid[level, index];
                 if (node?.NodeView != null)
                 {
-                    Tween nodeTween = node.NodeView.AnimateSpawn(_nodeSpawnDuration);
+                    Tween nodeTween = node.NodeView.AnimateSpawn(_nodeSpawnAnimationDuration);
 
                     if (!firstChained)
                     {
@@ -336,10 +346,12 @@ namespace BP.MapSystem
             Gizmos.color = Color.green;
             if (_intialNodeType != null)
             {
-                var centerIndex = _nodesPerLevel / 2;
-                var randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
-                Vector3 pos = GetNodePosition(-1, randomIndex);
-                pos -= (_bounds.up * _dynamicSpacing.y * _initialNodeDistanceMultiplier * 2f);
+                int centerIndex = _nodesPerLevel / 2;
+                int randomIndex = 0;
+                if (_nodesPerLevel > 1)
+                    randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
+                Vector3 pos = GetNodePosition(0, randomIndex);
+                pos -= _bounds.up.normalized * _initialNodeDistance;
                 Gizmos.DrawSphere(pos, radius * _initialNodeScaleMultiplier);
 
                 Gizmos.color = Color.white;
@@ -358,10 +370,12 @@ namespace BP.MapSystem
             Gizmos.color = Color.red;
             if (_finalNodeType != null)
             {
-                var centerIndex = _nodesPerLevel / 2;
-                var randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
-                Vector3 pos = GetNodePosition(_maxLevels, randomIndex);
-                pos += (_bounds.up * _dynamicSpacing.y * _finalNodeDistanceMultiplier * 2f);
+                int centerIndex = _nodesPerLevel / 2;
+                int randomIndex = 0;
+                if (_nodesPerLevel > 1)
+                    randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
+                Vector3 pos = GetNodePosition(_maxLevels - 1, randomIndex);
+                pos += _bounds.up.normalized * _finalNodeDistance;
                 Gizmos.DrawSphere(pos, radius * _finalNodeScaleMultiplier);
 
                 Gizmos.color = Color.white;

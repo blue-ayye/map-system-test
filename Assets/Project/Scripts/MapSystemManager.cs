@@ -7,6 +7,7 @@ namespace BP.MapSystem
     public class MapSystemManager : MonoBehaviour
     {
         [Header("References")]
+        [SerializeField] private Transform _mapContainer;
         [SerializeField] private MapNodeGenerator _mapGridGenerator;
         [SerializeField] private MapPathGenerator _mapPathGenerator;
         [SerializeField] private MapNodeTypeAssigner _mapNodeTypeAssigner;
@@ -27,6 +28,12 @@ namespace BP.MapSystem
         private const string _generationAttemptsWarning = "Could not generate a valid map within {0} attempts. Using the best available seed: {1}.";
         private const string _nullMapDataError = "Map data is null or empty. Cannot load map.";
 
+        public int PlayerInputSeed { get => _playerInputSeed; set => _playerInputSeed = value; }
+        public int GeneratedSeed => _generatedSeed;
+        public bool UsePlayerInputSeed { get => _usePlayerInputSeed; set => _usePlayerInputSeed = value; }
+        public int GenerationAttempts { get => _generationAttempts; set => _generationAttempts = value; }
+        public Transform MapContainer => _mapContainer;
+
         #region Unity API
 
         private void Start() => GenerateMap();
@@ -43,6 +50,9 @@ namespace BP.MapSystem
 
         [ContextMenu("Load Map")]
         public void LoadMap() => StartLoadingGame();
+
+        [ContextMenu("Delete Save")]
+        public void DeleteSave() => _mapDataHandler.DeleteMapData();
 
         #endregion Public APIs
 
@@ -163,7 +173,7 @@ namespace BP.MapSystem
 
             if (mapData == null)
             {
-                Debug.LogError(_nullMapDataError);
+                Debug.LogWarning(_nullMapDataError);
                 return;
             }
 

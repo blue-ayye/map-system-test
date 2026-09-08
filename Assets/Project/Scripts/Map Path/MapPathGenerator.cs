@@ -15,7 +15,7 @@ namespace BP.MapSystem
         [SerializeField] private Transform _pathViewPrefab;
 
         [Header("Spawn Settings")]
-        [SerializeField, Min(0.0001f)] private float _backgroundPathDrawDuration = 0.3f;
+        [SerializeField, Min(0.0001f)] private float _pathSpawnAnimationDuration = 0.3f;
 
         private MapNode[,] _mapGrid;
         private int _maxLevels;
@@ -28,6 +28,10 @@ namespace BP.MapSystem
         private readonly MapNode[] _nextNodeBuffer = new MapNode[3];
 
         public List<IMapPathView> PathViews { get; private set; } = new List<IMapPathView>();
+
+        public float PathSpawnAnimationDuration { get => _pathSpawnAnimationDuration; set => _pathSpawnAnimationDuration = value; }
+        public int UniquePaths { get => _uniquePaths; set => _uniquePaths = value; }
+        public int TotalPaths { get => _totalPaths; set => _totalPaths = value; }
 
         #region Public APIs
 
@@ -47,31 +51,35 @@ namespace BP.MapSystem
             int startingLevel = 0;
             _generatedPaths.Clear();
 
-            for (int pathIndex = 0; pathIndex < _uniquePaths; pathIndex++)
+            // clamp values to prevent out of bounds/infinite loops
+            int safeUniquePaths = Mathf.Min(_uniquePaths, _nodesPerLevel);
+            int safeTotalPaths = Mathf.Max(_totalPaths, safeUniquePaths);
+
+            var usedStartingNodes = new HashSet<MapNode>();
+
+            // Generate unique starting nodes for the number of unique paths
+            for (int pathIndex = 0; pathIndex < safeUniquePaths; pathIndex++)
             {
-                MapNode randomNode;
-                _generatedPaths[pathIndex] = new List<MapNode>();
+                MapNode randomStartingNode;
                 do
                 {
                     int randomIndex = _pathingRNG.Next(0, _nodesPerLevel);
-                    randomNode = _mapGrid[startingLevel, randomIndex];
-                } while (_generatedPaths[pathIndex].Contains(randomNode));
+                    randomStartingNode = _mapGrid[startingLevel, randomIndex];
+                } while (!usedStartingNodes.Add(randomStartingNode));
 
-                _generatedPaths[pathIndex].Add(randomNode);
+                // Add the first node of the path to the generated paths dictionary
+                _generatedPaths[pathIndex] = new List<MapNode> { randomStartingNode };
             }
 
-            while (_generatedPaths.Count < _totalPaths)
+            // If the total paths requested is greater than the unique paths, fill in the remaining paths with random starting nodes
+            // Allow duplicates resulting in multiple paths starting from the same node
+            while (_generatedPaths.Count < safeTotalPaths)
             {
                 int randomIndex = _pathingRNG.Next(0, _nodesPerLevel);
-                var randomNode = _mapGrid[startingLevel, randomIndex];
+                var randomStartingNode = _mapGrid[startingLevel, randomIndex];
+
                 int pathIndex = _generatedPaths.Count;
-
-                if (!_generatedPaths.ContainsKey(pathIndex))
-                {
-                    _generatedPaths[pathIndex] = new List<MapNode>();
-                }
-
-                _generatedPaths[pathIndex].Add(randomNode);
+                _generatedPaths[pathIndex] = new List<MapNode> { randomStartingNode };
             }
         }
 
@@ -80,6 +88,8 @@ namespace BP.MapSystem
             foreach (var pathEntry in _generatedPaths)
             {
                 List<MapNode> pathNodes = pathEntry.Value;
+                if (pathNodes == null || pathNodes.Count == 0) continue;
+
                 MapNode currentNode = pathNodes[0];
 
                 if (_initialNode != null)
@@ -212,7 +222,7 @@ namespace BP.MapSystem
             {
                 if (pathView.FromNode.Level == targetLevel)
                 {
-                    Tween pathTween = pathView.AnimateInitialDraw(_backgroundPathDrawDuration);
+                    Tween pathTween = pathView.AnimateInitialDraw(_pathSpawnAnimationDuration);
 
                     if (!firstChained)
                     {
