@@ -4,7 +4,10 @@ namespace BP.MapSystem
 {
     public class MapDataHandler : MonoBehaviour
     {
+        [Header("Storage Configuration")]
+        [Tooltip("The sub-folder path inside persistentDataPath where map saves are stored.")]
         [SerializeField] private string _saveFolder = "Maps/Save";
+        [Tooltip("The explicit filename used for the serialized map JSON.")]
         [SerializeField] private string _fileName = "GeneratedMapData.json";
 
         private const string _nullDataError = "Map data is null. Cannot save map.";
@@ -13,23 +16,9 @@ namespace BP.MapSystem
         private string FolderPath => System.IO.Path.Combine(Application.persistentDataPath, _saveFolder);
         private string FullFilePath => System.IO.Path.Combine(FolderPath, _fileName);
 
-        #region Public APIs
-
-        public void SaveGame(MapData mapData) => SaveGame_Internal(mapData);
-
-        public MapData LoadGame() => LoadGame_Internal();
-
-        [ContextMenu("Delete Map Data")]
-        public void DeleteMapData() => DeleteMapData_Internal();
-
-        [ContextMenu("Open Save Folder")]
-        public void OpenSaveFolder() => OpenSaveFolder_Internal();
-
-        #endregion Public APIs
-
         #region File Operations
 
-        private void SaveGame_Internal(MapData mapData)
+        public void SaveGame(MapData mapData)
         {
             if (mapData == null)
             {
@@ -47,7 +36,7 @@ namespace BP.MapSystem
             System.IO.File.WriteAllText(FullFilePath, json);
         }
 
-        private MapData LoadGame_Internal()
+        public MapData LoadGame()
         {
             if (!System.IO.File.Exists(FullFilePath))
             {
@@ -59,7 +48,8 @@ namespace BP.MapSystem
             return JsonUtility.FromJson<MapData>(json);
         }
 
-        private void DeleteMapData_Internal()
+        [ContextMenu("Delete Map Data")]
+        public void DeleteMapData()
         {
             if (!System.IO.File.Exists(FullFilePath))
             {
@@ -70,9 +60,9 @@ namespace BP.MapSystem
             System.IO.File.Delete(FullFilePath);
         }
 
-        private void OpenSaveFolder_Internal()
+        [ContextMenu("Open Save Folder")]
+        public void OpenSaveFolder()
         {
-            // Create the folder if it doesn't exist
             if (!System.IO.Directory.Exists(FolderPath))
             {
                 System.IO.Directory.CreateDirectory(FolderPath);

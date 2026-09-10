@@ -1,8 +1,5 @@
 namespace BP.MapSystem
 {
-    /// <summary>
-    /// Represents the data structure for storing information about a specific map node, including its level and index within the map.
-    /// </summary>
     [System.Serializable]
     public class MapNodeData
     {

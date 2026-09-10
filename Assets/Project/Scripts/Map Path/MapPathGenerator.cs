@@ -6,15 +6,20 @@ namespace BP.MapSystem
 {
     public class MapPathGenerator : MonoBehaviour
     {
-        [Header("Path Generation Settings")]
-        [SerializeField] private int _uniquePaths = 3;
-        [SerializeField] private int _totalPaths = 7;
-
-        [Header("Path View Settings")]
+        [Header("References")]
+        [Tooltip("The container transform where path view visuals will be instantiated.")]
         [SerializeField] private Transform _pathViewParent;
+        [Tooltip("The prefab used to visually represent a connection between two nodes.")]
         [SerializeField] private Transform _pathViewPrefab;
 
-        [Header("Spawn Settings")]
+        [Header("Path Generation Limits")]
+        [Tooltip("The guaranteed number of unique paths that will start from the bottom level.")]
+        [SerializeField] private int _uniquePaths = 3;
+        [Tooltip("The total number of paths to generate. Any paths beyond the unique count may share same starting nodes.")]
+        [SerializeField] private int _totalPaths = 7;
+
+        [Header("Animation")]
+        [Tooltip("How long it takes for a single path segment to animate its initial reveal.")]
         [SerializeField, Min(0.0001f)] private float _pathSpawnAnimationDuration = 0.3f;
 
         private MapNode[,] _mapGrid;
@@ -33,7 +38,7 @@ namespace BP.MapSystem
         public int UniquePaths { get => _uniquePaths; set => _uniquePaths = value; }
         public int TotalPaths { get => _totalPaths; set => _totalPaths = value; }
 
-        #region Public APIs
+        #region Initialization
 
         public void Initialize(MapNode[,] mapGrid, System.Random pathingRNG, MapNode initialNode = null, MapNode finalNode = null)
         {
@@ -51,13 +56,13 @@ namespace BP.MapSystem
             int startingLevel = 0;
             _generatedPaths.Clear();
 
-            // clamp values to prevent out of bounds/infinite loops
+            // Clamp values to prevent out of bounds/infinite loops
             int safeUniquePaths = Mathf.Min(_uniquePaths, _nodesPerLevel);
             int safeTotalPaths = Mathf.Max(_totalPaths, safeUniquePaths);
 
             var usedStartingNodes = new HashSet<MapNode>();
 
-            // Generate unique starting nodes for the number of unique paths
+            // 1. Generate unique starting nodes
             for (int pathIndex = 0; pathIndex < safeUniquePaths; pathIndex++)
             {
                 MapNode randomStartingNode;
@@ -67,12 +72,10 @@ namespace BP.MapSystem
                     randomStartingNode = _mapGrid[startingLevel, randomIndex];
                 } while (!usedStartingNodes.Add(randomStartingNode));
 
-                // Add the first node of the path to the generated paths dictionary
                 _generatedPaths[pathIndex] = new List<MapNode> { randomStartingNode };
             }
 
-            // If the total paths requested is greater than the unique paths, fill in the remaining paths with random starting nodes
-            // Allow duplicates resulting in multiple paths starting from the same node
+            // 2. Fill remaining path quotas (allowing shared starting nodes)
             while (_generatedPaths.Count < safeTotalPaths)
             {
                 int randomIndex = _pathingRNG.Next(0, _nodesPerLevel);
@@ -82,6 +85,10 @@ namespace BP.MapSystem
                 _generatedPaths[pathIndex] = new List<MapNode> { randomStartingNode };
             }
         }
+
+        #endregion Initialization
+
+        #region Path Generation
 
         public void GeneratePaths()
         {
@@ -116,46 +123,6 @@ namespace BP.MapSystem
                 }
             }
         }
-
-        public void CreatePathViews()
-        {
-            HashSet<(MapNode, MapNode)> drawnPaths = new HashSet<(MapNode, MapNode)>();
-
-            foreach (List<MapNode> pathNodes in _generatedPaths.Values)
-            {
-                for (int i = 0; i < pathNodes.Count - 1; i++)
-                {
-                    var fromNode = pathNodes[i];
-                    var toNode = pathNodes[i + 1];
-
-                    if (drawnPaths.Add((fromNode, toNode)))
-                    {
-                        var pathViewTransform = Instantiate(_pathViewPrefab, _pathViewParent);
-                        pathViewTransform.localPosition = Vector3.zero;
-
-                        if (pathViewTransform.TryGetComponent(out IMapPathView pathView))
-                        {
-                            pathView.SetupPath(fromNode, toNode);
-                            PathViews.Add(pathView);
-                        }
-                    }
-                }
-            }
-        }
-
-        public void ClearPathViews()
-        {
-            foreach (Transform child in _pathViewParent)
-            {
-                Destroy(child.gameObject);
-            }
-
-            PathViews.Clear();
-        }
-
-        #endregion Public APIs
-
-        #region Pathing Logic
 
         private MapNode GetValidNextNode(MapNode currentNode, int nextLevel)
         {
@@ -211,7 +178,48 @@ namespace BP.MapSystem
                 parentNode.ChildNodes.Add(childNode);
         }
 
-        #endregion Pathing Logic
+        #endregion Path Generation
+
+        #region Visuals Management
+
+        public void CreatePathViews()
+        {
+            HashSet<(MapNode, MapNode)> drawnPaths = new HashSet<(MapNode, MapNode)>();
+
+            foreach (List<MapNode> pathNodes in _generatedPaths.Values)
+            {
+                for (int i = 0; i < pathNodes.Count - 1; i++)
+                {
+                    var fromNode = pathNodes[i];
+                    var toNode = pathNodes[i + 1];
+
+                    // Prevent drawing multiple visuals for overlapping paths
+                    if (drawnPaths.Add((fromNode, toNode)))
+                    {
+                        var pathViewTransform = Instantiate(_pathViewPrefab, _pathViewParent);
+                        pathViewTransform.localPosition = Vector3.zero;
+
+                        if (pathViewTransform.TryGetComponent(out IMapPathView pathView))
+                        {
+                            pathView.SetupPath(fromNode, toNode);
+                            PathViews.Add(pathView);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void ClearPathViews()
+        {
+            foreach (Transform child in _pathViewParent)
+            {
+                Destroy(child.gameObject);
+            }
+
+            PathViews.Clear();
+        }
+
+        #endregion Visuals Management
 
         #region Animation
 

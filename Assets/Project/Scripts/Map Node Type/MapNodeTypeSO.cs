@@ -5,11 +5,14 @@ namespace BP.MapSystem
     [CreateAssetMenu(fileName = "MapNodeType", menuName = "Map System/Map Node Type")]
     public class MapNodeTypeSO : ScriptableObject
     {
-        private const string _fileNameSuffix = "_MapNodeType";
-        private const string _duplicateAssetWarning = "An asset with the name '{0}' already exists. Cannot rename.";
-
+        [Header("Identification")]
+        [Tooltip("Unique internal identifier for the node type.")]
         [SerializeField] private string _typeID;
+        [Tooltip("Display name used in UI.")]
         [SerializeField] private string _displayName;
+
+        [Header("Visuals")]
+        [Tooltip("Icon used on nodes and UI to represent this node type.")]
         [SerializeField] private Sprite _displayIcon;
 
         public string DisplayName => _displayName;
@@ -19,6 +22,9 @@ namespace BP.MapSystem
         #region Unity Editor
 
 #if UNITY_EDITOR
+
+        private const string _fileNameSuffix = "_MapNodeType";
+        private const string _duplicateAssetWarning = "An asset with the name '{0}' already exists. Cannot rename.";
 
         [ContextMenu("Rename File to Match Display Name")]
         public void RenameFile()

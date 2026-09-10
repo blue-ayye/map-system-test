@@ -14,17 +14,25 @@ namespace BP.MapSystem
     [CreateAssetMenu(fileName = "NodeTypeRules", menuName = "Map System/Node Type Rules")]
     public class NodeTypeRulesSO : ScriptableObject
     {
-        private const string _fileNameSuffix = "_NodeTypeRules";
-        private const string _duplicateAssetWarning = "An asset with the name '{0}' already exists. Cannot rename.";
-
+        [Header("Level Range")]
+        [Tooltip("Start level index (inclusive) for this rule set.")]
         [SerializeField] private int _startLevel;
+        [Tooltip("End level index (inclusive) for this rule set.")]
         [SerializeField] private int _endLevel;
+
+        [Header("Constraints")]
+        [Tooltip("If true, these levels are evaluated independently and will not be influenced by adjacent rules.")]
         [SerializeField] private bool _excludeFromOtherRules;
+        [Tooltip("Rule constraint for handling identical node types across sibling branches.")]
+        [SerializeField] private SiblingNodeTypeConstraint _siblingNodeTypeConstraint;
+
+        [Header("Weights")]
+        [Tooltip("Base weighted probabilities for each node type in this level range.")]
         [SerializedDictionary("Node Type", "Weight")]
         [SerializeField] private SerializedDictionary<MapNodeTypeSO, float> _nodeTypeWeights;
+        [Tooltip("Weight reduction applied if a connected parent or child shares this node type.")]
         [SerializedDictionary("Node Type", "Weight Reduction")]
         [SerializeField] private SerializedDictionary<MapNodeTypeSO, float> _consecutiveTypeWeightReductions;
-        [SerializeField] private SiblingNodeTypeConstraint _siblingNodeTypeConstraint;
 
         public int StartLevel => _startLevel;
         public int EndLevel => _endLevel;
@@ -37,6 +45,9 @@ namespace BP.MapSystem
 
 #if UNITY_EDITOR
 
+        private const string _fileNameSuffix = "_NodeTypeRules";
+        private const string _duplicateAssetWarning = "An asset with the name '{0}' already exists. Cannot rename.";
+
         [ContextMenu("Rename File to Match Display Name")]
         public void RenameFile()
         {
@@ -44,7 +55,7 @@ namespace BP.MapSystem
             string newFileName = $"{_startLevel}-{_endLevel}" + _fileNameSuffix;
             string newAssetPath = System.IO.Path.GetDirectoryName(assetPath) + "/" + newFileName + ".asset";
 
-            var existingAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<MapNodeTypeSO>(newAssetPath);
+            var existingAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<NodeTypeRulesSO>(newAssetPath);
             if (existingAsset != null && existingAsset != this)
             {
                 Debug.LogWarningFormat(_duplicateAssetWarning, newFileName);
@@ -74,7 +85,7 @@ namespace BP.MapSystem
         }
 
         [ContextMenu("Add or Remove Missing Node Types in Consecutive Type Weight Reductions")]
-        private void AddOrRemoveMissingNodeTypeInConsecutiveTypeWightReductions()
+        private void AddOrRemoveMissingNodeTypeInConsecutiveTypeWeightReductions()
         {
             var currentWeights = new Dictionary<MapNodeTypeSO, float>(_nodeTypeWeights);
 

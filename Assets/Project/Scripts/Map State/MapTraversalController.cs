@@ -7,19 +7,21 @@ namespace BP.MapSystem
 {
     public class MapTraversalController : MonoBehaviour
     {
-        [Header("Traversal Settings")]
-        [Tooltip("If true, allows the player to traverse back to previously visited nodes.")]
+        [Header("Traversal Rules")]
+        [Tooltip("If true, allows the player to travel back to previously visited nodes.")]
         [SerializeField] private bool _canTraverseVisitedNodes;
-        [Tooltip("Maximum number of traversal steps allowed. Set to -1 (or any negative number) for unlimited steps.")]
+        [Tooltip("Maximum number of traversal steps allowed before graph is locked. Set to -1 for unlimited steps.")]
         [SerializeField] private int _maxTraversalSteps = -1;
 
-        [Header("Path Animation Settings")]
-        [Tooltip("Duration of the path traversal animation in seconds.")]
+        [Header("Animation Settings")]
+        [Tooltip("Duration of the path traversal line filling up in seconds.")]
         [SerializeField, Min(0.0001f)] private float _pathTraversalAnimationDuration = 0.3f;
-        [SerializeField] private float _delayBeforeRestoringTravelledPaths = 0f;
+        [Tooltip("Pause duration before replaying traversed paths when loading a save.")]
+        [SerializeField, Min(0.0001f)] private float _delayBeforeRestoringTravelledPaths = 0.0001f;
+        [Tooltip("Speed of drawing lines for already-traversed paths on map load.")]
         [SerializeField, Min(0.0001f)] private float _pathTraversalAnimationOnLoadDuration = 0.3f;
 
-        [Header("Traversal Events")]
+        [Header("Events")]
         public UnityEvent<MapNode> OnMaxTraversalStepsReached = new UnityEvent<MapNode>();
         public UnityEvent<MapNode> OnVisitVeryFirstNode = new UnityEvent<MapNode>();
         public UnityEvent<MapNode> OnRevisitNode = new UnityEvent<MapNode>();
@@ -30,7 +32,6 @@ namespace BP.MapSystem
         private int _currentTraversalSteps = 0;
         private MapNode _currentNode;
         private MapNode[,] _mapGrid;
-
         private MapNode _initialNode;
         private MapNode _finalNode;
 
@@ -45,7 +46,6 @@ namespace BP.MapSystem
         public int TraversalStepsTaken => _currentTraversalSteps;
         public MapNode CurrentNode => _currentNode;
         public List<(MapNode From, MapNode To)> TraversedEdges { get; private set; } = new List<(MapNode, MapNode)>();
-
         public float PathTraversalAnimationDuration { get => _pathTraversalAnimationDuration; set => _pathTraversalAnimationDuration = value; }
         public float DelayBeforeRestoringTravelledPaths { get => _delayBeforeRestoringTravelledPaths; set => _delayBeforeRestoringTravelledPaths = value; }
         public float PathTraversalAnimationOnLoadDuration { get => _pathTraversalAnimationOnLoadDuration; set => _pathTraversalAnimationOnLoadDuration = value; }
@@ -61,7 +61,7 @@ namespace BP.MapSystem
 
         #endregion Unity API
 
-        #region Public APIs
+        #region Initialization
 
         public void ConnectMapVisuals(MapNode[,] mapGrid, List<IMapPathView> pathViews, MapNode initialNode = null, MapNode finalNode = null)
         {
@@ -101,7 +101,7 @@ namespace BP.MapSystem
             _currentNode = null;
         }
 
-        #endregion Public APIs
+        #endregion Initialization
 
         #region Data Management
 
@@ -113,7 +113,6 @@ namespace BP.MapSystem
         public void ReadFromMapData(MapData mapData)
         {
             var traversalData = mapData.MapTraversalData;
-
             if (traversalData == null) return;
 
             _visitedNodes.Clear();
@@ -127,7 +126,6 @@ namespace BP.MapSystem
                 if (fromNode != null && toNode != null)
                 {
                     TraversedEdges.Add((fromNode, toNode));
-
                     if (!_visitedNodes.Contains(fromNode)) _visitedNodes.Add(fromNode);
                     if (!_visitedNodes.Contains(toNode)) _visitedNodes.Add(toNode);
                 }
@@ -136,7 +134,6 @@ namespace BP.MapSystem
             if (traversalData.CurrentNodeData != null)
             {
                 _currentNode = GetNode(traversalData.CurrentNodeData.Level, traversalData.CurrentNodeData.Index);
-
                 if (_currentNode != null && !_visitedNodes.Contains(_currentNode))
                 {
                     _visitedNodes.Add(_currentNode);
@@ -164,7 +161,6 @@ namespace BP.MapSystem
         {
             if (_currentNode == clickedNode) return;
 
-            // Max traversal steps check
             if (_maxTraversalSteps >= 0 && _currentTraversalSteps >= _maxTraversalSteps)
             {
                 OnMaxTraversalStepsReached?.Invoke(clickedNode);
@@ -175,8 +171,6 @@ namespace BP.MapSystem
             if (_currentNode == null)
             {
                 int startLevel = _initialNode != null ? _initialNode.Level : 0;
-
-                // Very first node (starting node)
                 if (clickedNode.Level == startLevel)
                 {
                     TraversePath(clickedNode);
@@ -190,7 +184,6 @@ namespace BP.MapSystem
                 return;
             }
 
-            // Visiting a previously visited node (if allowed)
             if (_canTraverseVisitedNodes && _visitedNodes.Contains(clickedNode))
             {
                 _currentTraversalSteps++;
@@ -200,7 +193,6 @@ namespace BP.MapSystem
                 return;
             }
 
-            // Travelling to new node (must be a child of the current node)
             if (_currentNode.ChildNodes.Contains(clickedNode))
             {
                 _currentTraversalSteps++;
@@ -216,7 +208,6 @@ namespace BP.MapSystem
         private void TraversePath(MapNode clickedNode, bool animatePath = true)
         {
             MapNode previousNode = _currentNode;
-
             if (!_visitedNodes.Contains(clickedNode))
             {
                 _visitedNodes.Add(clickedNode);
@@ -247,7 +238,6 @@ namespace BP.MapSystem
             foreach (var node in _mapGrid)
             {
                 if (node == null || node.NodeView == null) continue;
-
                 node.NodeView.OnNodeClicked += NodeView_OnNodeClicked;
             }
         }
@@ -263,9 +253,7 @@ namespace BP.MapSystem
 
             foreach (MapNode node in _mapGrid)
             {
-                if (node == null)
-                    continue;
-
+                if (node == null) continue;
                 SetNodeState(node, GetDesiredState(node), forceUpdate: true);
             }
         }
@@ -273,7 +261,6 @@ namespace BP.MapSystem
         private void RefreshChangedNodeStates(MapNode previousNode, MapNode currentNode)
         {
             var affectedNodes = new HashSet<MapNode>();
-
             AddNodeAndChildren(affectedNodes, previousNode);
             AddNodeAndChildren(affectedNodes, currentNode);
 
@@ -294,47 +281,34 @@ namespace BP.MapSystem
 
             foreach (MapNode node in affectedNodes)
             {
-                if (node == null)
-                    continue;
-
+                if (node == null) continue;
                 SetNodeState(node, GetDesiredState(node));
             }
         }
 
         private NodeState GetDesiredState(MapNode node)
         {
-            if (node == _currentNode)
-                return NodeState.Current;
-
-            if (_visitedNodes.Contains(node))
-                return NodeState.Visited;
+            if (node == _currentNode) return NodeState.Current;
+            if (_visitedNodes.Contains(node)) return NodeState.Visited;
 
             int startLevel = _initialNode != null ? _initialNode.Level : 0;
-            if (_currentNode == null && node.Level == startLevel)
-                return NodeState.Reachable;
-
-            if (_currentNode != null && _currentNode.ChildNodes.Contains(node))
-                return NodeState.Reachable;
+            if (_currentNode == null && node.Level == startLevel) return NodeState.Reachable;
+            if (_currentNode != null && _currentNode.ChildNodes.Contains(node)) return NodeState.Reachable;
 
             return NodeState.Locked;
         }
 
         private static void SetNodeState(MapNode node, NodeState newState, bool forceUpdate = false)
         {
-            if (node == null || (!forceUpdate && node.State == newState))
-                return;
-
+            if (node == null || (!forceUpdate && node.State == newState)) return;
             node.State = newState;
             node.NodeView?.SetState(newState);
         }
 
         private static void AddNodeAndChildren(HashSet<MapNode> nodes, MapNode node)
         {
-            if (node == null)
-                return;
-
+            if (node == null) return;
             nodes.Add(node);
-
             foreach (MapNode childNode in node.ChildNodes)
             {
                 nodes.Add(childNode);

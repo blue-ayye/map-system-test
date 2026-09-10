@@ -7041,8 +7041,8 @@ MonoBehaviour:
   _mapNodeTypeAssigner: {fileID: 927686317}
   _mapTraversalController: {fileID: 927686316}
   _mapDataHandler: {fileID: 927686315}
-  _playerInputSeed: 0
   _usePlayerInputSeed: 0
+  _playerInputSeed: 0
   _generationAttempts: 1
 --- !u!114 &927686315
 MonoBehaviour:
@@ -7073,7 +7073,7 @@ MonoBehaviour:
   _canTraverseVisitedNodes: 0
   _maxTraversalSteps: -1
   _pathTraversalAnimationDuration: 0.3
-  _delayBeforeRestoringTravelledPaths: 0
+  _delayBeforeRestoringTravelledPaths: 0.0001
   _pathTraversalAnimationOnLoadDuration: 0.3
   OnMaxTraversalStepsReached:
     m_PersistentCalls:
@@ -14099,7 +14099,7 @@ MonoBehaviour:
   _canTraverseVisitedNodes: 0
   _maxTraversalSteps: -1
   _pathTraversalAnimationDuration: 0.3
-  _delayBeforeRestoringTravelledPaths: 0
+  _delayBeforeRestoringTravelledPaths: 0.0001
   _pathTraversalAnimationOnLoadDuration: 0.3
   OnMaxTraversalStepsReached:
     m_PersistentCalls:
@@ -14197,8 +14197,8 @@ MonoBehaviour:
   _mapNodeTypeAssigner: {fileID: 1994524040}
   _mapTraversalController: {fileID: 1994524039}
   _mapDataHandler: {fileID: 1994524038}
-  _playerInputSeed: 0
   _usePlayerInputSeed: 0
+  _playerInputSeed: 0
   _generationAttempts: 1
 --- !u!4 &1994524044
 Transform:

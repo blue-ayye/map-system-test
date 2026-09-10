@@ -1,22 +1,30 @@
 using PrimeTween;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace BP.MapSystem
 {
     public class MapSystemManager : MonoBehaviour
     {
-        [Header("References")]
+        [Header("System References")]
+        [Tooltip("The root transform for all map visuals.")]
         [SerializeField] private Transform _mapContainer;
+        [Tooltip("Handles the mathematical grid generation and node spawning.")]
         [SerializeField] private MapNodeGenerator _mapGridGenerator;
+        [Tooltip("Handles route connections between nodes across the grid.")]
         [SerializeField] private MapPathGenerator _mapPathGenerator;
+        [Tooltip("Applies procedural rules to assign types (e.g., combat, shop) to nodes.")]
         [SerializeField] private MapNodeTypeAssigner _mapNodeTypeAssigner;
+        [Tooltip("Manages player movement state across the generated map.")]
         [SerializeField] private MapTraversalController _mapTraversalController;
+        [Tooltip("Handles local disk read/write operations for map states.")]
         [SerializeField] private MapDataHandler _mapDataHandler;
 
-        [Header("Map Generation Settings")]
-        [SerializeField] private int _playerInputSeed = 0;
+        [Header("Generation Parameters")]
+        [Tooltip("Enable to force the map generator to use a specific seed.")]
         [SerializeField] private bool _usePlayerInputSeed = false;
+        [Tooltip("The explicit seed used if custom seed is enabled.")]
+        [SerializeField] private int _playerInputSeed = 0;
+        [Tooltip("How many times the generator should attempt to build a valid map before falling back to the best available configuration.")]
         [SerializeField] private int _generationAttempts = 1;
 
         private MapNode[,] _mapGrid;
@@ -40,25 +48,10 @@ namespace BP.MapSystem
 
         #endregion Unity API
 
-        #region Public APIs
-
-        [ContextMenu("Generate Map")]
-        public void GenerateMap() => GenerateMap_Internal();
-
-        [ContextMenu("Save Map")]
-        public void SaveMap() => StartSavingGame();
-
-        [ContextMenu("Load Map")]
-        public void LoadMap() => StartLoadingGame();
-
-        [ContextMenu("Delete Save")]
-        public void DeleteSave() => _mapDataHandler.DeleteMapData();
-
-        #endregion Public APIs
-
         #region Map Generation
 
-        private void GenerateMap_Internal()
+        [ContextMenu("Generate Map")]
+        public void GenerateMap()
         {
             _mapGridGenerator.CalculateBounds();
 
@@ -74,6 +67,7 @@ namespace BP.MapSystem
                     Debug.LogWarningFormat(_generationAttemptsWarning, _generationAttempts, _generatedSeed);
                 }
 
+                // Regenerate the map with the best seed found during attempts
                 GenerateMapData(bestSeed);
             }
 
@@ -158,16 +152,17 @@ namespace BP.MapSystem
 
         #region Map Data Management
 
-        private void StartSavingGame()
+        [ContextMenu("Save Map")]
+        public void SaveMap()
         {
             var mapData = new MapData();
-            this.WriteToMapData(mapData);
+            WriteToMapData(mapData);
             _mapTraversalController.WriteToMapData(mapData);
-
             _mapDataHandler.SaveGame(mapData);
         }
 
-        private void StartLoadingGame()
+        [ContextMenu("Load Map")]
+        public void LoadMap()
         {
             var mapData = _mapDataHandler.LoadGame();
 
@@ -177,7 +172,7 @@ namespace BP.MapSystem
                 return;
             }
 
-            this.ReadFromMapData(mapData);
+            ReadFromMapData(mapData);
 
             GenerateMapData(mapData.Seed);
             GenerateMapVisuals();
@@ -186,6 +181,12 @@ namespace BP.MapSystem
             _mapTraversalController.ReadFromMapData(mapData);
 
             AnimateMapReveal();
+        }
+
+        [ContextMenu("Delete Map Save")]
+        public void DeleteMapSave()
+        {
+            _mapDataHandler.DeleteMapData();
         }
 
         private void WriteToMapData(MapData mapData)
@@ -239,7 +240,7 @@ namespace BP.MapSystem
                 _mapGridGenerator.AppendNodeSpawnToSequence(ref _revealSequence, _mapGridGenerator.FinalNode);
             }
 
-            // 4. Restored Data
+            // 4. Animate saved states
             _mapTraversalController.AppendRestoredTraversalsToSequence(ref _revealSequence);
         }
 

@@ -5,12 +5,16 @@ namespace BP.MapSystem
 {
     public class WorldMapPathView : MonoBehaviour, IMapPathView
     {
-        [Header("Path References")]
+        [Header("Path Visuals")]
+        [Tooltip("The underlying dashed or dim line representing an unvisited path.")]
         [SerializeField] private LineRenderer _baseLineRenderer;
+        [Tooltip("The highlighted line that reveals as the player travels.")]
         [SerializeField] private LineRenderer _traversedLineRenderer;
 
-        [Header("Path Animation Settings")]
+        [Header("Animation")]
+        [Tooltip("Tween settings used to draw the map paths initially.")]
         [SerializeField] private TweenSettings<Vector3> _initialDrawTweenSettings;
+        [Tooltip("Tween settings used to animate the player's movement along the path.")]
         [SerializeField] private TweenSettings<Vector3> _traversalTweenSettings;
 
         private Vector3 _startLocalPos;
@@ -21,7 +25,7 @@ namespace BP.MapSystem
         public MapNode FromNode { get; private set; }
         public MapNode ToNode { get; private set; }
 
-        #region Public APIs
+        #region Initialization
 
         public void SetupPath(MapNode fromNode, MapNode toNode)
         {
@@ -43,6 +47,26 @@ namespace BP.MapSystem
             _traversedLineRenderer.SetPosition(0, _startLocalPos);
             _traversedLineRenderer.SetPosition(1, _startLocalPos);
         }
+
+        #endregion Initialization
+
+        #region State Management
+
+        public void SetInstantlyTraversed()
+        {
+            _traversalTween.Stop();
+            _traversedLineRenderer.SetPosition(1, _endLocalPos);
+        }
+
+        public void ResetToDefault()
+        {
+            _traversalTween.Stop();
+            _traversedLineRenderer.SetPosition(1, _startLocalPos);
+        }
+
+        #endregion State Management
+
+        #region Animation
 
         public Tween AnimateInitialDraw(float duration)
         {
@@ -68,18 +92,6 @@ namespace BP.MapSystem
             return _traversalTween;
         }
 
-        public void SetInstantlyTraversed()
-        {
-            _traversalTween.Stop();
-            _traversedLineRenderer.SetPosition(1, _endLocalPos);
-        }
-
-        public void ResetToDefault()
-        {
-            _traversalTween.Stop();
-            _traversedLineRenderer.SetPosition(1, _startLocalPos);
-        }
-
-        #endregion Public APIs
+        #endregion Animation
     }
 }

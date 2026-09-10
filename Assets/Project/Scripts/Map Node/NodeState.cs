@@ -5,6 +5,6 @@ namespace BP.MapSystem
         Locked,     // Cannot be clicked
         Reachable,  // Next valid move
         Current,    // Where the player is right now
-        Visited     // Previously traversed
+        Visited     // Visited or completed node
     }
 }

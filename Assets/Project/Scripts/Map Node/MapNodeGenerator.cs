@@ -7,33 +7,52 @@ namespace BP.MapSystem
     public class MapNodeGenerator : MonoBehaviour
     {
         [Header("References")]
+        [Tooltip("The prefab instantiated for each valid node in the map.")]
         [SerializeField] private Transform _nodeViewPrefab;
+        [Tooltip("The parent transform to hold all instantiated node views.")]
         [SerializeField] private Transform _nodeViewParent;
+        [Tooltip("A RectTransform or BoxCollider defining the physical bounds of the map.")]
         [SerializeField] private Transform _mapAreaBoundsDefiner;
-        [SerializeField] private MapNodeTypeSO _intialNodeType;
+        [Tooltip("The designated node type for the very first starting node.")]
+        [UnityEngine.Serialization.FormerlySerializedAs("_intialNodeType")]
+        [SerializeField] private MapNodeTypeSO _initialNodeType;
+        [Tooltip("The designated node type for the final boss/exit node.")]
         [SerializeField] private MapNodeTypeSO _finalNodeType;
 
-        [Header("Scale Settings")]
+        [Header("Scale Multipliers")]
+        [Tooltip("Scale multiplier applied to standard grid nodes.")]
         [SerializeField] private float _nodeScaleMultiplier = 1f;
+        [Tooltip("Scale multiplier applied exclusively to the initial starting node.")]
         [SerializeField] private float _initialNodeScaleMultiplier = 1.5f;
+        [Tooltip("Scale multiplier applied exclusively to the final ending node.")]
         [SerializeField] private float _finalNodeScaleMultiplier = 1.5f;
 
-        [Header("Map Grid Settings")]
+        [Header("Grid Dimensions")]
+        [Tooltip("Total number of horizontal rows (levels) in the map.")]
         [SerializeField] private int _maxLevels = 9;
+        [Tooltip("Total number of nodes per horizontal level.")]
         [SerializeField] private int _nodesPerLevel = 7;
 
-        [Header("Rotation and Direction")]
+        [Header("Layout & Orientation")]
+        [Tooltip("The flow direction of the map generation (e.g., BottomToTop for Slay the Spire style).")]
         [SerializeField] private MapDirection _direction = MapDirection.TopToBottom;
+        [Tooltip("Z-axis rotation applied to every instantiated node view.")]
         [SerializeField] private int _zRotation;
 
-        [Header("Position Settings")]
+        [Header("Positioning & Jitter")]
+        [Tooltip("Extra spatial offset for the initial node away from the main grid.")]
         [SerializeField] private float _initialNodeDistance = 2f;
+        [Tooltip("Extra spatial offset for the final node away from the main grid.")]
         [SerializeField] private float _finalNodeDistance = 2f;
+        [Tooltip("If true, offsets nodes slightly from their perfect mathematical grid positions.")]
         [SerializeField] private bool _applyJitter = true;
+        [Tooltip("Maximum horizontal position variance as a percentage of spacing.")]
         [SerializeField, Range(0f, 50f)] private float _nodeSpaceJitterPercentage;
+        [Tooltip("Maximum vertical position variance as a percentage of spacing.")]
         [SerializeField, Range(0f, 50f)] private float _levelSpaceJitterPercentage;
 
-        [Header("Spawn Settings")]
+        [Header("Animation")]
+        [Tooltip("Duration of the node popping in when revealed.")]
         [SerializeField, Min(0.0001f)] private float _nodeSpawnAnimationDuration = 0.3f;
 
         private MapNode[,] _mapGrid;
@@ -54,11 +73,74 @@ namespace BP.MapSystem
         public int NodeFacingDirection { get => _zRotation; set => _zRotation = value; }
         public float NodeSpawnAnimationDuration { get => _nodeSpawnAnimationDuration; set => _nodeSpawnAnimationDuration = value; }
 
-        #region Public APIs
+        #region Initialization
 
         public void Initialize(System.Random jitterRNG)
         {
             _jitterRNG = jitterRNG;
+        }
+
+        #endregion Initialization
+
+        #region Grid Generation
+
+        public void CalculateBounds()
+        {
+            if (_mapAreaBoundsDefiner == null)
+            {
+                Debug.LogError(_missingBoundsDefinerError);
+                return;
+            }
+
+            MapBoundsData boundData = new MapBoundsData();
+
+            if (_mapAreaBoundsDefiner.TryGetComponent(out RectTransform rt))
+            {
+                boundData.Size = Vector3.Scale(rt.rect.size, rt.lossyScale);
+                boundData.Center = rt.TransformPoint(rt.rect.center);
+            }
+            else if (_mapAreaBoundsDefiner.TryGetComponent(out BoxCollider collider))
+            {
+                boundData.Size = Vector3.Scale(collider.size, _mapAreaBoundsDefiner.lossyScale);
+                boundData.Center = _mapAreaBoundsDefiner.TransformPoint(collider.center);
+            }
+            else
+            {
+                Debug.LogError(_missingBoundsComponentError);
+                return;
+            }
+
+            boundData.Right = _mapAreaBoundsDefiner.right * (boundData.Size.x * 0.5f);
+            boundData.Up = _mapAreaBoundsDefiner.up * (boundData.Size.y * 0.5f);
+
+            switch (_direction)
+            {
+                case MapDirection.TopToBottom:
+                    boundData.Origin = boundData.Center - boundData.Right + boundData.Up;
+                    boundData.Up = -boundData.Up;
+                    break;
+
+                case MapDirection.BottomToTop:
+                    boundData.Origin = boundData.Center + boundData.Right - boundData.Up;
+                    boundData.Right = -boundData.Right;
+                    break;
+
+                case MapDirection.LeftToRight:
+                    (boundData.Right, boundData.Up) = (boundData.Up, boundData.Right);
+                    boundData.Origin = boundData.Center - boundData.Right - boundData.Up;
+                    break;
+
+                case MapDirection.RightToLeft:
+                    (boundData.Right, boundData.Up) = (-boundData.Up, -boundData.Right);
+                    boundData.Origin = boundData.Center - boundData.Right - boundData.Up;
+                    break;
+            }
+
+            _bounds = boundData;
+            _dynamicSpacing = new Vector2(
+                _nodesPerLevel > 1 ? 1f / (_nodesPerLevel - 1) : 0.5f,
+                _maxLevels > 1 ? 1f / (_maxLevels - 1) : 0.5f
+            );
         }
 
         public MapNode[,] CreateNodeGrid()
@@ -79,19 +161,20 @@ namespace BP.MapSystem
             }
 
             InitialNode = null;
-            if (_intialNodeType != null)
+            if (_initialNodeType != null)
             {
                 int centerIndex = _nodesPerLevel / 2;
                 int randomIndex = 0;
                 if (_nodesPerLevel > 1)
                     randomIndex = Mathf.Clamp(centerIndex + _jitterRNG.Next(-1, 2), 0, _nodesPerLevel - 1);
+
                 InitialNode = new MapNode(-1, randomIndex)
                 {
-                    NodeType = _intialNodeType,
+                    NodeType = _initialNodeType,
                 };
 
                 Vector3 pos = GetNodePosition(0, randomIndex, _applyJitter);
-                pos -= _bounds.up.normalized * _initialNodeDistance;
+                pos -= _bounds.Up.normalized * _initialNodeDistance;
                 InitialNode.Position = pos;
             }
 
@@ -102,18 +185,63 @@ namespace BP.MapSystem
                 int randomIndex = 0;
                 if (_nodesPerLevel > 1)
                     randomIndex = Mathf.Clamp(centerIndex + _jitterRNG.Next(-1, 2), 0, _nodesPerLevel - 1);
+
                 FinalNode = new MapNode(_maxLevels, randomIndex)
                 {
                     NodeType = _finalNodeType,
                 };
 
                 Vector3 pos = GetNodePosition(_maxLevels - 1, randomIndex, _applyJitter);
-                pos += _bounds.up.normalized * _finalNodeDistance;
+                pos += _bounds.Up.normalized * _finalNodeDistance;
                 FinalNode.Position = pos;
             }
 
             return _mapGrid;
         }
+
+        private Vector3 GetNodePosition(int level, int nodeIndex, bool applyJitter = false)
+        {
+            float xNorm = _dynamicSpacing.x * nodeIndex;
+            float yNorm = _dynamicSpacing.y * level;
+
+            if (!applyJitter)
+            {
+                return _bounds.Origin
+                    + _bounds.Right * xNorm * 2f
+                    + _bounds.Up * yNorm * 2f;
+            }
+            else
+            {
+                float nodeJitterFactor = _nodeSpaceJitterPercentage * 0.01f;
+                float levelJitterFactor = _levelSpaceJitterPercentage * 0.01f;
+
+                float jitterX = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.x * nodeJitterFactor;
+                float jitterY = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.y * levelJitterFactor;
+
+                return _bounds.Origin
+                    + _bounds.Right * (xNorm + jitterX) * 2f
+                    + _bounds.Up * (yNorm + jitterY) * 2f;
+            }
+        }
+
+        public void ClearUnusedNodes()
+        {
+            for (int level = 0; level < _maxLevels; level++)
+            {
+                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
+                {
+                    var node = _mapGrid[level, nodeIndex];
+                    if (node != null && node.ParentNodes.Count == 0 && node.ChildNodes.Count == 0)
+                    {
+                        _mapGrid[level, nodeIndex] = null;
+                    }
+                }
+            }
+        }
+
+        #endregion Grid Generation
+
+        #region View Management
 
         public void CreateNodeViews()
         {
@@ -140,18 +268,21 @@ namespace BP.MapSystem
             }
         }
 
-        public void ClearUnusedNodes()
+        private void CreateSingleNodeView(MapNode node, Quaternion rotation, float nodeScaleMultiplier)
         {
-            for (int level = 0; level < _maxLevels; level++)
+            Transform nodeViewTransform = Instantiate(_nodeViewPrefab, _nodeViewParent);
+            nodeViewTransform.SetPositionAndRotation(node.Position, rotation);
+            nodeViewTransform.localScale *= nodeScaleMultiplier;
+
+            if (nodeViewTransform.TryGetComponent(out IMapNodeView nodeView))
             {
-                for (int nodeIndex = 0; nodeIndex < _nodesPerLevel; nodeIndex++)
-                {
-                    var node = _mapGrid[level, nodeIndex];
-                    if (node != null && node.ParentNodes.Count == 0 && node.ChildNodes.Count == 0)
-                    {
-                        _mapGrid[level, nodeIndex] = null;
-                    }
-                }
+                node.NodeView = nodeView;
+                node.Scale = nodeViewTransform.localScale;
+                nodeView.Initialize(node);
+            }
+            else
+            {
+                Debug.LogError(_missingNodeViewInterfaceError);
             }
         }
 
@@ -163,66 +294,7 @@ namespace BP.MapSystem
             }
         }
 
-        public void CalculateBounds()
-        {
-            if (_mapAreaBoundsDefiner == null)
-            {
-                Debug.LogError(_missingBoundsDefinerError);
-                return;
-            }
-
-            MapBoundsData boundData = new MapBoundsData();
-
-            if (_mapAreaBoundsDefiner.TryGetComponent(out RectTransform rt))
-            {
-                boundData.size = Vector3.Scale(rt.rect.size, rt.lossyScale);
-                boundData.center = rt.TransformPoint(rt.rect.center);
-            }
-            else if (_mapAreaBoundsDefiner.TryGetComponent(out BoxCollider collider))
-            {
-                boundData.size = Vector3.Scale(collider.size, _mapAreaBoundsDefiner.lossyScale);
-                boundData.center = _mapAreaBoundsDefiner.TransformPoint(collider.center);
-            }
-            else
-            {
-                Debug.LogError(_missingBoundsComponentError);
-                return;
-            }
-
-            boundData.right = _mapAreaBoundsDefiner.right * (boundData.size.x * 0.5f);
-            boundData.up = _mapAreaBoundsDefiner.up * (boundData.size.y * 0.5f);
-
-            switch (_direction)
-            {
-                case MapDirection.TopToBottom:
-                    boundData.origin = boundData.center - boundData.right + boundData.up;
-                    boundData.up = -boundData.up;
-                    break;
-
-                case MapDirection.BottomToTop:
-                    boundData.origin = boundData.center + boundData.right - boundData.up;
-                    boundData.right = -boundData.right;
-                    break;
-
-                case MapDirection.LeftToRight:
-                    (boundData.right, boundData.up) = (boundData.up, boundData.right);
-                    boundData.origin = boundData.center - boundData.right - boundData.up;
-                    break;
-
-                case MapDirection.RightToLeft:
-                    (boundData.right, boundData.up) = (-boundData.up, -boundData.right);
-                    boundData.origin = boundData.center - boundData.right - boundData.up;
-                    break;
-            }
-
-            _bounds = boundData;
-            _dynamicSpacing = new Vector2(
-                _nodesPerLevel > 1 ? 1f / (_nodesPerLevel - 1) : 0.5f,
-                _maxLevels > 1 ? 1f / (_maxLevels - 1) : 0.5f
-            );
-        }
-
-        #endregion Public APIs
+        #endregion View Management
 
         #region Animation
 
@@ -259,54 +331,7 @@ namespace BP.MapSystem
 
         #endregion Animation
 
-        #region Helpers
-
-        private void CreateSingleNodeView(MapNode node, Quaternion rotation, float nodeScaleMultiplier)
-        {
-            Transform nodeViewTransform = Instantiate(_nodeViewPrefab, _nodeViewParent);
-            nodeViewTransform.SetPositionAndRotation(node.Position, rotation);
-            nodeViewTransform.localScale *= nodeScaleMultiplier;
-
-            if (nodeViewTransform.TryGetComponent(out IMapNodeView nodeView))
-            {
-                node.NodeView = nodeView;
-                node.Scale = nodeViewTransform.localScale;
-                nodeView.Initialize(node);
-            }
-            else
-            {
-                Debug.LogError(_missingNodeViewInterfaceError);
-            }
-        }
-
-        private Vector3 GetNodePosition(int level, int nodeIndex, bool applyJitter = false)
-        {
-            float xNorm = _dynamicSpacing.x * nodeIndex;
-            float yNorm = _dynamicSpacing.y * level;
-
-            if (!applyJitter)
-            {
-                return _bounds.origin
-                    + _bounds.right * xNorm * 2f
-                    + _bounds.up * yNorm * 2f;
-            }
-            else
-            {
-                float nodeJitterFactor = _nodeSpaceJitterPercentage * 0.01f;
-                float levelJitterFactor = _levelSpaceJitterPercentage * 0.01f;
-
-                float jitterX = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.x * nodeJitterFactor;
-                float jitterY = (float)(_jitterRNG.NextDouble() * 2f - 1f) * _dynamicSpacing.y * levelJitterFactor;
-
-                return _bounds.origin
-                    + _bounds.right * (xNorm + jitterX) * 2f
-                    + _bounds.up * (yNorm + jitterY) * 2f;
-            }
-        }
-
-        #endregion Helpers
-
-        #region Unity Editor & Debugging
+        #region Unity Editor
 
 #if UNITY_EDITOR
 
@@ -315,19 +340,19 @@ namespace BP.MapSystem
             if (_mapAreaBoundsDefiner == null) return;
 
             CalculateBounds();
-            float areaDiagonal = _bounds.size.magnitude;
+            float areaDiagonal = _bounds.Size.magnitude;
             float radius = areaDiagonal * 0.01f;
 
             // Base gizmos
             Gizmos.color = Color.blue; // Start point
-            Gizmos.DrawLine(_bounds.origin, _bounds.origin + _bounds.right * 2f);
+            Gizmos.DrawLine(_bounds.Origin, _bounds.Origin + _bounds.Right * 2f);
 
             Gizmos.color = Color.red; // End point
-            Gizmos.DrawLine(_bounds.origin + _bounds.up * 2f, _bounds.origin + _bounds.right * 2f + _bounds.up * 2f);
+            Gizmos.DrawLine(_bounds.Origin + _bounds.Up * 2f, _bounds.Origin + _bounds.Right * 2f + _bounds.Up * 2f);
 
             Gizmos.color = Color.green; // Sides
-            Gizmos.DrawLine(_bounds.origin, _bounds.origin + _bounds.up * 2f);
-            Gizmos.DrawLine(_bounds.origin + _bounds.right * 2f, _bounds.origin + _bounds.right * 2f + _bounds.up * 2f);
+            Gizmos.DrawLine(_bounds.Origin, _bounds.Origin + _bounds.Up * 2f);
+            Gizmos.DrawLine(_bounds.Origin + _bounds.Right * 2f, _bounds.Origin + _bounds.Right * 2f + _bounds.Up * 2f);
 
             // Draw node positions
             Gizmos.color = Color.yellow;
@@ -344,14 +369,15 @@ namespace BP.MapSystem
 
             // Draw special nodes if they exist
             Gizmos.color = Color.green;
-            if (_intialNodeType != null)
+            if (_initialNodeType != null)
             {
                 int centerIndex = _nodesPerLevel / 2;
                 int randomIndex = 0;
                 if (_nodesPerLevel > 1)
                     randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
+
                 Vector3 pos = GetNodePosition(0, randomIndex);
-                pos -= _bounds.up.normalized * _initialNodeDistance;
+                pos -= _bounds.Up.normalized * _initialNodeDistance;
                 Gizmos.DrawSphere(pos, radius * _initialNodeScaleMultiplier);
 
                 Gizmos.color = Color.white;
@@ -374,8 +400,9 @@ namespace BP.MapSystem
                 int randomIndex = 0;
                 if (_nodesPerLevel > 1)
                     randomIndex = Mathf.Clamp(centerIndex + tempRandom.Next(-1, 2), 0, _nodesPerLevel - 1);
+
                 Vector3 pos = GetNodePosition(_maxLevels - 1, randomIndex);
-                pos += _bounds.up.normalized * _finalNodeDistance;
+                pos += _bounds.Up.normalized * _finalNodeDistance;
                 Gizmos.DrawSphere(pos, radius * _finalNodeScaleMultiplier);
 
                 Gizmos.color = Color.white;
@@ -416,6 +443,6 @@ namespace BP.MapSystem
 
 #endif
 
-        #endregion Unity Editor & Debugging
+        #endregion Unity Editor
     }
 }
